@@ -16,10 +16,10 @@ const BADGES = [
 
 export default function Hero() {
   return (
-    <section id="home" className="hero-viewport relative bg-white">
-      <div className="flex h-full w-full flex-col p-3 sm:p-4 md:p-5 lg:p-6">
+    <section id="home" className="hero-viewport relative flex flex-col bg-white">
+      <div className="flex w-full flex-1 flex-col p-3 sm:p-4 md:p-5 lg:p-6">
         {/* premium panel */}
-        <div className="relative flex flex-1 flex-col overflow-hidden rounded-t-[1.75rem] bg-forest sm:rounded-t-[2.25rem] md:rounded-t-[3rem]">
+        <div className="relative flex flex-1 flex-col overflow-hidden rounded-[1.75rem] bg-forest sm:rounded-[2.25rem] md:rounded-[3rem]">
           <div
             aria-hidden
             className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_36%,rgba(255,255,255,0.09),transparent_60%)]"
@@ -103,7 +103,7 @@ export default function Hero() {
               {BADGES.map(({ value, label, Icon }) => (
                 <div
                   key={label}
-                  className="flex items-center gap-2.5 rounded-2xl border border-white/15 bg-white/10 px-3.5 py-2.5"
+                  className="flex items-center gap-2.5 rounded-xl border border-white/15 bg-white/10 px-3.5 py-2.5"
                 >
                   <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-forest-light/80">
                     <Icon className="h-4 w-4 text-cream-deep" strokeWidth={1.6} />
@@ -132,9 +132,6 @@ export default function Hero() {
               </Button>
             </div>
           </div>
-
-          {/* notch strip — white panels cut into the bottom corners, tablet+ only */}
-          
         </div>
 
         {/* mobile-only utility bar — sits below the panel with a soft wave cut */}

@@ -147,18 +147,7 @@ body {
   }
 }
 
-/* Diagonal "notch" panels for the hero: white shapes that cut up into the
-   bottom corners of the green hero panel, leaving the center + rounded
-   corners green. Percentages are relative to each panel's own box, so the
-   shape scales with it at every breakpoint. */
-.hero-notch-left {
-  clip-path: polygon(0 8%, 62% 8%, 100% 82%, 100% 100%, 0 100%);
-}
-
-.hero-notch-right {
-  clip-path: polygon(100% 8%, 38% 8%, 0 82%, 0 100%, 100% 100%);
-}
-
+/* Soft wave cut on the mobile-only utility bar below the hero panel. */
 .hero-notch-mobile {
   clip-path: polygon(0 0, 40% 0, 50% 12%, 60% 0, 100% 0, 100% 100%, 0 100%);
 }
