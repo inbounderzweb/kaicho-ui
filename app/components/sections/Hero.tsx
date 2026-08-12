@@ -33,15 +33,15 @@ export default function Hero() {
 
           <div className="relative z-10 flex flex-1 flex-col px-(--hero-inset) py-[clamp(1rem,2.5svh,2.5rem)]">
             {/* eyebrow */}
-            <span className="animate-fade-up mx-auto inline-flex items-center gap-2 text-center text-[clamp(0.62rem,0.3vw_+_0.56rem,0.8rem)] font-bold uppercase tracking-[0.3em] text-gold">
+            <span className="animate-fade-up mx-auto inline-flex items-center gap-2 text-center text-[clamp(0.62rem,0.3vw_+_0.56rem,0.8rem)] font-bold uppercase tracking-[0.3em] text-white">
               <IconLeaf className="h-3.5 w-3.5 shrink-0" />
               Ready-to-Eat &middot; Japanese Retort Tech
             </span>
 
             {/* headline */}
             <h1 className="animate-fade-up mt-[clamp(0.25rem,1.2svh,1rem)] text-center font-display text-[clamp(2.5rem,5vw_+_1rem,5.5rem)] font-bold leading-[0.95] tracking-tight lg:text-[clamp(2.5rem,2svh+1.6vw,4.75rem)]">
-              <span className="block text-white">Veg Oats</span>
-              <span className="block text-gold">Porridge</span>
+              <span className="block text-white mt-5">Veg Oats Porridge</span>
+
             </h1>
 
             {/* product photography */}
