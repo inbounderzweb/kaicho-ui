@@ -7,12 +7,14 @@ import ProductSection from "./components/sections/ProductSection";
 import StorySection from "./components/sections/StorySection";
 import Testimonials from "./components/sections/Testimonials";
 import UseCaseGrid from "./components/sections/UseCaseGrid";
+import WholesomeGoodness from "./components/sections/WholesomeGoodness";
 
 export default function Home() {
   return (
     <>
       <Hero />
       <FeatureMarquee />
+      <WholesomeGoodness />
       <ProductSection />
       <StorySection />
       <BulkOrderForm />

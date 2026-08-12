@@ -16,6 +16,26 @@
   --color-sale: #db0000;
   --color-cream: #f7f4ee;
   --color-border: #eaeaea;
+
+  --color-forest: var(--color-brand);
+  --color-forest-light: var(--color-brand-dark);
+  --color-cream-deep: #f1e9d8;
+  --color-gold: #c9a24a;
+  --color-terracotta: #c97b4a;
+
+  --shadow-hero: 0 40px 80px -32px rgba(14, 43, 28, 0.28);
+  --shadow-card: 0 18px 40px -20px rgba(28, 28, 28, 0.18);
+  --radius-hero: 2.5rem;
+
+  /* Header.tsx renders a constant h-20 (80px) bar at every breakpoint. */
+  --header-height: 5rem;
+  /* Reserves room below the hero so the FeatureMarquee strip peeks into
+     view on the first screen instead of the hero claiming 100% of it. */
+  --marquee-peek: 5.5rem;
+  /* Single horizontal inset shared by every layer of the hero (headline
+     block, notch panels, mobile utility bar) so their left/right edges
+     always line up, instead of each one tuning its own clamp(). */
+  --hero-inset: clamp(1.25rem, 4vw, 3rem);
 }
 
 @theme inline {
@@ -35,11 +55,18 @@
   --color-cream: var(--color-cream);
   --color-border: var(--color-border);
 
+  --color-forest: var(--color-forest);
+  --color-forest-light: var(--color-forest-light);
+  --color-cream-deep: var(--color-cream-deep);
+  --color-gold: var(--color-gold);
+  --color-terracotta: var(--color-terracotta);
+
   --font-sans: var(--font-urbanist);
   --font-display: var(--font-sora);
 
   --animate-marquee: marquee 28s linear infinite;
   --animate-fade-up: fade-up 0.6s ease-out both;
+  --animate-fade-scale: fade-scale 0.7s ease-out both;
 }
 
 @keyframes marquee {
@@ -59,6 +86,26 @@
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+@keyframes fade-scale {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-fade-up,
+  .animate-fade-scale {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transform: none !important;
   }
 }
 
@@ -83,4 +130,35 @@ body {
 .no-scrollbar {
   -ms-overflow-style: none;
   scrollbar-width: none;
+}
+
+/* Fills exactly what's left below the sticky header on the first viewport,
+   using the most accurate viewport unit each browser supports. Never a
+   hard-coded pixel height, so it scales fluidly across every device. */
+.hero-viewport {
+  min-height: calc(100vh - var(--header-height) - var(--marquee-peek));
+  min-height: calc(100dvh - var(--header-height) - var(--marquee-peek));
+  min-height: calc(100svh - var(--header-height) - var(--marquee-peek));
+}
+
+@supports (height: 100svh) {
+  .hero-viewport {
+    min-height: calc(100svh - var(--header-height) - var(--marquee-peek));
+  }
+}
+
+/* Diagonal "notch" panels for the hero: white shapes that cut up into the
+   bottom corners of the green hero panel, leaving the center + rounded
+   corners green. Percentages are relative to each panel's own box, so the
+   shape scales with it at every breakpoint. */
+.hero-notch-left {
+  clip-path: polygon(0 8%, 62% 8%, 100% 82%, 100% 100%, 0 100%);
+}
+
+.hero-notch-right {
+  clip-path: polygon(100% 8%, 38% 8%, 0 82%, 0 100%, 100% 100%);
+}
+
+.hero-notch-mobile {
+  clip-path: polygon(0 0, 40% 0, 50% 12%, 60% 0, 100% 0, 100% 100%, 0 100%);
 }

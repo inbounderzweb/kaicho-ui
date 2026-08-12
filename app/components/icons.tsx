@@ -313,6 +313,18 @@ export function IconQuote(props: IconProps) {
   );
 }
 
+export function IconSprout(props: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <path d="M8 20h8" />
+      <path d="M9 20v-2.5a3 3 0 0 1 3-3 3 3 0 0 1 3 3V20" />
+      <path d="M12 14.5V8" />
+      <path d="M12 9c-3 0-5-2-5-5 3 0 5 2 5 5Z" />
+      <path d="M12 11c2.5 0 4.5-1.8 4.5-4.5-2.5 0-4.5 1.8-4.5 4.5Z" />
+    </svg>
+  );
+}
+
 export function IconStar(props: IconProps) {
   return (
     <svg viewBox="0 0 24 24" fill="currentColor" {...props}>
