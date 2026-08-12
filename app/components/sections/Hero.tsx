@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Button from "../Button";
 import {
   IconArrowRight,
@@ -46,13 +46,35 @@ const FEATURE_TOPS = ["2%", "38%", "74%"];
 
 export default function Hero() {
   const [active, setActive] = useState(0);
+  // How long each slide's image actually took to load, in ms — null until
+  // its onLoad has fired. Measured from mount, so a heavier/unoptimized
+  // photo (e.g. the chicken oats slide) naturally gets a longer readout.
+  const [loadMs, setLoadMs] = useState<(number | null)[]>(() => SLIDES.map(() => null));
+  const mountedAt = useRef(0);
 
   useEffect(() => {
-    const id = setInterval(() => {
-      setActive((a) => (a + 1) % SLIDES.length);
-    }, 7000);
-    return () => clearInterval(id);
+    mountedAt.current = performance.now();
   }, []);
+
+  const markLoaded = (i: number) =>
+    setLoadMs((prev) =>
+      prev[i] !== null ? prev : prev.map((v, idx) => (idx === i ? performance.now() - mountedAt.current : v))
+    );
+
+  useEffect(() => {
+    // Hold the current slide until its image has actually finished loading,
+    // then keep it on screen for a beat — that beat is the image's own
+    // measured load time (floor 3s, cap 9s) layered on a 5s base, so a
+    // slower-loading photo genuinely gets more time on screen, not a flat
+    // duration shared by every slide.
+    const ms = loadMs[active];
+    if (ms === null) return;
+    const hold = 5000 + Math.min(4000, Math.max(0, ms));
+    const id = setTimeout(() => {
+      setActive((a) => (a + 1) % SLIDES.length);
+    }, hold);
+    return () => clearTimeout(id);
+  }, [active, loadMs]);
 
   return (
     <section id="home" className="hero-viewport relative flex flex-col bg-white">
@@ -81,11 +103,9 @@ export default function Hero() {
   Ready-to-Eat · Japanese Retort Tech
 </span>
 
-            {/* headline */}
+            {/* headline — stays fixed; only the product photo rotates */}
             <h1 className="mt-[clamp(0.25rem,1.2svh,1rem)] text-center font-display text-[clamp(2rem,9vw,2.75rem)] font-bold leading-[0.95] tracking-tight sm:text-[clamp(2.5rem,5vw_+_1rem,5.5rem)] lg:text-[clamp(2.5rem,2svh+1.6vw,4.75rem)]">
-              <span key={active} className="animate-fade-up mt-5 block text-white">
-                {SLIDES[active].headline}
-              </span>
+              <span className="animate-fade-up mt-5 block text-white">Veg Oats Porridge</span>
             </h1>
 
             {/* product photography */}
@@ -99,6 +119,7 @@ export default function Hero() {
                     fill
                     priority={i === 0}
                     unoptimized={slide.unoptimized}
+                    onLoad={() => markLoaded(i)}
                     sizes="(min-width: 1024px) 720px, 90vw"
                     className={`absolute inset-0 object-contain drop-shadow-[0_35px_60px_rgba(0,0,0,0.45)] transition-all duration-1200 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${
                       i === active ? "opacity-100 scale-100" : "opacity-0 scale-90"
@@ -133,19 +154,19 @@ export default function Hero() {
                   ))}
                 </div>
 
-                {/* dotted connector lines from badges to pin markers, tablet+ */}
+                {/* squared-elbow connector lines from badges to pin markers, tablet+ */}
                 <svg
                   aria-hidden
                   viewBox="0 0 100 100"
                   preserveAspectRatio="none"
                   className="pointer-events-none absolute inset-0 hidden h-full w-full md:block"
                 >
-                  <line x1="1.5" y1="8.6" x2="36" y2="10" stroke="white" strokeOpacity="0.55" strokeWidth="1" strokeDasharray="1 4" strokeLinecap="round" vectorEffect="non-scaling-stroke" />
-                  <line x1="1.5" y1="44.6" x2="33" y2="46" stroke="white" strokeOpacity="0.55" strokeWidth="1" strokeDasharray="1 4" strokeLinecap="round" vectorEffect="non-scaling-stroke" />
-                  <line x1="1.5" y1="80.6" x2="30" y2="79" stroke="white" strokeOpacity="0.55" strokeWidth="1" strokeDasharray="1 4" strokeLinecap="round" vectorEffect="non-scaling-stroke" />
-                  <line x1="98.5" y1="8.6" x2="74" y2="30" stroke="white" strokeOpacity="0.55" strokeWidth="1" strokeDasharray="1 4" strokeLinecap="round" vectorEffect="non-scaling-stroke" />
-                  <line x1="98.5" y1="44.6" x2="76" y2="55" stroke="white" strokeOpacity="0.55" strokeWidth="1" strokeDasharray="1 4" strokeLinecap="round" vectorEffect="non-scaling-stroke" />
-                  <line x1="98.5" y1="80.6" x2="73" y2="78" stroke="white" strokeOpacity="0.55" strokeWidth="1" strokeDasharray="1 4" strokeLinecap="round" vectorEffect="non-scaling-stroke" />
+                  <polyline points="1.5,8.6 23,8.6 36,10" fill="none" stroke="white" strokeOpacity="0.55" strokeWidth="1" strokeDasharray="1 4" strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
+                  <polyline points="1.5,44.6 21,44.6 33,46" fill="none" stroke="white" strokeOpacity="0.55" strokeWidth="1" strokeDasharray="1 4" strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
+                  <polyline points="1.5,80.6 20,80.6 30,79" fill="none" stroke="white" strokeOpacity="0.55" strokeWidth="1" strokeDasharray="1 4" strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
+                  <polyline points="98.5,8.6 77,8.6 74,30" fill="none" stroke="white" strokeOpacity="0.55" strokeWidth="1" strokeDasharray="1 4" strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
+                  <polyline points="98.5,44.6 79,44.6 76,55" fill="none" stroke="white" strokeOpacity="0.55" strokeWidth="1" strokeDasharray="1 4" strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
+                  <polyline points="98.5,80.6 78,80.6 73,78" fill="none" stroke="white" strokeOpacity="0.55" strokeWidth="1" strokeDasharray="1 4" strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
                 </svg>
 
                 {/* squared-elbow connector lines from badges to pin markers, mobile only */}
