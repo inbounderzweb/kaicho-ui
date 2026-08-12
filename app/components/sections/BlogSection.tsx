@@ -50,18 +50,18 @@ export default function BlogSection() {
       <Container>
         <SectionHeading eyebrow="Latest News" heading="Our Blog" />
 
-        <div className="mt-12 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="no-scrollbar mt-12 flex snap-x snap-mandatory gap-4 overflow-x-auto pb-1 sm:grid sm:grid-cols-2 sm:gap-6 sm:overflow-visible sm:pb-0 sm:snap-none lg:grid-cols-3">
           {POSTS.map(({ date, title, teaser, image }) => (
             <article
               key={title}
-              className="group flex flex-col overflow-hidden rounded-2xl border border-border bg-white transition-shadow hover:shadow-[0_20px_40px_-28px_rgba(28,28,28,0.3)]"
+              className="group flex w-[68vw] max-w-65 shrink-0 snap-start flex-col overflow-hidden rounded-2xl border border-border bg-white transition-shadow hover:shadow-[0_20px_40px_-28px_rgba(28,28,28,0.3)] sm:w-auto sm:max-w-none sm:shrink"
             >
               <div className="relative aspect-[16/10] bg-brand-soft">
                 <Image
                   src={image}
                   alt={title}
                   fill
-                  sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+                  sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 68vw"
                   className="object-cover transition-transform duration-500 group-hover:scale-105"
                 />
               </div>

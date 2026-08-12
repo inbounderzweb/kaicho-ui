@@ -33,6 +33,9 @@
 
   /* Header.tsx renders a constant h-20 (80px) bar at every breakpoint. */
   --header-height: 5rem;
+  /* MobileTabBar.tsx is a fixed bottom bar shown below lg; main reserves
+     the same amount via pb-16 so page content isn't hidden behind it. */
+  --mobile-tabbar-height: 4rem;
   /* Single horizontal inset shared by every layer of the hero (headline
      block, notch panels, mobile utility bar) so their left/right edges
      always line up, instead of each one tuning its own clamp(). */
@@ -161,13 +164,25 @@ body {
   scrollbar-width: none;
 }
 
-/* Fills exactly what's left below the sticky header on the first viewport,
-   using the most accurate viewport unit each browser supports. Never a
-   hard-coded pixel height, so it scales fluidly across every device.
-   Mobile is exempt: forcing full-viewport height there leaves large dead
-   gaps around the (necessarily smaller) photo, so mobile just sizes to
-   its content instead. */
-@media (min-width: 768px) {
+/* Fills exactly what's left below the sticky header (and, on mobile, above
+   the fixed MobileTabBar) on the first viewport, using the most accurate
+   viewport unit each browser supports. Never a hard-coded pixel height, so
+   it scales fluidly across every device. */
+.hero-viewport {
+  min-height: calc(100vh - var(--header-height) - var(--mobile-tabbar-height));
+  min-height: calc(100dvh - var(--header-height) - var(--mobile-tabbar-height));
+  min-height: calc(100svh - var(--header-height) - var(--mobile-tabbar-height));
+}
+
+@supports (height: 100svh) {
+  .hero-viewport {
+    min-height: calc(100svh - var(--header-height) - var(--mobile-tabbar-height));
+  }
+}
+
+/* MobileTabBar.tsx hides at lg (matches main's pb-16 lg:pb-0), so the hero
+   only needs to clear the header from here up. */
+@media (min-width: 1024px) {
   .hero-viewport {
     min-height: calc(100vh - var(--header-height));
     min-height: calc(100dvh - var(--header-height));

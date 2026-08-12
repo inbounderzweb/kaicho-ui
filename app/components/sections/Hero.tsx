@@ -11,15 +11,15 @@ import {
 } from "../icons";
 
 const FEATURES_LEFT = [
-  { title: "100% Natural", desc: "Natural ingredients", Icon: IconLeaf },
-  { title: "No Preservatives", desc: "Clean & simple ingredients", Icon: IconShieldCheck },
-  { title: "Diabetic-Friendly", desc: "Thoughtfully crafted for everyday nutrition", Icon: IconHeart },
+  { title: "100% Natural", Icon: IconLeaf },
+  { title: "No Preservatives", Icon: IconShieldCheck },
+  { title: "Diabetic-Friendly", Icon: IconHeart },
 ];
 
 const FEATURES_RIGHT = [
-  { title: "High in Fiber & Protein", desc: "Nourishing & satisfying", Icon: IconWheat },
-  { title: "Gut-Healthy Ingredients", desc: "Made with wholesome ingredients", Icon: IconPulse },
-  { title: "Japanese Retort Technology", desc: "Sealed fresh for convenience", Icon: IconPackage },
+  { title: "High in Fiber & Protein", Icon: IconWheat },
+  { title: "Gut-Healthy Ingredients", Icon: IconPulse },
+  { title: "Japanese Retort Technology", Icon: IconPackage },
 ];
 
 const FEATURE_TOPS = ["2%", "38%", "74%"];
@@ -47,13 +47,13 @@ export default function Hero() {
 
           <div className="relative z-10 flex flex-1 flex-col px-(--hero-inset) py-[clamp(1rem,2.5svh,2.5rem)]">
             {/* eyebrow */}
-            <span className="animate-fade-up mx-auto inline-flex items-center gap-2 text-center text-[clamp(0.62rem,0.3vw_+_0.56rem,0.8rem)] font-bold uppercase tracking-[0.3em] text-white">
-              <IconLeaf className="h-3.5 w-3.5 shrink-0" />
-              Ready-to-Eat &middot; Japanese Retort Tech
-            </span>
+            <span className="animate-fade-up mx-auto inline-flex items-center gap-1.5 text-center text-[10px] font-bold uppercase tracking-[0.18em] text-white sm:text-xs">
+  <IconLeaf className="h-3 w-3 shrink-0" />
+  Ready-to-Eat · Japanese Retort Tech
+</span>
 
             {/* headline */}
-            <h1 className="animate-fade-up mt-[clamp(0.25rem,1.2svh,1rem)] text-center font-display text-[clamp(2.5rem,5vw_+_1rem,5.5rem)] font-bold leading-[0.95] tracking-tight lg:text-[clamp(2.5rem,2svh+1.6vw,4.75rem)]">
+            <h1 className="animate-fade-up mt-[clamp(0.25rem,1.2svh,1rem)] text-center font-display text-[clamp(2rem,9vw,2.75rem)] font-bold leading-[0.95] tracking-tight sm:text-[clamp(2.5rem,5vw_+_1rem,5.5rem)] lg:text-[clamp(2.5rem,2svh+1.6vw,4.75rem)]">
               <span className="block text-white mt-5">Veg Oats Porridge</span>
 
             </h1>
@@ -128,15 +128,15 @@ export default function Hero() {
                 </svg>
 
                 {/* pin markers on the photo */}
-                <span className="absolute left-[36%] top-[10%] block h-1.5 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white shadow-[0_0_0_2px_rgba(255,255,255,0.25)] md:h-2.5 md:w-2.5 md:shadow-[0_0_0_3px_rgba(255,255,255,0.25)]" />
-                <span className="absolute left-[33%] top-[46%] block h-1.5 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white shadow-[0_0_0_2px_rgba(255,255,255,0.25)] md:h-2.5 md:w-2.5 md:shadow-[0_0_0_3px_rgba(255,255,255,0.25)]" />
-                <span className="absolute left-[30%] top-[79%] block h-1.5 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white shadow-[0_0_0_2px_rgba(255,255,255,0.25)] md:h-2.5 md:w-2.5 md:shadow-[0_0_0_3px_rgba(255,255,255,0.25)]" />
-                <span className="absolute left-[74%] top-[30%] block h-1.5 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white shadow-[0_0_0_2px_rgba(255,255,255,0.25)] md:h-2.5 md:w-2.5 md:shadow-[0_0_0_3px_rgba(255,255,255,0.25)]" />
-                <span className="absolute left-[76%] top-[55%] block h-1.5 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white shadow-[0_0_0_2px_rgba(255,255,255,0.25)] md:h-2.5 md:w-2.5 md:shadow-[0_0_0_3px_rgba(255,255,255,0.25)]" />
-                <span className="absolute left-[73%] top-[78%] block h-1.5 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white shadow-[0_0_0_2px_rgba(255,255,255,0.25)] md:h-2.5 md:w-2.5 md:shadow-[0_0_0_3px_rgba(255,255,255,0.25)]" />
+                <span className="absolute left-[36%] top-[10%] block h-1 w-1 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white shadow-[0_0_0_1.5px_rgba(255,255,255,0.25)] md:h-2.5 md:w-2.5 md:shadow-[0_0_0_3px_rgba(255,255,255,0.25)]" />
+                <span className="absolute left-[33%] top-[46%] block h-1 w-1 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white shadow-[0_0_0_1.5px_rgba(255,255,255,0.25)] md:h-2.5 md:w-2.5 md:shadow-[0_0_0_3px_rgba(255,255,255,0.25)]" />
+                <span className="absolute left-[30%] top-[79%] block h-1 w-1 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white shadow-[0_0_0_1.5px_rgba(255,255,255,0.25)] md:h-2.5 md:w-2.5 md:shadow-[0_0_0_3px_rgba(255,255,255,0.25)]" />
+                <span className="absolute left-[74%] top-[30%] block h-1 w-1 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white shadow-[0_0_0_1.5px_rgba(255,255,255,0.25)] md:h-2.5 md:w-2.5 md:shadow-[0_0_0_3px_rgba(255,255,255,0.25)]" />
+                <span className="absolute left-[76%] top-[55%] block h-1 w-1 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white shadow-[0_0_0_1.5px_rgba(255,255,255,0.25)] md:h-2.5 md:w-2.5 md:shadow-[0_0_0_3px_rgba(255,255,255,0.25)]" />
+                <span className="absolute left-[73%] top-[78%] block h-1 w-1 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white shadow-[0_0_0_1.5px_rgba(255,255,255,0.25)] md:h-2.5 md:w-2.5 md:shadow-[0_0_0_3px_rgba(255,255,255,0.25)]" />
 
-                {/* feature badges: left column — icon square + title + description */}
-                {FEATURES_LEFT.map(({ title, desc, Icon }, i) => (
+                {/* feature badges: left column — icon square + title */}
+                {FEATURES_LEFT.map(({ title, Icon }, i) => (
                   <div
                     key={title}
                     className="absolute left-0 hidden w-37.5 translate-x-[-14%] flex-col items-start gap-1 md:flex"
@@ -145,15 +145,12 @@ export default function Hero() {
                     <span className="flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-forest-light/80 backdrop-blur-sm">
                       <Icon className="h-3.5 w-3.5 text-cream-deep" strokeWidth={1.6} />
                     </span>
-                    <div>
-                      <p className="line-clamp-2 text-[11px] font-bold leading-tight text-white">{title}</p>
-                      <p className="mt-0.5 truncate text-[10px] leading-snug text-cream-deep/70">{desc}</p>
-                    </div>
+                    <p className="line-clamp-2 text-[9px] font-bold leading-tight text-white">{title}</p>
                   </div>
                 ))}
 
-                {/* feature badges: right column — icon square + title + description */}
-                {FEATURES_RIGHT.map(({ title, desc, Icon }, i) => (
+                {/* feature badges: right column — icon square + title */}
+                {FEATURES_RIGHT.map(({ title, Icon }, i) => (
                   <div
                     key={title}
                     className="absolute right-0 hidden w-37.5 translate-x-[14%] flex-col items-end gap-1 md:flex"
@@ -162,10 +159,7 @@ export default function Hero() {
                     <span className="flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-forest-light/80 backdrop-blur-sm">
                       <Icon className="h-3.5 w-3.5 text-cream-deep" strokeWidth={1.6} />
                     </span>
-                    <div className="w-full text-right">
-                      <p className="line-clamp-2 text-[11px] font-bold leading-tight text-white">{title}</p>
-                      <p className="mt-0.5 truncate text-[10px] leading-snug text-cream-deep/70">{desc}</p>
-                    </div>
+                    <p className="line-clamp-2 text-right text-[11px] font-bold leading-tight text-white">{title}</p>
                   </div>
                 ))}
 
@@ -173,13 +167,13 @@ export default function Hero() {
                 {FEATURES_LEFT.map(({ title, Icon }, i) => (
                   <div
                     key={title}
-                    className="absolute right-full mr-1.5 flex w-18 flex-col items-end gap-1 md:hidden"
+                    className="absolute right-full mr-1 flex w-13 flex-col items-end gap-0.5 md:hidden"
                     style={{ top: FEATURE_TOPS[i] }}
                   >
-                    <span className="flex h-6 w-6 items-center justify-center rounded-md border border-white/10 bg-forest-light/80 backdrop-blur-sm">
-                      <Icon className="h-3 w-3 text-cream-deep" strokeWidth={1.8} />
+                    <span className="flex h-4.5 w-4.5 items-center justify-center rounded-md border border-white/10 bg-forest-light/80 backdrop-blur-sm">
+                      <Icon className="h-2.5 w-2.5 text-cream-deep" strokeWidth={1.8} />
                     </span>
-                    <p className="line-clamp-1 text-[9px] font-bold leading-tight text-white">{title}</p>
+                    <p className="text-[7px] font-bold leading-tight text-white">{title}</p>
                   </div>
                 ))}
 
@@ -187,20 +181,20 @@ export default function Hero() {
                 {FEATURES_RIGHT.map(({ title, Icon }, i) => (
                   <div
                     key={title}
-                    className="absolute left-full ml-1.5 flex w-18 flex-col items-start gap-1 md:hidden"
+                    className="absolute left-full ml-1 flex w-13 flex-col items-start gap-0.5 md:hidden"
                     style={{ top: FEATURE_TOPS[i] }}
                   >
-                    <span className="flex h-6 w-6 items-center justify-center rounded-md border border-white/10 bg-forest-light/80 backdrop-blur-sm">
-                      <Icon className="h-3 w-3 text-cream-deep" strokeWidth={1.8} />
+                    <span className="flex h-4.5 w-4.5 items-center justify-center rounded-md border border-white/10 bg-forest-light/80 backdrop-blur-sm">
+                      <Icon className="h-2.5 w-2.5 text-cream-deep" strokeWidth={1.8} />
                     </span>
-                    <p className="line-clamp-1 text-[9px] font-bold leading-tight text-white">{title}</p>
+                    <p className="text-[7px] font-bold leading-tight text-white">{title}</p>
                   </div>
                 ))}
               </div>
             </div>
 
             {/* description + CTA */}
-            <p className="animate-fade-up mx-auto mt-[clamp(0.5rem,1.5svh,1.75rem)] max-w-md text-center text-[clamp(0.85rem,0.3vw_+_0.78rem,1rem)] leading-relaxed text-cream-deep/85">
+            <p className="animate-fade-up mx-auto mt-[clamp(0.5rem,1.5svh,1.75rem)] max-w-md text-center text-[clamp(0.78rem,3vw,0.88rem)] leading-relaxed text-cream-deep/85 sm:text-[clamp(0.85rem,0.3vw_+_0.78rem,1rem)]">
               Wholesome oats with real vegetables, sealed fresh with Japanese retort technology. A nourishing meal, ready in minutes.
             </p>
 
@@ -208,10 +202,10 @@ export default function Hero() {
               <Button
                 href="#products"
                 size="lg"
-                className="group bg-white! text-forest! hover:bg-cream-deep!"
+                className="group h-10! gap-1.5! px-6! text-sm! bg-white! text-forest! hover:bg-cream-deep! sm:h-12! sm:gap-2! sm:px-8! sm:text-base!"
               >
                 Explore Our Meals
-                <IconArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
+                <IconArrowRight className="h-3.5 w-3.5 transition-transform duration-300 group-hover:translate-x-1 sm:h-4 sm:w-4" />
               </Button>
             </div>
           </div>
