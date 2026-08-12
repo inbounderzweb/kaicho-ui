@@ -1,7 +1,11 @@
+"use client";
+
 import Image from "next/image";
+import { useEffect, useState } from "react";
 import Button from "../Button";
 import {
   IconArrowRight,
+  IconChevronRight,
   IconHeart,
   IconLeaf,
   IconPackage,
@@ -9,6 +13,22 @@ import {
   IconShieldCheck,
   IconWheat,
 } from "../icons";
+
+const SLIDES = [
+  {
+    headline: "Veg Oats Porridge",
+    image: "/kaicho-hero.png",
+    alt: "Kaicho Veg Oats Porridge pouch beside a served bowl of porridge garnished with coriander, next to a wooden spoon",
+  },
+  {
+    headline: "Chicken Oats Porridge",
+    image: "/kaicho-chickenoats.png",
+    alt: "Kaicho Chicken Oats Porridge pouch beside a served bowl of porridge",
+    // Next's image optimizer flattens this PNG's transparent background to
+    // solid black (reproducible via /_next/image?url=...); serve as-is.
+    unoptimized: true,
+  },
+];
 
 const FEATURES_LEFT = [
   { title: "100% Natural", Icon: IconLeaf },
@@ -25,6 +45,15 @@ const FEATURES_RIGHT = [
 const FEATURE_TOPS = ["2%", "38%", "74%"];
 
 export default function Hero() {
+  const [active, setActive] = useState(0);
+
+  useEffect(() => {
+    const id = setInterval(() => {
+      setActive((a) => (a + 1) % SLIDES.length);
+    }, 7000);
+    return () => clearInterval(id);
+  }, []);
+
   return (
     <section id="home" className="hero-viewport relative flex flex-col bg-white">
       <div className="flex w-full flex-1 flex-col p-3 sm:p-4 md:p-5 lg:p-6">
@@ -53,22 +82,29 @@ export default function Hero() {
 </span>
 
             {/* headline */}
-            <h1 className="animate-fade-up mt-[clamp(0.25rem,1.2svh,1rem)] text-center font-display text-[clamp(2rem,9vw,2.75rem)] font-bold leading-[0.95] tracking-tight sm:text-[clamp(2.5rem,5vw_+_1rem,5.5rem)] lg:text-[clamp(2.5rem,2svh+1.6vw,4.75rem)]">
-              <span className="block text-white mt-5">Veg Oats Porridge</span>
-
+            <h1 className="mt-[clamp(0.25rem,1.2svh,1rem)] text-center font-display text-[clamp(2rem,9vw,2.75rem)] font-bold leading-[0.95] tracking-tight sm:text-[clamp(2.5rem,5vw_+_1rem,5.5rem)] lg:text-[clamp(2.5rem,2svh+1.6vw,4.75rem)]">
+              <span key={active} className="animate-fade-up mt-5 block text-white">
+                {SLIDES[active].headline}
+              </span>
             </h1>
 
             {/* product photography */}
             <div className="relative flex flex-1 items-center justify-center py-[clamp(0.25rem,1.5svh,1.25rem)]">
               <div className="relative aspect-[3/2] w-[64%] max-w-215 max-h-[32svh] sm:max-h-[42svh] md:w-full lg:max-h-[36svh]">
-                <Image
-                  src="/kaicho-hero.png"
-                  alt="Kaicho Veg Oats Porridge pouch beside a served bowl of porridge garnished with coriander, next to a wooden spoon"
-                  fill
-                  priority
-                  sizes="(min-width: 1024px) 720px, 90vw"
-                  className="animate-fade-scale object-contain drop-shadow-[0_35px_60px_rgba(0,0,0,0.45)]"
-                />
+                {SLIDES.map((slide, i) => (
+                  <Image
+                    key={slide.image}
+                    src={slide.image}
+                    alt={slide.alt}
+                    fill
+                    priority={i === 0}
+                    unoptimized={slide.unoptimized}
+                    sizes="(min-width: 1024px) 720px, 90vw"
+                    className={`absolute inset-0 object-contain drop-shadow-[0_35px_60px_rgba(0,0,0,0.45)] transition-all duration-1200 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${
+                      i === active ? "opacity-100 scale-100" : "opacity-0 scale-90"
+                    }`}
+                  />
+                ))}
 
                 {/* rising steam over the served bowl */}
                 <div
@@ -193,6 +229,21 @@ export default function Hero() {
               </div>
             </div>
 
+            {/* slide indicators */}
+            <div className="mx-auto flex items-center justify-center gap-1.5">
+              {SLIDES.map((slide, i) => (
+                <button
+                  key={slide.image}
+                  type="button"
+                  aria-label={`Show ${slide.headline}`}
+                  onClick={() => setActive(i)}
+                  className={`h-1.5 rounded-full transition-all duration-300 ${
+                    i === active ? "w-5 bg-white" : "w-1.5 bg-white/40 hover:bg-white/70"
+                  }`}
+                />
+              ))}
+            </div>
+
             {/* description + CTA */}
             <p className="animate-fade-up mx-auto mt-[clamp(0.5rem,1.5svh,1.75rem)] max-w-md text-center text-[clamp(0.78rem,3vw,0.88rem)] leading-relaxed text-cream-deep/85 sm:text-[clamp(0.85rem,0.3vw_+_0.78rem,1rem)]">
               Wholesome oats with real vegetables, sealed fresh with Japanese retort technology. A nourishing meal, ready in minutes.
@@ -208,6 +259,16 @@ export default function Hero() {
                 <IconArrowRight className="h-3.5 w-3.5 transition-transform duration-300 group-hover:translate-x-1 sm:h-4 sm:w-4" />
               </Button>
             </div>
+
+            {/* scroll hint — bounces gently to signal there's more content below */}
+            <button
+              type="button"
+              onClick={() => window.scrollTo({ top: window.innerHeight, behavior: "smooth" })}
+              aria-label="Scroll to next section"
+              className="animate-bounce mx-auto mt-1 text-white/70 transition-colors hover:text-white"
+            >
+              <IconChevronRight className="h-4 w-4 rotate-90" />
+            </button>
           </div>
         </div>
       </div>
