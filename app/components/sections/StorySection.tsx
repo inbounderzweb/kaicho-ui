@@ -1,91 +1,225 @@
+import Image from "next/image";
 import Button from "../Button";
 import Container from "../Container";
-import { IconArrowRight, IconLeaf, IconPackage, IconShieldCheck } from "../icons";
+import {
+  IconArrowRight,
+  IconLeaf,
+  IconPackage,
+  IconShieldCheck,
+} from "../icons";
 
 const VALUES = [
-  { label: "100% Natural Ingredients", Icon: IconLeaf },
-  { label: "Zero Preservatives", Icon: IconShieldCheck },
-  { label: "Japanese Retort Sealed", Icon: IconPackage },
+  {
+    number: "01",
+    label: "Natural Ingredients",
+    description: "Thoughtfully selected ingredients",
+    Icon: IconLeaf,
+  },
+  {
+    number: "02",
+    label: "No Preservatives",
+    description: "Clean and simple food",
+    Icon: IconShieldCheck,
+  },
+  {
+    number: "03",
+    label: "Japanese Retort",
+    description: "Sealed for freshness",
+    Icon: IconPackage,
+  },
 ];
 
 export default function StorySection() {
   return (
-    <section id="story" className="bg-white py-20 sm:py-24">
-      <Container className="grid grid-cols-1 items-center gap-12 lg:grid-cols-2 lg:gap-16">
-        <div>
-          <span className="text-xs font-bold uppercase tracking-[0.2em] text-brand">
-            Our Story
+    <section
+      id="story"
+      className="relative overflow-hidden bg-[#f6f5ef] py-24 sm:py-32"
+    >
+      <Container>
+        {/* Header */}
+        <div className="mb-14 flex items-end justify-between gap-6">
+          <div>
+            <div className="flex items-center gap-3">
+              <span className="h-px w-8 bg-brand" />
+
+              <span className="text-xs font-bold uppercase tracking-[0.25em] text-brand">
+                Our Story
+              </span>
+            </div>
+          </div>
+
+          <span className="hidden text-xs font-semibold tracking-[0.2em] text-ink-muted sm:block">
+            01 / 03
           </span>
-          <h2 className="mt-3 font-display text-3xl font-semibold tracking-tight text-ink sm:text-4xl">
-            Kaicho Foods
-          </h2>
-          <p className="mt-5 max-w-xl text-base leading-relaxed text-ink-muted">
-            At Kaicho Foods, we believe food is more than just nourishment —
-            it is culture, care, and connection. Rooted in tradition yet
-            designed for modern lifestyles, our mission is to make healthy
-            eating simple, accessible, and enjoyable for everyone.
-          </p>
-
-          <ul className="mt-8 flex flex-col gap-4 sm:flex-row sm:flex-wrap">
-            {VALUES.map(({ label, Icon }) => (
-              <li key={label} className="flex items-center gap-3">
-                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand-soft text-brand">
-                  <Icon className="h-5 w-5" />
-                </span>
-                <span className="text-sm font-semibold text-ink">{label}</span>
-              </li>
-            ))}
-          </ul>
-
-          <Button href="#b2b" variant="outline" size="lg" className="mt-10">
-            Partner With Us
-            <IconArrowRight className="h-4 w-4" />
-          </Button>
         </div>
 
-        <div className="relative">
-          <div className="relative overflow-hidden rounded-[2rem] bg-brand-soft p-10 sm:p-14">
-            <svg viewBox="0 0 200 200" className="absolute inset-0 h-full w-full opacity-40" aria-hidden>
-              <defs>
-                <pattern id="grain" width="26" height="26" patternUnits="userSpaceOnUse">
-                  <circle cx="4" cy="4" r="1.6" fill="#00A861" />
-                  <circle cx="16" cy="14" r="1.2" fill="#00A861" />
-                </pattern>
-              </defs>
-              <rect width="200" height="200" fill="url(#grain)" />
-            </svg>
+        {/* Main editorial layout */}
+        <div className="grid items-center gap-14 lg:grid-cols-[0.9fr_1.1fr] lg:gap-20">
+          {/* LEFT CONTENT */}
+          <div className="max-w-xl">
+            <h2 className="font-display text-4xl font-semibold leading-[1.05] tracking-tight text-ink sm:text-5xl lg:text-6xl">
+              Food rooted in
+              <span className="block text-brand">
+                tradition.
+              </span>
+              Made for today.
+            </h2>
 
-            <div className="relative flex flex-col items-center text-center">
-              <svg viewBox="0 0 220 220" className="h-44 w-44 sm:h-56 sm:w-56">
-                <circle cx="110" cy="110" r="100" fill="#FFFFFF" />
-                <path
-                  d="M60 130h100a50 30 0 0 1 -100 0Z"
-                  fill="#00A861"
-                />
-                <path
-                  d="M40 100a70 26 0 0 1 140 0"
-                  fill="none"
-                  stroke="#00A861"
-                  strokeWidth="6"
-                  strokeLinecap="round"
-                />
-                <g fill="#00A861" opacity="0.6">
-                  <circle cx="78" cy="146" r="3" />
-                  <circle cx="98" cy="154" r="2.5" />
-                  <circle cx="122" cy="152" r="3" />
-                  <circle cx="142" cy="144" r="2.5" />
-                </g>
-              </svg>
+            <p className="mt-7 max-w-lg text-base leading-8 text-ink-muted sm:text-lg">
+              At Kaicho Foods, we believe wholesome food should fit naturally
+              into modern life. We bring together time-honoured food traditions,
+              carefully selected ingredients, and Japanese retort technology
+              to create meals that are simple to enjoy and easy to share.
+            </p>
 
-              <p className="mt-6 font-display text-xl font-bold text-ink sm:text-2xl">
+            <div className="mt-9">
+              <Button
+                href="#b2b"
+                variant="outline"
+                size="lg"
+                className="group"
+              >
+                Partner With Us
+                <IconArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
+              </Button>
+            </div>
+
+            {/* Brand statement */}
+            <div className="mt-14 border-l-2 border-brand pl-5">
+              <p className="font-display text-lg font-semibold text-ink">
                 Said. Served. Shared.
               </p>
-              <p className="mt-2 max-w-[26ch] text-sm text-ink-muted">
-                Every Kaicho pouch is prepared, sealed, and shared with the
-                same care you&apos;d put into a home-cooked bowl.
+
+              <p className="mt-1 text-sm leading-6 text-ink-muted">
+                Made with the care of a home-cooked meal.
               </p>
             </div>
           </div>
+
+          {/* RIGHT IMAGE */}
+          <div className="relative">
+            {/* Ambient glow */}
+            <div
+              className="
+                absolute left-1/2 top-1/2
+                h-[75%] w-[75%]
+                -translate-x-1/2 -translate-y-1/2
+                rounded-full
+                bg-brand/10
+                blur-3xl
+              "
+            />
+
+            <div
+              className="
+                relative overflow-hidden
+                rounded-[2rem]
+                bg-[#e8e7df]
+                p-6
+                sm:p-10
+              "
+            >
+              {/* Image */}
+              <Image
+                src="/kaicho-hero.png"
+                alt="Kaicho ready-to-eat meal"
+                width={1536}
+                height={1024}
+                sizes="(min-width: 1024px) 620px, 90vw"
+                className="
+                  relative z-10
+                  mx-auto
+                  h-auto
+                  w-full
+                  max-w-[620px]
+                  object-contain
+                  drop-shadow-[0_30px_40px_rgba(0,0,0,0.14)]
+                  transition-transform
+                  duration-700
+                  hover:scale-[1.025]
+                "
+              />
+
+              {/* Floating label */}
+              <div
+                className="
+                  absolute
+                  bottom-5 left-5
+                  z-20
+                  rounded-2xl
+                  border border-white/60
+                  bg-white/80
+                  px-5 py-4
+                  shadow-lg
+                  backdrop-blur-md
+                "
+              >
+                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-brand">
+                  Kaicho Philosophy
+                </p>
+
+                <p className="mt-1 font-display text-lg font-semibold text-ink">
+                  Simple food. Thoughtfully made.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* VALUE RAIL */}
+        <div
+          className="
+            mt-20
+            grid
+            divide-y divide-ink/10
+            border-y border-ink/10
+            sm:grid-cols-3
+            sm:divide-x sm:divide-y-0
+          "
+        >
+          {VALUES.map(({ number, label, description, Icon }) => (
+            <div
+              key={label}
+              className="
+                group
+                flex items-center gap-5
+                px-2 py-7
+                sm:px-7
+                lg:px-10
+              "
+            >
+              <div
+                className="
+                  flex h-12 w-12 shrink-0
+                  items-center justify-center
+                  rounded-full
+                  bg-brand/10
+                  text-brand
+                  transition-all duration-300
+                  group-hover:bg-brand
+                  group-hover:text-white
+                "
+              >
+                <Icon className="h-5 w-5" />
+              </div>
+
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-bold tracking-[0.15em] text-brand">
+                    {number}
+                  </span>
+
+                  <h3 className="text-sm font-bold text-ink">
+                    {label}
+                  </h3>
+                </div>
+
+                <p className="mt-1 text-xs text-ink-muted">
+                  {description}
+                </p>
+              </div>
+            </div>
+          ))}
         </div>
       </Container>
     </section>
