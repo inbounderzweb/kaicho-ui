@@ -1,25 +1,39 @@
 import Image from "next/image";
-import Link from "next/link";
 import Button from "../Button";
 import {
   IconArrowRight,
-  IconInstagram,
+  IconHeart,
   IconLeaf,
-  IconPhone,
-  IconSprout,
+  IconPackage,
+  IconPulse,
+  IconShieldCheck,
+  IconWheat,
 } from "../icons";
 
-const BADGES = [
-  { value: "100%", label: "Organic", Icon: IconLeaf },
-  { value: "Farm to", label: "Table", Icon: IconSprout },
+const FEATURES_LEFT = [
+  { title: "100% Natural", desc: "Natural ingredients", Icon: IconLeaf },
+  { title: "No Preservatives", desc: "Clean & simple ingredients", Icon: IconShieldCheck },
+  { title: "Diabetic-Friendly", desc: "Thoughtfully crafted for everyday nutrition", Icon: IconHeart },
 ];
+
+const FEATURES_RIGHT = [
+  { title: "High in Fiber & Protein", desc: "Nourishing & satisfying", Icon: IconWheat },
+  { title: "Gut-Healthy Ingredients", desc: "Made with wholesome ingredients", Icon: IconPulse },
+  { title: "Japanese Retort Technology", desc: "Sealed fresh for convenience", Icon: IconPackage },
+];
+
+const FEATURE_TOPS = ["2%", "38%", "74%"];
 
 export default function Hero() {
   return (
     <section id="home" className="hero-viewport relative flex flex-col bg-white">
       <div className="flex w-full flex-1 flex-col p-3 sm:p-4 md:p-5 lg:p-6">
         {/* premium panel */}
-        <div className="relative flex flex-1 flex-col overflow-hidden rounded-[1.75rem] bg-forest sm:rounded-[2.25rem] md:rounded-[3rem]">
+        <div className="relative flex flex-1 flex-col overflow-hidden rounded-xl bg-forest bg-[url('/mobile-coverimage.png')] bg-cover bg-center md:bg-[url('/desktop-coverimage.png')]">
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-0 bg-forest/35 md:bg-forest/45"
+          />
           <div
             aria-hidden
             className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_36%,rgba(255,255,255,0.09),transparent_60%)]"
@@ -46,7 +60,7 @@ export default function Hero() {
 
             {/* product photography */}
             <div className="relative flex flex-1 items-center justify-center py-[clamp(0.25rem,1.5svh,1.25rem)]">
-              <div className="relative aspect-[3/2] w-full max-w-[720px] max-h-[32svh] sm:max-h-[38svh] lg:max-h-[27svh]">
+              <div className="relative aspect-[3/2] w-[64%] max-w-215 max-h-[32svh] sm:max-h-[42svh] md:w-full lg:max-h-[36svh]">
                 <Image
                   src="/kaicho-hero.png"
                   alt="Kaicho Veg Oats Porridge pouch beside a served bowl of porridge garnished with coriander, next to a wooden spoon"
@@ -56,64 +70,133 @@ export default function Hero() {
                   className="animate-fade-scale object-contain drop-shadow-[0_35px_60px_rgba(0,0,0,0.45)]"
                 />
 
-                {/* pin markers on the photo, tablet+ */}
-                <span className="absolute left-[31%] top-[40%] hidden h-2.5 w-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white/90 bg-white/30 md:block" />
-                <span className="absolute left-[78%] top-[58%] hidden h-2.5 w-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white/90 bg-white/30 md:block" />
+                {/* rising steam over the served bowl */}
+                <div
+                  aria-hidden
+                  className="pointer-events-none absolute left-[62%] top-[56%] h-0 w-0 sm:left-[64%]"
+                >
+                  {[
+                    { left: -34, w: 14, h: 46, dur: 3.6, delay: 0 },
+                    { left: -16, w: 20, h: 62, dur: 4.4, delay: 0.4 },
+                    { left: 2, w: 26, h: 78, dur: 5, delay: 0.9 },
+                    { left: 20, w: 22, h: 68, dur: 4.2, delay: 1.4 },
+                    { left: 38, w: 16, h: 52, dur: 3.8, delay: 1.9 },
+                    { left: -4, w: 12, h: 40, dur: 3.4, delay: 2.4 },
+                  ].map((wisp, i) => (
+                    <span
+                      key={i}
+                      className="animate-steam absolute bottom-0 rounded-full bg-[radial-gradient(circle,rgba(255,255,255,0.9),rgba(255,255,255,0)_70%)] blur-[4px]"
+                      style={{
+                        left: `${wisp.left}px`,
+                        width: `${wisp.w}px`,
+                        height: `${wisp.h}px`,
+                        animationDuration: `${wisp.dur}s`,
+                        animationDelay: `${wisp.delay}s`,
+                      }}
+                    />
+                  ))}
+                </div>
 
-                {/* badge: left — icon square + stat + progress underline */}
-                <div className="absolute left-0 top-[16%] hidden w-[150px] -translate-x-[14%] items-start gap-3 md:flex">
-                  <span className="mt-6 h-px w-8 shrink-0 bg-white/30" />
-                  <div className="flex flex-col gap-2.5">
-                    <span className="flex h-11 w-11 items-center justify-center rounded-2xl border border-white/10 bg-forest-light/80 backdrop-blur-sm">
-                      <IconLeaf className="h-5 w-5 text-cream-deep" strokeWidth={1.5} />
+                {/* dotted connector lines from badges to pin markers, tablet+ */}
+                <svg
+                  aria-hidden
+                  viewBox="0 0 100 100"
+                  preserveAspectRatio="none"
+                  className="pointer-events-none absolute inset-0 hidden h-full w-full md:block"
+                >
+                  <line x1="1.5" y1="8.6" x2="36" y2="10" stroke="white" strokeOpacity="0.55" strokeWidth="1" strokeDasharray="1 4" strokeLinecap="round" vectorEffect="non-scaling-stroke" />
+                  <line x1="1.5" y1="44.6" x2="33" y2="46" stroke="white" strokeOpacity="0.55" strokeWidth="1" strokeDasharray="1 4" strokeLinecap="round" vectorEffect="non-scaling-stroke" />
+                  <line x1="1.5" y1="80.6" x2="30" y2="79" stroke="white" strokeOpacity="0.55" strokeWidth="1" strokeDasharray="1 4" strokeLinecap="round" vectorEffect="non-scaling-stroke" />
+                  <line x1="98.5" y1="8.6" x2="74" y2="30" stroke="white" strokeOpacity="0.55" strokeWidth="1" strokeDasharray="1 4" strokeLinecap="round" vectorEffect="non-scaling-stroke" />
+                  <line x1="98.5" y1="44.6" x2="76" y2="55" stroke="white" strokeOpacity="0.55" strokeWidth="1" strokeDasharray="1 4" strokeLinecap="round" vectorEffect="non-scaling-stroke" />
+                  <line x1="98.5" y1="80.6" x2="73" y2="78" stroke="white" strokeOpacity="0.55" strokeWidth="1" strokeDasharray="1 4" strokeLinecap="round" vectorEffect="non-scaling-stroke" />
+                </svg>
+
+                {/* squared-elbow connector lines from badges to pin markers, mobile only */}
+                <svg
+                  aria-hidden
+                  viewBox="0 0 100 100"
+                  preserveAspectRatio="none"
+                  className="pointer-events-none absolute inset-0 block h-full w-full md:hidden"
+                >
+                  <polyline points="0,11.5 23,11.5 36,10" fill="none" stroke="white" strokeOpacity="0.6" strokeWidth="1" strokeDasharray="1 3.5" strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
+                  <polyline points="0,47.5 21,47.5 33,46" fill="none" stroke="white" strokeOpacity="0.6" strokeWidth="1" strokeDasharray="1 3.5" strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
+                  <polyline points="0,83.5 20,83.5 30,79" fill="none" stroke="white" strokeOpacity="0.6" strokeWidth="1" strokeDasharray="1 3.5" strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
+                  <polyline points="100,11.5 77,11.5 74,30" fill="none" stroke="white" strokeOpacity="0.6" strokeWidth="1" strokeDasharray="1 3.5" strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
+                  <polyline points="100,47.5 79,47.5 76,55" fill="none" stroke="white" strokeOpacity="0.6" strokeWidth="1" strokeDasharray="1 3.5" strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
+                  <polyline points="100,83.5 78,83.5 73,78" fill="none" stroke="white" strokeOpacity="0.6" strokeWidth="1" strokeDasharray="1 3.5" strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
+                </svg>
+
+                {/* pin markers on the photo */}
+                <span className="absolute left-[36%] top-[10%] block h-1.5 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white shadow-[0_0_0_2px_rgba(255,255,255,0.25)] md:h-2.5 md:w-2.5 md:shadow-[0_0_0_3px_rgba(255,255,255,0.25)]" />
+                <span className="absolute left-[33%] top-[46%] block h-1.5 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white shadow-[0_0_0_2px_rgba(255,255,255,0.25)] md:h-2.5 md:w-2.5 md:shadow-[0_0_0_3px_rgba(255,255,255,0.25)]" />
+                <span className="absolute left-[30%] top-[79%] block h-1.5 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white shadow-[0_0_0_2px_rgba(255,255,255,0.25)] md:h-2.5 md:w-2.5 md:shadow-[0_0_0_3px_rgba(255,255,255,0.25)]" />
+                <span className="absolute left-[74%] top-[30%] block h-1.5 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white shadow-[0_0_0_2px_rgba(255,255,255,0.25)] md:h-2.5 md:w-2.5 md:shadow-[0_0_0_3px_rgba(255,255,255,0.25)]" />
+                <span className="absolute left-[76%] top-[55%] block h-1.5 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white shadow-[0_0_0_2px_rgba(255,255,255,0.25)] md:h-2.5 md:w-2.5 md:shadow-[0_0_0_3px_rgba(255,255,255,0.25)]" />
+                <span className="absolute left-[73%] top-[78%] block h-1.5 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white shadow-[0_0_0_2px_rgba(255,255,255,0.25)] md:h-2.5 md:w-2.5 md:shadow-[0_0_0_3px_rgba(255,255,255,0.25)]" />
+
+                {/* feature badges: left column — icon square + title + description */}
+                {FEATURES_LEFT.map(({ title, desc, Icon }, i) => (
+                  <div
+                    key={title}
+                    className="absolute left-0 hidden w-37.5 translate-x-[-14%] flex-col items-start gap-1 md:flex"
+                    style={{ top: FEATURE_TOPS[i] }}
+                  >
+                    <span className="flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-forest-light/80 backdrop-blur-sm">
+                      <Icon className="h-3.5 w-3.5 text-cream-deep" strokeWidth={1.6} />
                     </span>
                     <div>
-                      <p className="text-lg font-bold leading-none text-white">{BADGES[0].value}</p>
-                      <p className="mt-1 text-xs font-medium text-cream-deep/80">{BADGES[0].label}</p>
+                      <p className="line-clamp-2 text-[11px] font-bold leading-tight text-white">{title}</p>
+                      <p className="mt-0.5 truncate text-[10px] leading-snug text-cream-deep/70">{desc}</p>
                     </div>
-                    <span className="flex items-center gap-1">
-                      <span className="h-1 w-8 rounded-full bg-white" />
-                      <span className="h-px flex-1 bg-white/25" />
-                    </span>
                   </div>
-                </div>
+                ))}
 
-                {/* badge: right — icon square + stat + progress underline */}
-                <div className="absolute right-0 top-[46%] hidden w-[150px] translate-x-[14%] flex-row-reverse items-start gap-3 md:flex">
-                  <span className="mt-6 h-px w-8 shrink-0 bg-white/30" />
-                  <div className="flex flex-col items-end gap-2.5">
-                    <span className="flex h-11 w-11 items-center justify-center rounded-2xl border border-white/10 bg-forest-light/80 backdrop-blur-sm">
-                      <IconSprout className="h-5 w-5 text-cream-deep" strokeWidth={1.5} />
+                {/* feature badges: right column — icon square + title + description */}
+                {FEATURES_RIGHT.map(({ title, desc, Icon }, i) => (
+                  <div
+                    key={title}
+                    className="absolute right-0 hidden w-37.5 translate-x-[14%] flex-col items-end gap-1 md:flex"
+                    style={{ top: FEATURE_TOPS[i] }}
+                  >
+                    <span className="flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-forest-light/80 backdrop-blur-sm">
+                      <Icon className="h-3.5 w-3.5 text-cream-deep" strokeWidth={1.6} />
                     </span>
-                    <div className="text-right">
-                      <p className="text-lg font-bold leading-none text-white">{BADGES[1].value}</p>
-                      <p className="mt-1 text-xs font-medium text-cream-deep/80">{BADGES[1].label}</p>
+                    <div className="w-full text-right">
+                      <p className="line-clamp-2 text-[11px] font-bold leading-tight text-white">{title}</p>
+                      <p className="mt-0.5 truncate text-[10px] leading-snug text-cream-deep/70">{desc}</p>
                     </div>
-                    <span className="flex items-center gap-1">
-                      <span className="h-px flex-1 bg-white/25" />
-                      <span className="h-1 w-8 rounded-full bg-white" />
-                    </span>
                   </div>
-                </div>
+                ))}
+
+                {/* feature badges: left column, mobile only — icon + title, pinned beside the photo */}
+                {FEATURES_LEFT.map(({ title, Icon }, i) => (
+                  <div
+                    key={title}
+                    className="absolute right-full mr-1.5 flex w-18 flex-col items-end gap-1 md:hidden"
+                    style={{ top: FEATURE_TOPS[i] }}
+                  >
+                    <span className="flex h-6 w-6 items-center justify-center rounded-md border border-white/10 bg-forest-light/80 backdrop-blur-sm">
+                      <Icon className="h-3 w-3 text-cream-deep" strokeWidth={1.8} />
+                    </span>
+                    <p className="line-clamp-1 text-[9px] font-bold leading-tight text-white">{title}</p>
+                  </div>
+                ))}
+
+                {/* feature badges: right column, mobile only — icon + title, pinned beside the photo */}
+                {FEATURES_RIGHT.map(({ title, Icon }, i) => (
+                  <div
+                    key={title}
+                    className="absolute left-full ml-1.5 flex w-18 flex-col items-start gap-1 md:hidden"
+                    style={{ top: FEATURE_TOPS[i] }}
+                  >
+                    <span className="flex h-6 w-6 items-center justify-center rounded-md border border-white/10 bg-forest-light/80 backdrop-blur-sm">
+                      <Icon className="h-3 w-3 text-cream-deep" strokeWidth={1.8} />
+                    </span>
+                    <p className="line-clamp-1 text-[9px] font-bold leading-tight text-white">{title}</p>
+                  </div>
+                ))}
               </div>
-            </div>
-
-            {/* compact badge row, mobile + small tablet only */}
-            <div className="flex items-center justify-center gap-3 md:hidden">
-              {BADGES.map(({ value, label, Icon }) => (
-                <div
-                  key={label}
-                  className="flex items-center gap-2.5 rounded-xl border border-white/15 bg-white/10 px-3.5 py-2.5"
-                >
-                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-forest-light/80">
-                    <Icon className="h-4 w-4 text-cream-deep" strokeWidth={1.6} />
-                  </span>
-                  <div>
-                    <span className="block text-sm font-bold leading-none text-white">{value}</span>
-                    <span className="block text-[11px] text-cream-deep/80">{label}</span>
-                  </div>
-                </div>
-              ))}
             </div>
 
             {/* description + CTA */}
@@ -131,55 +214,6 @@ export default function Hero() {
                 <IconArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
               </Button>
             </div>
-          </div>
-        </div>
-
-        {/* mobile-only utility bar — sits below the panel with a soft wave cut */}
-        <div className="hero-notch-mobile -mt-4 flex flex-col items-center gap-4 bg-white px-(--hero-inset) pb-6 pt-8 text-center md:hidden">
-          <div className="flex items-center gap-3">
-            <Link
-              href="tel:+918792799631"
-              aria-label="Call Kaicho Foods"
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gold text-forest transition hover:bg-terracotta"
-            >
-              <IconPhone className="h-4 w-4" />
-            </Link>
-            <Link
-              href="https://instagram.com"
-              aria-label="Kaicho Foods on Instagram"
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-ink/15 text-ink transition hover:border-brand hover:text-brand"
-            >
-              <IconInstagram className="h-4 w-4" />
-            </Link>
-          </div>
-          <p className="max-w-xs text-sm text-ink-muted">
-            Kaicho helps you eat wholesome, ready-to-eat meals without the wait.
-          </p>
-
-          <span className="h-px w-16 bg-ink/10" />
-
-          <Link
-            href="#products"
-            className="group inline-flex items-center gap-2 rounded-full border border-gold/40 bg-gold/10 py-1.5 pl-1.5 pr-4 text-xs font-bold uppercase tracking-wide text-forest transition hover:bg-gold/20"
-          >
-            <span className="flex h-7 w-7 items-center justify-center rounded-full bg-gold text-forest">
-              <IconArrowRight className="h-3.5 w-3.5 transition-transform duration-300 group-hover:translate-x-0.5" />
-            </span>
-            Explore Meals
-          </Link>
-
-          <div className="flex items-center gap-4">
-            <div>
-              <p className="text-2xl font-bold leading-none text-forest">0%</p>
-              <p className="mt-1 text-xs text-ink-muted">Preservatives, ever</p>
-            </div>
-            <span className="h-8 w-px bg-ink/10" />
-            <Link
-              href="#story"
-              className="text-xs font-bold uppercase tracking-wide text-ink underline decoration-ink/20 underline-offset-4 hover:decoration-brand"
-            >
-              Our Story
-            </Link>
           </div>
         </div>
       </div>

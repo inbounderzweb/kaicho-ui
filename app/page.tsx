@@ -1,6 +1,6 @@
 import BlogSection from "./components/sections/BlogSection";
 import BulkOrderForm from "./components/sections/BulkOrderForm";
-import FeatureMarquee from "./components/sections/FeatureMarquee";
+import CategoryShowcase from "./components/sections/CategoryShowcase";
 import Hero from "./components/sections/Hero";
 import HowItWorks from "./components/sections/HowItWorks";
 import ProductSection from "./components/sections/ProductSection";
@@ -13,9 +13,9 @@ export default function Home() {
   return (
     <>
       <Hero />
-      <FeatureMarquee />
       <WholesomeGoodness />
-      <ProductSection />
+      {/* <ProductSection /> */}
+      <CategoryShowcase />
       <StorySection />
       <BulkOrderForm />
       <HowItWorks />

@@ -23,15 +23,16 @@
   --color-gold: #c9a24a;
   --color-terracotta: #c97b4a;
 
+  /* Neutral near-black, deliberately NOT green — used for dark sections
+     that need to read as a distinct visual beat from the brand-green hero. */
+  --color-charcoal: #14171c;
+
   --shadow-hero: 0 40px 80px -32px rgba(14, 43, 28, 0.28);
   --shadow-card: 0 18px 40px -20px rgba(28, 28, 28, 0.18);
   --radius-hero: 2.5rem;
 
   /* Header.tsx renders a constant h-20 (80px) bar at every breakpoint. */
   --header-height: 5rem;
-  /* Reserves room below the hero so the FeatureMarquee strip peeks into
-     view on the first screen instead of the hero claiming 100% of it. */
-  --marquee-peek: 5.5rem;
   /* Single horizontal inset shared by every layer of the hero (headline
      block, notch panels, mobile utility bar) so their left/right edges
      always line up, instead of each one tuning its own clamp(). */
@@ -60,6 +61,7 @@
   --color-cream-deep: var(--color-cream-deep);
   --color-gold: var(--color-gold);
   --color-terracotta: var(--color-terracotta);
+  --color-charcoal: var(--color-charcoal);
 
   --font-sans: var(--font-urbanist);
   --font-display: var(--font-sora);
@@ -67,6 +69,7 @@
   --animate-marquee: marquee 28s linear infinite;
   --animate-fade-up: fade-up 0.6s ease-out both;
   --animate-fade-scale: fade-scale 0.7s ease-out both;
+  --animate-steam: steam-rise 4.2s ease-in-out infinite;
 }
 
 @keyframes marquee {
@@ -100,12 +103,38 @@
   }
 }
 
+@keyframes steam-rise {
+  0% {
+    transform: translate(-50%, 0) scale(0.5);
+    opacity: 0;
+  }
+  12% {
+    opacity: 0.6;
+  }
+  40% {
+    transform: translate(calc(-50% + 8px), -45%) scale(0.95);
+    opacity: 0.45;
+  }
+  70% {
+    transform: translate(calc(-50% - 10px), -85%) scale(1.35);
+    opacity: 0.2;
+  }
+  100% {
+    transform: translate(-50%, -130%) scale(1.75);
+    opacity: 0;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .animate-fade-up,
   .animate-fade-scale {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transform: none !important;
+  }
+
+  .animate-steam {
+    display: none;
   }
 }
 
@@ -134,20 +163,20 @@ body {
 
 /* Fills exactly what's left below the sticky header on the first viewport,
    using the most accurate viewport unit each browser supports. Never a
-   hard-coded pixel height, so it scales fluidly across every device. */
-.hero-viewport {
-  min-height: calc(100vh - var(--header-height) - var(--marquee-peek));
-  min-height: calc(100dvh - var(--header-height) - var(--marquee-peek));
-  min-height: calc(100svh - var(--header-height) - var(--marquee-peek));
-}
-
-@supports (height: 100svh) {
+   hard-coded pixel height, so it scales fluidly across every device.
+   Mobile is exempt: forcing full-viewport height there leaves large dead
+   gaps around the (necessarily smaller) photo, so mobile just sizes to
+   its content instead. */
+@media (min-width: 768px) {
   .hero-viewport {
-    min-height: calc(100svh - var(--header-height) - var(--marquee-peek));
+    min-height: calc(100vh - var(--header-height));
+    min-height: calc(100dvh - var(--header-height));
+    min-height: calc(100svh - var(--header-height));
   }
-}
 
-/* Soft wave cut on the mobile-only utility bar below the hero panel. */
-.hero-notch-mobile {
-  clip-path: polygon(0 0, 40% 0, 50% 12%, 60% 0, 100% 0, 100% 100%, 0 100%);
+  @supports (height: 100svh) {
+    .hero-viewport {
+      min-height: calc(100svh - var(--header-height));
+    }
+  }
 }
