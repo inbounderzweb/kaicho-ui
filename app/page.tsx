@@ -1,5 +1,4 @@
 import BlogSection from "./components/sections/BlogSection";
-import BulkOrderForm from "./components/sections/BulkOrderForm";
 import CategoryShowcase from "./components/sections/CategoryShowcase";
 import GetStarted from "./components/sections/GetStarted";
 import Hero from "./components/sections/Hero";
@@ -21,7 +20,6 @@ export default function Home() {
       <CategoryShowcase />
       <StorySection />
       <StoryCover />
-      <BulkOrderForm />
       <HowItWorks />
       <UseCaseGrid />
       <Testimonials />

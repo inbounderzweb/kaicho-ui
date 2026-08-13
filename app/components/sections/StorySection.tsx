@@ -139,29 +139,28 @@ export default function StorySection() {
                   hover:scale-[1.025]
                 "
               />
+            </div>
 
-              {/* Floating label */}
-              <div
-                className="
-                  absolute
-                  bottom-5 left-5
-                  z-20
-                  rounded-2xl
-                  border border-white/60
-                  bg-white/80
-                  px-5 py-4
-                  shadow-lg
-                  backdrop-blur-md
-                "
-              >
-                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-brand">
-                  Kaicho Philosophy
-                </p>
+            {/* Floating label — moved outside the overflow-hidden image card so
+                it can straddle the card's bottom edge (half in, half out) on
+                mobile; sits fully inside, at full size, from sm: up */}
+            <div
+              className="
+                absolute z-20
+                left-5 -bottom-6 w-[70%]
+                rounded-2xl border border-white/60 bg-white/80
+                px-4 py-3
+                shadow-lg backdrop-blur-md
+                sm:bottom-5 sm:w-auto sm:px-5 sm:py-4
+              "
+            >
+              <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-brand sm:text-[10px]">
+                Kaicho Philosophy
+              </p>
 
-                <p className="mt-1 font-display text-lg font-semibold text-ink">
-                  Simple food. Thoughtfully made.
-                </p>
-              </div>
+              <p className="mt-1 font-display text-sm font-semibold leading-snug text-ink sm:text-lg">
+                Simple food. Thoughtfully made.
+              </p>
             </div>
           </div>
         </div>
