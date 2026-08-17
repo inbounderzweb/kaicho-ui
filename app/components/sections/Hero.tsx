@@ -37,7 +37,7 @@ const SLIDES = [
   {
     headline: (
       <>
-        Veg <br />
+        Veg 
         Oats Porridge
       </>
     ),
@@ -49,7 +49,7 @@ const SLIDES = [
   {
     headline: (
       <>
-        Chicken <br />
+        Chicken 
         Oats Porridge
       </>
     ),
@@ -127,23 +127,23 @@ export default function Hero() {
             KAICHO
           </span>
 
-          <div className="relative z-10 flex flex-1 flex-col px-(--hero-inset) py-[clamp(1rem,2.5svh,2.5rem)]">
+          <div className="relative z-10 mt-3 md:mt-2 flex flex-1 flex-col px-(--hero-inset) py-[clamp(1rem,2.5svh,2.5rem)]">
             {/* eyebrow */}
             <span className="animate-fade-up mx-auto inline-flex items-center gap-1.5 text-center text-[10px] font-bold uppercase tracking-[0.18em] text-white sm:text-xs">
   <IconLeaf className="h-3 w-3 shrink-0" />
   Ready-to-Eat · Japanese Retort Tech
 </span>
 
-            {/* headline — rotates in sync with the product photo */}
-            <h1 className="mt-[clamp(0.25rem,1.2svh,1rem)] text-center font-display text-[clamp(2rem,9vw,2.75rem)] font-bold leading-[0.95] tracking-tight sm:text-[clamp(2.5rem,5vw_+_1rem,5.5rem)] lg:text-[clamp(2.5rem,2svh+1.6vw,4.75rem)]">
-              <span key={active} className="animate-fade-up mt-5 block text-white">
+            {/* headline */}
+            <h1 className="mt-6 md:mt-4 text-center font-display text-[clamp(1.15rem,6vw,2.75rem)] font-bold leading-[0.9] tracking-tight sm:mt-4 sm:text-[clamp(2.5rem,5vw+1rem,5.5rem)] lg:text-[clamp(2.5rem,2svh+1.6vw,4.75rem)]">
+              <span key={active} className="animate-fade-up block text-white">
                 {SLIDES[active].headline}
               </span>
             </h1>
 
             {/* product photography */}
-            <div className="relative flex flex-1 items-center justify-center py-[clamp(0.25rem,1.5svh,1.25rem)]">
-              <div className="relative aspect-[3/2] w-[64%] max-w-215 max-h-[32svh] sm:max-h-[42svh] md:w-full lg:max-h-[36svh]">
+            <div className="relative mt-6 md:mt-2 flex h-[30svh] min-h-52.5 flex-none items-center justify-center sm:h-auto sm:min-h-0 sm:flex-1 sm:py-[clamp(0.25rem,1.5svh,1.25rem)]">
+              <div className="relative h-full w-[94%] max-w-215 sm:aspect-3/2 sm:h-auto sm:w-full sm:max-h-[42svh] lg:max-h-[36svh]">
                 {SLIDES.map((slide, i) => (
                   <Image
                     key={slide.image}
@@ -154,7 +154,7 @@ export default function Hero() {
                     unoptimized={slide.unoptimized}
                     onLoad={() => markLoaded(i)}
                     sizes="(min-width: 1024px) 720px, 90vw"
-                    className={`absolute inset-0 object-contain drop-shadow-[0_35px_60px_rgba(0,0,0,0.45)] transition-all duration-1200 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${
+                    className={`absolute inset-0 h-full w-full object-contain drop-shadow-[0_25px_40px_rgba(0,0,0,0.35)] transition-all duration-1200 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${
                       i === active ? "opacity-100 scale-100" : "opacity-0 scale-90"
                     }`}
                   />
@@ -163,7 +163,7 @@ export default function Hero() {
                 {/* rising steam over the served bowl */}
                 <div
                   aria-hidden
-                  className="pointer-events-none absolute left-[62%] top-[56%] h-0 w-0 sm:left-[64%]"
+                  className="pointer-events-none mt-6 absolute left-[62%] top-[56%] h-0 w-0 sm:left-[64%]"
                 >
                   {[
                     { left: -34, w: 14, h: 46, dur: 3.6, delay: 0 },
@@ -175,7 +175,7 @@ export default function Hero() {
                   ].map((wisp, i) => (
                     <span
                       key={i}
-                      className="animate-steam absolute bottom-0 rounded-full bg-[radial-gradient(circle,rgba(255,255,255,0.9),rgba(255,255,255,0)_70%)] blur-[4px]"
+                      className="animate-steam mt-4 absolute bottom-0 rounded-full bg-[radial-gradient(circle,rgba(255,255,255,0.9),rgba(255,255,255,0)_70%)] blur-[4px]"
                       style={{
                         left: `${wisp.left}px`,
                         width: `${wisp.w}px`,
@@ -202,28 +202,13 @@ export default function Hero() {
                   <polyline points="98.5,80.6 78,80.6 73,78" fill="none" stroke="white" strokeOpacity="0.55" strokeWidth="1" strokeDasharray="1 4" strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
                 </svg>
 
-                {/* squared-elbow connector lines from badges to pin markers, mobile only */}
-                <svg
-                  aria-hidden
-                  viewBox="0 0 100 100"
-                  preserveAspectRatio="none"
-                  className="pointer-events-none absolute inset-0 block h-full w-full md:hidden"
-                >
-                  <polyline points="0,11.5 23,11.5 36,10" fill="none" stroke="white" strokeOpacity="0.6" strokeWidth="1" strokeDasharray="1 3.5" strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
-                  <polyline points="0,47.5 21,47.5 33,46" fill="none" stroke="white" strokeOpacity="0.6" strokeWidth="1" strokeDasharray="1 3.5" strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
-                  <polyline points="0,83.5 20,83.5 30,79" fill="none" stroke="white" strokeOpacity="0.6" strokeWidth="1" strokeDasharray="1 3.5" strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
-                  <polyline points="100,11.5 77,11.5 74,30" fill="none" stroke="white" strokeOpacity="0.6" strokeWidth="1" strokeDasharray="1 3.5" strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
-                  <polyline points="100,47.5 79,47.5 76,55" fill="none" stroke="white" strokeOpacity="0.6" strokeWidth="1" strokeDasharray="1 3.5" strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
-                  <polyline points="100,83.5 78,83.5 73,78" fill="none" stroke="white" strokeOpacity="0.6" strokeWidth="1" strokeDasharray="1 3.5" strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
-                </svg>
-
-                {/* pin markers on the photo */}
-                <span className="absolute left-[36%] top-[10%] block h-1 w-1 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white shadow-[0_0_0_1.5px_rgba(255,255,255,0.25)] md:h-2.5 md:w-2.5 md:shadow-[0_0_0_3px_rgba(255,255,255,0.25)]" />
-                <span className="absolute left-[33%] top-[46%] block h-1 w-1 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white shadow-[0_0_0_1.5px_rgba(255,255,255,0.25)] md:h-2.5 md:w-2.5 md:shadow-[0_0_0_3px_rgba(255,255,255,0.25)]" />
-                <span className="absolute left-[30%] top-[79%] block h-1 w-1 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white shadow-[0_0_0_1.5px_rgba(255,255,255,0.25)] md:h-2.5 md:w-2.5 md:shadow-[0_0_0_3px_rgba(255,255,255,0.25)]" />
-                <span className="absolute left-[74%] top-[30%] block h-1 w-1 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white shadow-[0_0_0_1.5px_rgba(255,255,255,0.25)] md:h-2.5 md:w-2.5 md:shadow-[0_0_0_3px_rgba(255,255,255,0.25)]" />
-                <span className="absolute left-[76%] top-[55%] block h-1 w-1 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white shadow-[0_0_0_1.5px_rgba(255,255,255,0.25)] md:h-2.5 md:w-2.5 md:shadow-[0_0_0_3px_rgba(255,255,255,0.25)]" />
-                <span className="absolute left-[73%] top-[78%] block h-1 w-1 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white shadow-[0_0_0_1.5px_rgba(255,255,255,0.25)] md:h-2.5 md:w-2.5 md:shadow-[0_0_0_3px_rgba(255,255,255,0.25)]" />
+                {/* pin markers on the photo, tablet+ only — mobile shows the feature grid below the photo instead */}
+                <span className="absolute left-[36%] top-[10%] hidden h-2.5 w-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white shadow-[0_0_0_3px_rgba(255,255,255,0.25)] md:block" />
+                <span className="absolute left-[33%] top-[46%] hidden h-2.5 w-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white shadow-[0_0_0_3px_rgba(255,255,255,0.25)] md:block" />
+                <span className="absolute left-[30%] top-[79%] hidden h-2.5 w-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white shadow-[0_0_0_3px_rgba(255,255,255,0.25)] md:block" />
+                <span className="absolute left-[74%] top-[30%] hidden h-2.5 w-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white shadow-[0_0_0_3px_rgba(255,255,255,0.25)] md:block" />
+                <span className="absolute left-[76%] top-[55%] hidden h-2.5 w-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white shadow-[0_0_0_3px_rgba(255,255,255,0.25)] md:block" />
+                <span className="absolute left-[73%] top-[78%] hidden h-2.5 w-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white shadow-[0_0_0_3px_rgba(255,255,255,0.25)] md:block" />
 
                 {/* feature badges: left column — icon square + title */}
                 {FEATURES_LEFT.map(({ title, Icon }, i) => (
@@ -232,10 +217,10 @@ export default function Hero() {
                     className="absolute left-0 hidden w-37.5 translate-x-[-14%] flex-col items-start gap-1 md:flex"
                     style={{ top: FEATURE_TOPS[i] }}
                   >
-                    <span className="flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-forest-light/80 backdrop-blur-sm">
-                      <Icon className="h-3.5 w-3.5 text-cream-deep" strokeWidth={1.6} />
+                    <span className="flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-forest-light/80 backdrop-blur-sm lg:h-10 lg:w-10 lg:border-forest/15 lg:bg-white">
+                      <Icon className="h-3.5 w-3.5 text-cream-deep lg:h-5 lg:w-5 lg:text-forest" strokeWidth={1.6} />
                     </span>
-                    <p className="line-clamp-2 text-[9px] font-bold leading-tight text-white">{title}</p>
+                    <p className="line-clamp-2 text-[9px] font-bold leading-tight text-white lg:text-[11px]">{title}</p>
                   </div>
                 ))}
 
@@ -246,45 +231,30 @@ export default function Hero() {
                     className="absolute right-0 hidden w-37.5 translate-x-[14%] flex-col items-end gap-1 md:flex"
                     style={{ top: FEATURE_TOPS[i] }}
                   >
-                    <span className="flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-forest-light/80 backdrop-blur-sm">
-                      <Icon className="h-3.5 w-3.5 text-cream-deep" strokeWidth={1.6} />
+                    <span className="flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-forest-light/80 backdrop-blur-sm lg:h-10 lg:w-10 lg:border-forest/15 lg:bg-white">
+                      <Icon className="h-3.5 w-3.5 text-cream-deep lg:h-5 lg:w-5 lg:text-forest" strokeWidth={1.6} />
                     </span>
-                    <p className="line-clamp-2 text-right text-[11px] font-bold leading-tight text-white">{title}</p>
+                    <p className="line-clamp-2 text-right text-[11px] font-bold leading-tight text-white lg:text-[13px]">{title}</p>
                   </div>
                 ))}
 
-                {/* feature badges: left column, mobile only — icon + title, pinned beside the photo */}
-                {FEATURES_LEFT.map(({ title, Icon }, i) => (
-                  <div
-                    key={title}
-                    className="absolute right-full mr-1 flex w-13 flex-col items-end gap-0.5 md:hidden"
-                    style={{ top: FEATURE_TOPS[i] }}
-                  >
-                    <span className="flex h-4.5 w-4.5 items-center justify-center rounded-md border border-white/10 bg-forest-light/80 backdrop-blur-sm">
-                      <Icon className="h-2.5 w-2.5 text-cream-deep" strokeWidth={1.8} />
-                    </span>
-                    <p className="text-[7px] font-bold leading-tight text-white">{title}</p>
-                  </div>
-                ))}
-
-                {/* feature badges: right column, mobile only — icon + title, pinned beside the photo */}
-                {FEATURES_RIGHT.map(({ title, Icon }, i) => (
-                  <div
-                    key={title}
-                    className="absolute left-full ml-1 flex w-13 flex-col items-start gap-0.5 md:hidden"
-                    style={{ top: FEATURE_TOPS[i] }}
-                  >
-                    <span className="flex h-4.5 w-4.5 items-center justify-center rounded-md border border-white/10 bg-forest-light/80 backdrop-blur-sm">
-                      <Icon className="h-2.5 w-2.5 text-cream-deep" strokeWidth={1.8} />
-                    </span>
-                    <p className="text-[7px] font-bold leading-tight text-white">{title}</p>
-                  </div>
-                ))}
               </div>
             </div>
 
+            {/* feature grid — mobile */}
+            <div className="mt-2 grid grid-cols-3 gap-x-2 gap-y-2 px-2 md:hidden">
+              {[...FEATURES_LEFT, ...FEATURES_RIGHT].map(({ title, Icon }) => (
+                <div key={title} className="flex min-w-0 flex-col items-center justify-start gap-1 text-center">
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-white/10 bg-forest-light/80 backdrop-blur-sm">
+                    <Icon className="h-3.5 w-3.5 text-cream-deep" strokeWidth={1.8} />
+                  </span>
+                  <p className="line-clamp-2 text-[8.5px] font-bold leading-[1.1] text-white">{title}</p>
+                </div>
+              ))}
+            </div>
+
             {/* slide indicators */}
-            <div className="mx-auto flex items-center justify-center gap-1.5">
+            <div className="mx-auto mt-6 flex items-center justify-center gap-1.5 sm:mt-4">
               {SLIDES.map((slide, i) => (
                 <button
                   key={slide.image}
@@ -301,12 +271,12 @@ export default function Hero() {
             {/* description + CTA — rotates in sync with the product photo */}
             <p
               key={active}
-              className="animate-fade-up mx-auto mt-[clamp(0.5rem,1.5svh,1.75rem)] max-w-md text-center text-[clamp(0.78rem,3vw,0.88rem)] leading-relaxed text-cream-deep/85 sm:text-[clamp(0.85rem,0.3vw_+_0.78rem,1rem)]"
+              className="animate-fade-up mx-auto mt-3 max-w-[92%] text-center text-[clamp(0.78rem,3vw,0.9rem)] leading-[1.55] text-cream-deep/85 sm:mt-[clamp(0.5rem,1.5svh,1.75rem)] sm:max-w-md sm:text-[clamp(0.85rem,0.3vw+0.78rem,1rem)]"
             >
               {SLIDES[active].description}
             </p>
 
-            <div className="animate-fade-up mx-auto mt-[clamp(0.75rem,1.5svh,1.75rem)]">
+            <div className="animate-fade-up mx-auto mt-3 sm:mt-[clamp(0.75rem,1.5svh,1.75rem)]">
               <Button
                 href="#products"
                 size="lg"
@@ -322,7 +292,7 @@ export default function Hero() {
               type="button"
               onClick={() => window.scrollTo({ top: window.innerHeight, behavior: "smooth" })}
               aria-label="Scroll to next section"
-              className="animate-bounce mx-auto mt-1 text-white/70 transition-colors hover:text-white"
+              className="animate-bounce mx-auto mt-6 text-white/70 transition-colors hover:text-white sm:mt-1"
             >
               <IconChevronRight className="h-4 w-4 rotate-90" />
             </button>
