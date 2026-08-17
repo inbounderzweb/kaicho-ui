@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
-import Button from "../Button";
+import Button from "../ui/Button";
 import {
   IconArrowRight,
   IconChevronRight,
@@ -12,20 +12,51 @@ import {
   IconPulse,
   IconShieldCheck,
   IconWheat,
-} from "../icons";
+} from "../ui/icons";
+
+// const SLIDES = [
+//   {
+//     headline:(<>
+//     Veg </br> Oats Porridge</>),
+//     description: "Wholesome oats with real vegetables, sealed fresh with Japanese retort technology. A nourishing meal, ready in minutes.",
+//     image: "/kaicho-hero.png",
+//     alt: "Kaicho Veg Oats Porridge pouch beside a served bowl of porridge garnished with coriander, next to a wooden spoon",
+//   },
+//   {
+//     headline: "Chicken </br> Oats Porridge",
+//     description: "Protein-rich oats simmered with tender chicken, sealed fresh with Japanese retort technology. A nourishing meal, ready in minutes.",
+//     image: "/kaicho-chickenoats.png",
+//     alt: "Kaicho Chicken Oats Porridge pouch beside a served bowl of porridge",
+//     // Next's image optimizer flattens this PNG's transparent background to
+//     // solid black (reproducible via /_next/image?url=...); serve as-is.
+//     unoptimized: true,
+//   },
+// ];
 
 const SLIDES = [
   {
-    headline: "Veg Oats Porridge",
+    headline: (
+      <>
+        Veg <br />
+        Oats Porridge
+      </>
+    ),
+    description:
+      "Wholesome oats with real vegetables, sealed fresh with Japanese retort technology. A nourishing meal, ready in minutes.",
     image: "/kaicho-hero.png",
     alt: "Kaicho Veg Oats Porridge pouch beside a served bowl of porridge garnished with coriander, next to a wooden spoon",
   },
   {
-    headline: "Chicken Oats Porridge",
+    headline: (
+      <>
+        Chicken <br />
+        Oats Porridge
+      </>
+    ),
+    description:
+      "Protein-rich oats simmered with tender chicken, sealed fresh with Japanese retort technology. A nourishing meal, ready in minutes.",
     image: "/kaicho-chickenoats.png",
     alt: "Kaicho Chicken Oats Porridge pouch beside a served bowl of porridge",
-    // Next's image optimizer flattens this PNG's transparent background to
-    // solid black (reproducible via /_next/image?url=...); serve as-is.
     unoptimized: true,
   },
 ];
@@ -103,9 +134,11 @@ export default function Hero() {
   Ready-to-Eat · Japanese Retort Tech
 </span>
 
-            {/* headline — stays fixed; only the product photo rotates */}
+            {/* headline — rotates in sync with the product photo */}
             <h1 className="mt-[clamp(0.25rem,1.2svh,1rem)] text-center font-display text-[clamp(2rem,9vw,2.75rem)] font-bold leading-[0.95] tracking-tight sm:text-[clamp(2.5rem,5vw_+_1rem,5.5rem)] lg:text-[clamp(2.5rem,2svh+1.6vw,4.75rem)]">
-              <span className="animate-fade-up mt-5 block text-white">Veg Oats Porridge</span>
+              <span key={active} className="animate-fade-up mt-5 block text-white">
+                {SLIDES[active].headline}
+              </span>
             </h1>
 
             {/* product photography */}
@@ -265,9 +298,12 @@ export default function Hero() {
               ))}
             </div>
 
-            {/* description + CTA */}
-            <p className="animate-fade-up mx-auto mt-[clamp(0.5rem,1.5svh,1.75rem)] max-w-md text-center text-[clamp(0.78rem,3vw,0.88rem)] leading-relaxed text-cream-deep/85 sm:text-[clamp(0.85rem,0.3vw_+_0.78rem,1rem)]">
-              Wholesome oats with real vegetables, sealed fresh with Japanese retort technology. A nourishing meal, ready in minutes.
+            {/* description + CTA — rotates in sync with the product photo */}
+            <p
+              key={active}
+              className="animate-fade-up mx-auto mt-[clamp(0.5rem,1.5svh,1.75rem)] max-w-md text-center text-[clamp(0.78rem,3vw,0.88rem)] leading-relaxed text-cream-deep/85 sm:text-[clamp(0.85rem,0.3vw_+_0.78rem,1rem)]"
+            >
+              {SLIDES[active].description}
             </p>
 
             <div className="animate-fade-up mx-auto mt-[clamp(0.75rem,1.5svh,1.75rem)]">

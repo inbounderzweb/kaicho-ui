@@ -1,6 +1,6 @@
 import Image from "next/image";
-import Container from "../Container";
-import { IconCart, IconTruck } from "../icons";
+import Container from "../ui/Container";
+import { IconCart, IconTruck } from "../ui/icons";
 
 const HIGHLIGHTS = [
   {

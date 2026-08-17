@@ -1,7 +1,7 @@
 import Image from "next/image";
-import Container from "../Container";
-import SectionHeading from "../SectionHeading";
-import { IconArrowRight } from "../icons";
+import Container from "../ui/Container";
+import SectionHeading from "../ui/SectionHeading";
+import { IconArrowRight } from "../ui/icons";
 
 const BLOG_IMAGE = "https://cdn.shopify.com/s/files/1/0768/7979/0338/files/card6_1.png?v=1779454715";
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { IconCart, IconHome, IconLeaf, IconPhone } from "./icons";
+import { IconCart, IconHome, IconLeaf, IconPhone } from "../ui/icons";
 
 const TABS = [
   { label: "Home", href: "#home", Icon: IconHome },

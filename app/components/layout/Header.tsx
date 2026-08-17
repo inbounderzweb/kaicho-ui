@@ -3,10 +3,10 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import Button from "./Button";
+import Button from "../ui/Button";
 import MobileMenu from "./MobileMenu";
 import { NAV_LINKS } from "./nav-links";
-import { IconCart, IconHeart, IconMenu, IconSearch, IconUser } from "./icons";
+import { IconCart, IconHeart, IconMenu, IconSearch, IconUser } from "../ui/icons";
 
 export default function Header() {
   const [scrolled, setScrolled] = useState(false);

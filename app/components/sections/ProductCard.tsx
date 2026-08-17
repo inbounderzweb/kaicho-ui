@@ -1,4 +1,4 @@
-import { IconCart, IconCheck } from "../icons";
+import { IconCart, IconCheck } from "../ui/icons";
 import ProductArt from "./ProductArt";
 import type { Product } from "./product-data";
 

@@ -1,12 +1,12 @@
 import Image from "next/image";
-import Button from "../Button";
-import Container from "../Container";
+import Button from "../ui/Button";
+import Container from "../ui/Container";
 import {
   IconArrowRight,
   IconLeaf,
   IconPackage,
   IconShieldCheck,
-} from "../icons";
+} from "../ui/icons";
 
 const VALUES = [
   {

@@ -1,5 +1,5 @@
-import Container from "../Container";
-import { IconBowl, IconFlame, IconPackage } from "../icons";
+import Container from "../ui/Container";
+import { IconBowl, IconFlame, IconPackage } from "../ui/icons";
 
 const STEPS = [
   { step: "01", title: "Open the pack", Icon: IconPackage },

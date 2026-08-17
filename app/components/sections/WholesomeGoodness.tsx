@@ -1,7 +1,7 @@
 import Image from "next/image";
-import Button from "../Button";
-import Container from "../Container";
-import { IconArrowRight } from "../icons";
+import Button from "../ui/Button";
+import Container from "../ui/Container";
+import { IconArrowRight } from "../ui/icons";
 
 export default function WholesomeGoodness() {
   return (
@@ -20,7 +20,7 @@ export default function WholesomeGoodness() {
             Crafted with care using time-honored grains and modern technology
             to bring you the best of both worlds.
           </p>
-          <Button href="#story" variant="outline-dark" size="lg" className="mt-8 border">
+          <Button href="#story" variant="outline" size="lg" className="mt-8">
             Learn More
             <IconArrowRight className="h-4 w-4" />
           </Button>

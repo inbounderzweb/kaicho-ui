@@ -2,9 +2,9 @@
 
 import Image from "next/image";
 import { FormEvent, useEffect, useRef, useState } from "react";
-import Button from "../Button";
-import Container from "../Container";
-import { IconCheck } from "../icons";
+import Button from "../ui/Button";
+import Container from "../ui/Container";
+import { IconCheck } from "../ui/icons";
 
 const HIGHLIGHTS = [
   {

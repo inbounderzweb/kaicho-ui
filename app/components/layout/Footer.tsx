@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import Container from "./Container";
+import Container from "../ui/Container";
 import { NAV_LINKS } from "./nav-links";
 import {
   IconFacebook,
@@ -9,7 +9,7 @@ import {
   IconMapPin,
   IconPhone,
   IconWhatsapp,
-} from "./icons";
+} from "../ui/icons";
 
 const LEGAL_LINKS = [
   { label: "Terms of Service", href: "#" },

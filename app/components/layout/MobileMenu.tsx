@@ -2,9 +2,9 @@
 
 import Image from "next/image";
 import { useEffect, useRef } from "react";
-import Button from "./Button";
+import Button from "../ui/Button";
 import { NAV_LINKS } from "./nav-links";
-import { IconClose, IconMail, IconPhone } from "./icons";
+import { IconClose, IconMail, IconPhone } from "../ui/icons";
 
 export default function MobileMenu({
   open,

@@ -2,8 +2,8 @@
 
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
-import Container from "../Container";
-import SectionHeading from "../SectionHeading";
+import Container from "../ui/Container";
+import SectionHeading from "../ui/SectionHeading";
 
 const BIG_IMAGE = "https://cdn.shopify.com/s/files/1/0768/7979/0338/files/bigslide.jpg?v=1779453605";
 

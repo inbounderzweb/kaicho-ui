@@ -1,4 +1,4 @@
-import { IconWhatsapp } from "./icons";
+import { IconWhatsapp } from "../ui/icons";
 
 export default function WhatsAppButton() {
   return (

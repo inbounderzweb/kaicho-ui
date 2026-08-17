@@ -1,6 +1,6 @@
-import Container from "../Container";
-import SectionHeading from "../SectionHeading";
-import { IconQuote, IconStar } from "../icons";
+import Container from "../ui/Container";
+import SectionHeading from "../ui/SectionHeading";
+import { IconQuote, IconStar } from "../ui/icons";
 
 const TESTIMONIALS = [
   {

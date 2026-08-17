@@ -1,7 +1,7 @@
-import Button from "../Button";
-import Container from "../Container";
-import SectionHeading from "../SectionHeading";
-import { IconArrowRight } from "../icons";
+import Button from "../ui/Button";
+import Container from "../ui/Container";
+import SectionHeading from "../ui/SectionHeading";
+import { IconArrowRight } from "../ui/icons";
 import ProductCard from "./ProductCard";
 import { COMBOS, MEALS, SAVER_PACKS } from "./product-data";
 import type { Product } from "./product-data";

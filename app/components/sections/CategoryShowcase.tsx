@@ -1,6 +1,6 @@
 import Image from "next/image";
-import Container from "../Container";
-import { IconCart, IconHeart } from "../icons";
+import Container from "../ui/Container";
+import { IconCart, IconHeart } from "../ui/icons";
 import ProductArt from "./ProductArt";
 import { COMBOS, MEALS, SAVER_PACKS } from "./product-data";
 import type { Product } from "./product-data";
@@ -29,7 +29,7 @@ function CategoryCard({ name, price, originalPrice, accent, count, image, tags }
         >
           <IconHeart className="h-4 w-4" />
         </button>
-        <div className="h-full w-full transition-transform duration-500 group-hover:scale-105">
+        <div className="relative h-full w-full transition-transform duration-500 group-hover:scale-105">
           {image ? (
             <Image
               src={image}
