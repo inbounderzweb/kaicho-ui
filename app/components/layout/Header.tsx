@@ -59,13 +59,13 @@ export default function Header() {
             >
               <IconSearch className="h-5 w-5" />
             </button>
-            <button
-              type="button"
+            <Link
+              href="/login"
               aria-label="Account"
               className="hidden h-10 w-10 items-center justify-center rounded-full text-ink transition-colors hover:bg-brand-soft hover:text-brand sm:inline-flex"
             >
               <IconUser className="h-5 w-5" />
-            </button>
+            </Link>
             <button
               type="button"
               aria-label="Wishlist"
@@ -76,8 +76,8 @@ export default function Header() {
                 0
               </span>
             </button>
-            <button
-              type="button"
+            <Link
+              href="/cart"
               aria-label="Cart"
               className="relative inline-flex h-10 w-10 items-center justify-center rounded-full text-ink transition-colors hover:bg-brand-soft hover:text-brand"
             >
@@ -85,7 +85,7 @@ export default function Header() {
               <span className="absolute right-1 top-1 flex h-4 w-4 items-center justify-center rounded-full bg-brand text-[10px] font-bold text-white">
                 0
               </span>
-            </button>
+            </Link>
 
             <Button href="#products" variant="primary" size="sm" className="ml-2 hidden lg:inline-flex">
               Shop Now

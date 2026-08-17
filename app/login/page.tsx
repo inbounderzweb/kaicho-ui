@@ -11,6 +11,7 @@ import {
   IconFlame,
   IconCheck,
   IconChevronLeft,
+  IconGoogle,
 } from "../components/ui/icons";
 
 const TRUST_BADGES = [
@@ -24,6 +25,7 @@ export default function LoginPage() {
   const [mobile, setMobile] = useState("");
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
   const otpRefs = useRef<(HTMLInputElement | null)[]>([]);
@@ -38,6 +40,14 @@ export default function LoginPage() {
     await new Promise((r) => setTimeout(r, 1200));
     setLoading(false);
     setStep("otp");
+  };
+
+  const handleGoogleLogin = async () => {
+    setError("");
+    setGoogleLoading(true);
+    await new Promise((r) => setTimeout(r, 1200));
+    setGoogleLoading(false);
+    setSuccess(true);
   };
 
   const handleVerifyOtp = async () => {
@@ -254,8 +264,8 @@ export default function LoginPage() {
                 <Button
                   onClick={handleSendOtp}
                   disabled={loading}
-                  size="lg"
-                  className="w-full"
+                  size="sm"
+                  className="w-full bg-[#00A961] rounded-lg py-2 text-white font-bold"
                 >
                   {loading ? (
                     <span className="inline-flex items-center gap-2">
@@ -263,12 +273,31 @@ export default function LoginPage() {
                       Sending OTP…
                     </span>
                   ) : (
-                    <>
-                      Send OTP
-                      <IconArrowRight className="h-4 w-4" />
-                    </>
+                    "Send OTP"
                   )}
                 </Button>
+
+                <div className="flex items-center gap-3">
+                  <span className="h-px flex-1 bg-border" />
+                  <span className="text-xs font-semibold uppercase tracking-wider text-ink-faint">
+                    Or
+                  </span>
+                  <span className="h-px flex-1 bg-border" />
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleGoogleLogin}
+                  disabled={googleLoading}
+                  className="flex w-full items-center justify-center gap-2.5 rounded-2xl border border-border bg-white py-3.5 text-sm font-semibold text-ink transition-colors hover:bg-cream disabled:opacity-50"
+                >
+                  {googleLoading ? (
+                    <span className="h-4 w-4 animate-spin rounded-full border-2 border-ink/20 border-t-ink/60" />
+                  ) : (
+                    <IconGoogle className="h-4 w-4" />
+                  )}
+                  {googleLoading ? "Signing in…" : "Continue with Google"}
+                </button>
 
                 <p className="text-center text-[11px] font-medium leading-relaxed text-ink-faint">
                   By continuing, you agree to our Terms of Service and Privacy

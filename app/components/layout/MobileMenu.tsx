@@ -1,10 +1,11 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useEffect, useRef } from "react";
 import Button from "../ui/Button";
 import { NAV_LINKS } from "./nav-links";
-import { IconClose, IconMail, IconPhone } from "../ui/icons";
+import { IconClose, IconMail, IconPhone, IconUser } from "../ui/icons";
 
 export default function MobileMenu({
   open,
@@ -86,6 +87,13 @@ export default function MobileMenu({
         </nav>
 
         <div className="space-y-3 border-t border-border px-5 py-6">
+          <Link
+            href="/login"
+            onClick={onClose}
+            className="flex items-center gap-3 text-sm text-ink-muted"
+          >
+            <IconUser className="h-4 w-4 text-brand" /> Login / Account
+          </Link>
           <a href="tel:+918792799631" className="flex items-center gap-3 text-sm text-ink-muted">
             <IconPhone className="h-4 w-4 text-brand" /> +91 87927 99631
           </a>

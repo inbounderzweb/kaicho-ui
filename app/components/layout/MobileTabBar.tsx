@@ -1,12 +1,13 @@
 "use client";
 
-import { IconCart, IconHome, IconLeaf, IconPhone } from "../ui/icons";
+import Link from "next/link";
+import { IconCart, IconHome, IconLeaf, IconUser } from "../ui/icons";
 
 const TABS = [
   { label: "Home", href: "#home", Icon: IconHome },
   { label: "Shop", href: "#products", Icon: IconCart },
   { label: "About", href: "#story", Icon: IconLeaf },
-  { label: "Contact", href: "#contact", Icon: IconPhone },
+  { label: "Profile", href: "/login", Icon: IconUser },
 ];
 
 export default function MobileTabBar() {
@@ -16,14 +17,14 @@ export default function MobileTabBar() {
       aria-label="Quick navigation"
     >
       {TABS.map(({ label, href, Icon }) => (
-        <a
+        <Link
           key={href}
           href={href}
           className="flex flex-1 flex-col items-center gap-1 py-2.5 text-ink-muted transition-colors active:text-brand"
         >
           <Icon className="h-5 w-5" />
           <span className="text-[11px] font-semibold">{label}</span>
-        </a>
+        </Link>
       ))}
     </nav>
   );
