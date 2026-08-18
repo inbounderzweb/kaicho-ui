@@ -355,3 +355,21 @@ export function IconGoogle(props: IconProps) {
     </svg>
   );
 }
+
+export function IconMessageCircle(props: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <path d="M21 11.5a8.4 8.4 0 0 1-8.4 8.4 8.3 8.3 0 0 1-3.9-.9L3 21l1.9-5.7a8.3 8.3 0 0 1-.9-3.9A8.4 8.4 0 0 1 12.5 3a8.4 8.4 0 0 1 8.5 8.5Z" />
+    </svg>
+  );
+}
+
+export function IconLogout(props: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+      <path d="m16 17 5-5-5-5" />
+      <path d="M21 12H9" />
+    </svg>
+  );
+}

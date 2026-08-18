@@ -34,7 +34,11 @@ export const metadata: Metadata = {
     "retort technology",
   ],
   icons: {
-    icon: "/logo_07aad60c-0e17-4a1b-936b-88609e93a1cc.svg",
+    icon: [
+      { url: "/favicon.svg", type: "image/svg+xml" },
+      { url: "/favicon-32x32.png", sizes: "32x32", type: "image/png" },
+    ],
+    apple: "/apple-touch-icon.png",
   },
 };
 

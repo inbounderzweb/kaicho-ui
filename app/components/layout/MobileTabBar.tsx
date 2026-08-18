@@ -4,9 +4,9 @@ import Link from "next/link";
 import { IconCart, IconHome, IconLeaf, IconUser } from "../ui/icons";
 
 const TABS = [
-  { label: "Home", href: "#home", Icon: IconHome },
-  { label: "Shop", href: "#products", Icon: IconCart },
-  { label: "About", href: "#story", Icon: IconLeaf },
+  { label: "Home", href: "/#home", Icon: IconHome },
+  { label: "Shop", href: "/#products", Icon: IconCart },
+  { label: "About", href: "/#story", Icon: IconLeaf },
   { label: "Profile", href: "/login", Icon: IconUser },
 ];
 

@@ -278,7 +278,7 @@ export default function Hero() {
 
             <div className="animate-fade-up mx-auto mt-3 sm:mt-[clamp(0.75rem,1.5svh,1.75rem)]">
               <Button
-                href="#products"
+                href="/#products"
                 size="lg"
                 className="group h-10! gap-1.5! px-6! text-sm! bg-white! text-forest! hover:bg-cream-deep! sm:h-12! sm:gap-2! sm:px-8! sm:text-base!"
               >

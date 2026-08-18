@@ -100,7 +100,7 @@ export default function MobileMenu({
           <a href="mailto:hello@kaicho.in" className="flex items-center gap-3 text-sm text-ink-muted">
             <IconMail className="h-4 w-4 text-brand" /> hello@kaicho.in
           </a>
-          <Button href="#products" onClick={onClose} className="mt-2 w-full">
+          <Button href="/#products" onClick={onClose} className="mt-2 w-full">
             Shop Now
           </Button>
         </div>

@@ -15,8 +15,8 @@ function CategoryCard({ name, price, originalPrice, accent, count, image, tags }
   const discount = Math.round((1 - price / originalPrice) * 100);
 
   return (
-    <div className="group flex flex-col overflow-hidden rounded-2xl border border-border bg-white transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_20px_40px_-24px_rgba(28,28,28,0.25)]">
-      <div className="relative aspect-square bg-cream p-5">
+    <div className="group flex flex-col overflow-hidden rounded-2xl bg-white transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_20px_40px_-24px_rgba(28,28,28,0.25)]">
+      <div className="relative aspect-square overflow-hidden bg-cream">
         {discount > 0 && (
           <span className="absolute left-3 top-3 z-10 rounded-md bg-sale px-2 py-1 text-[11px] font-bold text-white">
             -{discount}%

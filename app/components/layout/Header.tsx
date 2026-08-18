@@ -27,7 +27,7 @@ export default function Header() {
         }`}
       >
         <div className="mx-auto flex h-20 w-full max-w-[1280px] items-center justify-between px-5 sm:px-6 lg:px-8">
-          <Link href="#home" className="flex shrink-0 items-center" aria-label="Kaicho Foods home">
+          <Link href="/#home" className="flex shrink-0 items-center" aria-label="Kaicho Foods home">
             <Image
               src="/logo_07aad60c-0e17-4a1b-936b-88609e93a1cc.svg"
               alt="Kaicho Foods"
@@ -66,8 +66,8 @@ export default function Header() {
             >
               <IconUser className="h-5 w-5" />
             </Link>
-            <button
-              type="button"
+            <Link
+              href="/wishlist"
               aria-label="Wishlist"
               className="relative hidden h-10 w-10 items-center justify-center rounded-full text-ink transition-colors hover:bg-brand-soft hover:text-brand sm:inline-flex"
             >
@@ -75,7 +75,7 @@ export default function Header() {
               <span className="absolute right-1 top-1 flex h-4 w-4 items-center justify-center rounded-full bg-brand text-[10px] font-bold text-white">
                 0
               </span>
-            </button>
+            </Link>
             <Link
               href="/cart"
               aria-label="Cart"
@@ -87,7 +87,7 @@ export default function Header() {
               </span>
             </Link>
 
-            <Button href="#products" variant="primary" size="sm" className="ml-2 hidden lg:inline-flex">
+            <Button href="/#products" variant="primary" size="sm" className="ml-2 hidden lg:inline-flex">
               Shop Now
             </Button>
 

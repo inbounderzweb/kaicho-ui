@@ -23,7 +23,7 @@ const TRUST_BADGES = [
 export default function LoginPage() {
   const [step, setStep] = useState<"mobile" | "otp">("mobile");
   const [mobile, setMobile] = useState("");
-  const [otp, setOtp] = useState(["", "", "", "", "", ""]);
+  const [otp, setOtp] = useState(["", "", "", ""]);
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState("");
@@ -53,8 +53,8 @@ export default function LoginPage() {
   const handleVerifyOtp = async () => {
     setError("");
     const code = otp.join("");
-    if (code.length !== 6) {
-      setError("Please enter the 6-digit OTP");
+    if (code.length !== 4) {
+      setError("Please enter the 4-digit OTP");
       return;
     }
     setLoading(true);
@@ -69,7 +69,7 @@ export default function LoginPage() {
     next[i] = val;
     setOtp(next);
     setError("");
-    if (val && i < 5) {
+    if (val && i < 3) {
       otpRefs.current[i + 1]?.focus();
     }
   };
@@ -82,15 +82,15 @@ export default function LoginPage() {
 
   const handleOtpPaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
     e.preventDefault();
-    const pasted = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, 6);
+    const pasted = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, 4);
     if (!pasted) return;
     const next = [...otp];
     for (let i = 0; i < pasted.length; i++) {
-      if (i < 6) next[i] = pasted[i];
+      if (i < 4) next[i] = pasted[i];
     }
     setOtp(next);
     setError("");
-    const focusIndex = Math.min(pasted.length, 5);
+    const focusIndex = Math.min(pasted.length, 3);
     otpRefs.current[focusIndex]?.focus();
   };
 
@@ -312,7 +312,7 @@ export default function LoginPage() {
                     type="button"
                     onClick={() => {
                       setStep("mobile");
-                      setOtp(["", "", "", "", "", ""]);
+                      setOtp(["", "", "", ""]);
                       setError("");
                     }}
                     className="inline-flex h-8 w-8 items-center justify-center rounded-full text-ink-muted transition-colors hover:bg-cream hover:text-ink"
@@ -375,7 +375,7 @@ export default function LoginPage() {
                   type="button"
                   onClick={() => {
                     setStep("mobile");
-                    setOtp(["", "", "", "", "", ""]);
+                    setOtp(["", "", "", ""]);
                     setError("");
                   }}
                   className="mx-auto block text-xs font-semibold text-forest transition-colors hover:text-brand-dark"

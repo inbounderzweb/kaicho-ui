@@ -15,7 +15,7 @@ export default function CartItemRow({
 
   return (
     <div className="flex gap-4 border-b border-border py-5 last:border-b-0 sm:gap-5">
-      <div className="h-20 w-20 shrink-0 overflow-hidden rounded-xl bg-cream p-2 sm:h-24 sm:w-24">
+      <div className="h-20 w-20 shrink-0 overflow-hidden rounded-xl bg-cream sm:h-24 sm:w-24">
         <ProductArt accent={item.accent} count={item.artCount} />
       </div>
 

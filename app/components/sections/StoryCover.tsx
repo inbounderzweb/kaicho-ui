@@ -127,7 +127,7 @@ export default function StoryCover() {
             <br />
             Ready by choice.
           </p>
-          <Button href="#story" variant="outline-light" size="lg" className="mt-8">
+          <Button href="/#story" variant="outline-light" size="lg" className="mt-8">
             Learn Our Story
           </Button>
         </div>
