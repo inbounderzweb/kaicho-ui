@@ -1,7 +1,9 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
 import ProductArt from "../sections/ProductArt";
+import { slugify } from "../sections/product-data";
 import { IconTruck } from "../ui/icons";
 import { ORDERS, type Order, type OrderStatus } from "./profile-data";
 
@@ -99,20 +101,27 @@ function OrderCard({ order }: { order: Order }) {
       </div>
 
       <div className="grid grid-cols-1 gap-4 p-5 sm:grid-cols-2">
-        {order.items.map((item, i) => (
-          <div key={i} className="flex gap-3">
-            <div className="h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-cream">
-              <ProductArt accent={item.accent} count={item.artCount} />
+        {order.items.map((item, i) => {
+          const href = `/products/${slugify(item.name)}`;
+          return (
+            <div key={i} className="flex gap-3">
+              <Link href={href} className="h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-cream">
+                <ProductArt accent={item.accent} count={item.artCount} />
+              </Link>
+              <div className="min-w-0">
+                <Link href={href}>
+                  <p className="truncate text-sm font-semibold text-ink hover:text-brand">
+                    {item.name}
+                  </p>
+                </Link>
+                <p className="mt-0.5 text-xs text-ink-muted">
+                  Qty: {item.quantity}x = Rs. {(item.price * item.quantity).toFixed(2)}
+                </p>
+                {item.variant && <p className="text-xs text-ink-muted">{item.variant}</p>}
+              </div>
             </div>
-            <div className="min-w-0">
-              <p className="truncate text-sm font-semibold text-ink">{item.name}</p>
-              <p className="mt-0.5 text-xs text-ink-muted">
-                Qty: {item.quantity}x = Rs. {(item.price * item.quantity).toFixed(2)}
-              </p>
-              {item.variant && <p className="text-xs text-ink-muted">{item.variant}</p>}
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

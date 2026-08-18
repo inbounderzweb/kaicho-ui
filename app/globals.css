@@ -31,8 +31,9 @@
   --shadow-card: 0 18px 40px -20px rgba(28, 28, 28, 0.18);
   --radius-hero: 2.5rem;
 
-  /* Header.tsx renders a constant h-20 (80px) bar at every breakpoint. */
-  --header-height: 5rem;
+  /* Header.tsx renders a shorter h-16 (64px) bar below lg; the lg:h-20
+     (80px) desktop bar is accounted for by the override further down. */
+  --header-height: 4rem;
   /* MobileTabBar.tsx is a fixed bottom bar shown below lg; main reserves
      the same amount via pb-16 so page content isn't hidden behind it. */
   --mobile-tabbar-height: 4rem;
@@ -184,8 +185,14 @@ body {
 }
 
 /* MobileTabBar.tsx hides at lg (matches main's pb-16 lg:pb-0), so the hero
-   only needs to clear the header from here up. */
+   only needs to clear the header from here up. Header.tsx also switches to
+   its taller lg:h-20 (80px) bar at this breakpoint, hence the --header-height
+   override alongside it. */
 @media (min-width: 1024px) {
+  :root {
+    --header-height: 5rem;
+  }
+
   .hero-viewport {
     min-height: calc(100vh - var(--header-height));
     min-height: calc(100dvh - var(--header-height));

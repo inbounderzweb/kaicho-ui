@@ -1,13 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { IconCart, IconHome, IconLeaf, IconUser } from "../ui/icons";
+import { IconCart, IconHeart, IconHome, IconUser } from "../ui/icons";
 
 const TABS = [
-  { label: "Home", href: "/#home", Icon: IconHome },
-  { label: "Shop", href: "/#products", Icon: IconCart },
-  { label: "About", href: "/#story", Icon: IconLeaf },
-  { label: "Profile", href: "/login", Icon: IconUser },
+  { label: "Home", href: "/", Icon: IconHome },
+  { label: "Shop", href: "/products", Icon: IconCart },
+  { label: "Wishlist", href: "/wishlist", Icon: IconHeart },
+  { label: "Account", href: "/login", Icon: IconUser },
 ];
 
 export default function MobileTabBar() {

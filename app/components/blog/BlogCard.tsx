@@ -13,7 +13,7 @@ export default function BlogCard({
 }) {
   return (
     <article
-      className={`group flex flex-col overflow-hidden rounded-2xl border border-border bg-white transition-shadow hover:shadow-[0_20px_40px_-28px_rgba(28,28,28,0.3)] ${className}`}
+      className={`group flex min-w-0 flex-col overflow-hidden rounded-2xl border border-border bg-white transition-shadow hover:shadow-[0_20px_40px_-28px_rgba(28,28,28,0.3)] ${className}`}
     >
       <div className="relative aspect-[16/10] bg-brand-soft">
         <Image
@@ -28,7 +28,7 @@ export default function BlogCard({
         <span className="text-xs font-semibold uppercase tracking-wide text-ink-faint">
           {post.date}
         </span>
-        <h3 className="mt-2 font-display text-[15px] font-semibold leading-snug text-ink">
+        <h3 className="line-clamp-2 mt-2 break-words font-display text-[15px] font-semibold leading-snug text-ink">
           {post.title}
         </h3>
         <p className="mt-2 flex-1 text-sm leading-relaxed text-ink-muted">{post.teaser}</p>

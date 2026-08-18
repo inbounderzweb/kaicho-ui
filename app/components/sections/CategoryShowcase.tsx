@@ -1,8 +1,9 @@
 import Image from "next/image";
+import Link from "next/link";
 import Container from "../ui/Container";
 import { IconCart, IconHeart } from "../ui/icons";
 import ProductArt from "./ProductArt";
-import { COMBOS, MEALS, SAVER_PACKS } from "./product-data";
+import { COMBOS, MEALS, SAVER_PACKS, slugify } from "./product-data";
 import type { Product } from "./product-data";
 
 const CATEGORIES: { label: string; products: Product[] }[] = [
@@ -13,22 +14,16 @@ const CATEGORIES: { label: string; products: Product[] }[] = [
 
 function CategoryCard({ name, price, originalPrice, accent, count, image, tags }: Product) {
   const discount = Math.round((1 - price / originalPrice) * 100);
+  const href = `/products/${slugify(name)}`;
 
   return (
-    <div className="group flex flex-col overflow-hidden rounded-2xl bg-white transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_20px_40px_-24px_rgba(28,28,28,0.25)]">
-      <div className="relative aspect-square overflow-hidden bg-cream">
+    <div className="group relative flex min-w-0 flex-col overflow-hidden rounded-2xl bg-white transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_20px_40px_-24px_rgba(28,28,28,0.25)]">
+      <Link href={href} className="relative block aspect-square overflow-hidden bg-cream">
         {discount > 0 && (
           <span className="absolute left-3 top-3 z-10 rounded-md bg-sale px-2 py-1 text-[11px] font-bold text-white">
             -{discount}%
           </span>
         )}
-        <button
-          type="button"
-          aria-label={`Add ${name} to wishlist`}
-          className="absolute right-3 top-3 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-white text-ink-muted shadow-sm transition hover:bg-brand-soft hover:text-brand"
-        >
-          <IconHeart className="h-4 w-4" />
-        </button>
         <div className="relative h-full w-full transition-transform duration-500 group-hover:scale-105">
           {image ? (
             <Image
@@ -42,7 +37,17 @@ function CategoryCard({ name, price, originalPrice, accent, count, image, tags }
             <ProductArt accent={accent} count={count} />
           )}
         </div>
-      </div>
+      </Link>
+
+      {/* Sibling of the image Link (not nested inside it) so this button
+          stays independently clickable instead of also triggering navigation. */}
+      <button
+        type="button"
+        aria-label={`Add ${name} to wishlist`}
+        className="absolute right-3 top-3 z-20 flex h-8 w-8 items-center justify-center rounded-full bg-white text-ink-muted shadow-sm transition hover:bg-brand-soft hover:text-brand"
+      >
+        <IconHeart className="h-4 w-4" />
+      </button>
 
       <div className="flex flex-1 flex-col p-4 sm:p-5">
         {tags[0] && (
@@ -51,9 +56,11 @@ function CategoryCard({ name, price, originalPrice, accent, count, image, tags }
           </span>
         )}
 
-        <h4 className="mt-1 font-display text-[15px] font-semibold leading-snug text-ink sm:text-base">
-          {name}
-        </h4>
+        <Link href={href}>
+          <h4 className="line-clamp-2 mt-1 min-h-[41px] break-words font-display text-[15px] font-semibold leading-snug text-ink hover:text-brand sm:min-h-[44px] sm:text-base">
+            {name}
+          </h4>
+        </Link>
 
         <div className="mt-2 flex flex-wrap items-baseline gap-2">
           <span className="text-lg font-bold text-ink">Rs. {price.toFixed(2)}</span>

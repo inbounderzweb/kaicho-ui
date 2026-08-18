@@ -74,7 +74,7 @@ export default function StorySection() {
 
             <div className="mt-9">
               <Button
-                href="/#b2b"
+                href="/b2b"
                 variant="outline"
                 size="lg"
                 className="group"

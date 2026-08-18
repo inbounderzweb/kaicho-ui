@@ -5,17 +5,19 @@ import { NAV_LINKS } from "./nav-links";
 import {
   IconFacebook,
   IconInstagram,
+  IconLinkedin,
   IconMail,
   IconMapPin,
   IconPhone,
   IconWhatsapp,
+  IconYoutube,
 } from "../ui/icons";
 
 const LEGAL_LINKS = [
-  { label: "Terms of Service", href: "#" },
-  { label: "Privacy Policy", href: "#" },
-  { label: "Shipping Policy", href: "#" },
-  { label: "Refund Policy", href: "#" },
+  { label: "Terms of Service", href: "/terms" },
+  { label: "Privacy Policy", href: "/privacy-policy" },
+  { label: "Shipping Policy", href: "/shipping-policy" },
+  { label: "Refund Policy", href: "/refund-policy" },
 ];
 
 const PAYMENT_METHODS = ["UPI", "Visa", "Mastercard", "RuPay", "COD"];
@@ -26,23 +28,34 @@ export default function Footer() {
       <div className="bg-brand-soft">
         <Container className="grid grid-cols-1 gap-12 py-16 sm:grid-cols-2 lg:grid-cols-4">
           <div>
-            <Image
-              src="/logo_07aad60c-0e17-4a1b-936b-88609e93a1cc.svg"
-              alt="Kaicho Foods"
-              width={140}
-              height={44}
-              className="h-10 w-auto"
-            />
+            <Link href="/" aria-label="Kaicho Foods home" className="inline-flex">
+              <Image
+                src="/logo_07aad60c-0e17-4a1b-936b-88609e93a1cc.svg"
+                alt="Kaicho Foods"
+                width={140}
+                height={44}
+                className="h-10 w-auto"
+              />
+            </Link>
             <p className="mt-4 max-w-xs text-sm leading-relaxed text-ink-muted">
               Ready-to-eat, gut-healthy meals made with Japanese retort
               technology &mdash; said, served, and shared across India.
             </p>
             <div className="mt-5 flex items-center gap-3">
-              <SocialLink href="https://instagram.com" label="Instagram">
+              <SocialLink href="https://www.instagram.com/kaichofoods/" label="Instagram">
                 <IconInstagram className="h-4 w-4" />
               </SocialLink>
-              <SocialLink href="https://facebook.com" label="Facebook">
+              <SocialLink
+                href="https://www.facebook.com/people/Kaicho-Foods/61577834296853/"
+                label="Facebook"
+              >
                 <IconFacebook className="h-4 w-4" />
+              </SocialLink>
+              <SocialLink href="https://www.youtube.com/@kaichofoods" label="YouTube">
+                <IconYoutube className="h-4 w-4" />
+              </SocialLink>
+              <SocialLink href="https://www.linkedin.com/in/kaicho-foods" label="LinkedIn">
+                <IconLinkedin className="h-4 w-4" />
               </SocialLink>
               <SocialLink href="https://wa.me/918792799631" label="WhatsApp">
                 <IconWhatsapp className="h-4 w-4" />

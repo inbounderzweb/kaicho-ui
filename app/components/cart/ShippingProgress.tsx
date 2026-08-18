@@ -59,16 +59,9 @@ export default function ShippingProgress({ subtotal }: { subtotal: number }) {
             style={{ left: `${freeShippingMark}%` }}
             aria-hidden
           />
-          <div className="relative mt-2 h-4">
-            <span
-              className="absolute -translate-x-1/2 text-[10px] font-bold uppercase tracking-wider text-brand sm:text-[11px]"
-              style={{ left: `${freeShippingMark}%` }}
-            >
-              Free Shipping
-            </span>
-            <span className="absolute right-0 text-[10px] font-bold uppercase tracking-wider text-terracotta sm:text-[11px]">
-              {CASHBACK_PERCENT}% Cashback
-            </span>
+          <div className="mt-2 flex items-center justify-between gap-2 text-[10px] font-bold uppercase tracking-wider sm:text-[11px]">
+            <span className="text-brand">Free Shipping</span>
+            <span className="text-terracotta">{CASHBACK_PERCENT}% Cashback</span>
           </div>
         </div>
         <span className="shrink-0 text-xs font-semibold text-ink-faint">

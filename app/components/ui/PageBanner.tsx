@@ -1,10 +1,16 @@
 import Image from "next/image";
 import Link from "next/link";
+import JsonLd from "../seo/JsonLd";
+import { breadcrumbJsonLd } from "@/lib/seo/structured-data";
 import { IconChevronRight } from "./icons";
 
 export type Breadcrumb = {
   label: string;
-  href?: string;
+  /** Site-relative path, e.g. "/about". Required on every crumb (including
+   *  the current page) so the visible breadcrumb and its BreadcrumbList
+   *  structured data always describe the same trail — the current page's
+   *  entry is still rendered as plain text, never as a link. */
+  href: string;
 };
 
 export default function PageBanner({
@@ -20,6 +26,11 @@ export default function PageBanner({
 }) {
   return (
     <div className="relative h-[240px] w-full overflow-hidden sm:h-[280px] lg:h-[320px]">
+      <JsonLd
+        data={breadcrumbJsonLd(
+          breadcrumbs.map((crumb) => ({ name: crumb.label, path: crumb.href }))
+        )}
+      />
       <Image src={image} alt="" fill priority className="object-cover" />
       <div className="absolute inset-0 bg-gradient-to-t from-charcoal/80 via-charcoal/40 to-charcoal/20" />
 
@@ -39,18 +50,21 @@ export default function PageBanner({
         aria-label="Breadcrumb"
         className="absolute inset-x-0 bottom-0 z-10 mx-auto flex max-w-[1280px] items-center gap-1.5 px-5 pb-5 text-xs font-medium text-white/75 sm:px-6 sm:pb-6 sm:text-sm lg:px-8"
       >
-        {breadcrumbs.map((crumb, i) => (
-          <span key={crumb.label} className="flex items-center gap-1.5">
-            {i > 0 && <IconChevronRight className="h-3.5 w-3.5 text-white/50" />}
-            {crumb.href ? (
-              <Link href={crumb.href} className="transition-colors hover:text-white">
-                {crumb.label}
-              </Link>
-            ) : (
-              <span className="font-semibold text-white">{crumb.label}</span>
-            )}
-          </span>
-        ))}
+        {breadcrumbs.map((crumb, i) => {
+          const isCurrentPage = i === breadcrumbs.length - 1;
+          return (
+            <span key={crumb.label} className="flex items-center gap-1.5">
+              {i > 0 && <IconChevronRight className="h-3.5 w-3.5 text-white/50" />}
+              {isCurrentPage ? (
+                <span className="font-semibold text-white">{crumb.label}</span>
+              ) : (
+                <Link href={crumb.href} className="transition-colors hover:text-white">
+                  {crumb.label}
+                </Link>
+              )}
+            </span>
+          );
+        })}
       </nav>
     </div>
   );

@@ -42,7 +42,7 @@ export default function BlogPageClient() {
       <PageBanner
         title="Read our latest blog"
         description="Recipes, nutrition tips and stories from the Kaicho kitchen."
-        breadcrumbs={[{ label: "Home", href: "/" }, { label: "Blog" }]}
+        breadcrumbs={[{ label: "Home", href: "/" }, { label: "Blog", href: "/blog" }]}
       />
 
       <div className="mx-auto max-w-[1280px] px-5 pt-10 sm:px-6 lg:px-8">

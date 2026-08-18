@@ -15,7 +15,7 @@ export default function ContactPage() {
       <PageBanner
         title="Contact Us"
         description="We'd love to hear from you — reach out with any questions or feedback."
-        breadcrumbs={[{ label: "Home", href: "/" }, { label: "Contact" }]}
+        breadcrumbs={[{ label: "Home", href: "/" }, { label: "Contact", href: "/contact" }]}
       />
       <ContactSection />
     </>

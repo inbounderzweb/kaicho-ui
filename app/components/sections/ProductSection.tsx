@@ -44,7 +44,7 @@ export default function ProductSection() {
         </div>
 
         <div className="mt-14 flex justify-center">
-          <Button href="/#story" size="lg">
+          <Button href="/about" size="lg">
             Explore Our Meals
             <IconArrowRight className="h-4 w-4" />
           </Button>

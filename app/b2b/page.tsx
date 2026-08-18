@@ -15,7 +15,7 @@ export default function B2BPage() {
       <PageBanner
         title="Bulk Orders & B2B"
         description="Corporate orders, reselling, events and catering — let's talk bulk pricing."
-        breadcrumbs={[{ label: "Home", href: "/" }, { label: "B2B" }]}
+        breadcrumbs={[{ label: "Home", href: "/" }, { label: "B2B", href: "/b2b" }]}
       />
       <StoryCover />
     </>

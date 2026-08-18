@@ -6,7 +6,10 @@ import { useEffect, useState } from "react";
 import Button from "../ui/Button";
 import MobileMenu from "./MobileMenu";
 import { NAV_LINKS } from "./nav-links";
+import { INITIAL_CART } from "../cart/cart-data";
 import { IconCart, IconHeart, IconMenu, IconSearch, IconUser } from "../ui/icons";
+
+const CART_COUNT = INITIAL_CART.reduce((sum, item) => sum + item.quantity, 0);
 
 export default function Header() {
   const [scrolled, setScrolled] = useState(false);
@@ -26,8 +29,52 @@ export default function Header() {
           scrolled ? "shadow-[0_1px_0_0_rgba(0,0,0,0.06)]" : ""
         }`}
       >
-        <div className="mx-auto flex h-20 w-full max-w-[1280px] items-center justify-between px-5 sm:px-6 lg:px-8">
-          <Link href="/#home" className="flex shrink-0 items-center" aria-label="Kaicho Foods home">
+        {/* Mobile top bar: hamburger + search — logo — cart */}
+        <div className="mx-auto flex h-16 w-full max-w-[1280px] items-center justify-between px-5 sm:px-6 lg:hidden">
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              aria-label="Open menu"
+              onClick={() => setMenuOpen(true)}
+              className="inline-flex h-10 w-10 items-center justify-center rounded-full text-ink hover:bg-brand-soft hover:text-brand"
+            >
+              <IconMenu className="h-6 w-6" />
+            </button>
+            <button
+              type="button"
+              aria-label="Search"
+              className="inline-flex h-10 w-10 items-center justify-center rounded-full text-ink hover:bg-brand-soft hover:text-brand"
+            >
+              <IconSearch className="h-5 w-5" />
+            </button>
+          </div>
+
+          <Link href="/" className="flex items-center" aria-label="Kaicho Foods home">
+            <Image
+              src="/logo_07aad60c-0e17-4a1b-936b-88609e93a1cc.svg"
+              alt="Kaicho Foods"
+              width={110}
+              height={35}
+              priority
+              className="h-8 w-auto"
+            />
+          </Link>
+
+          <Link
+            href="/cart"
+            aria-label={`Cart, ${CART_COUNT} items`}
+            className="relative inline-flex h-10 w-10 items-center justify-center rounded-full text-ink hover:bg-brand-soft hover:text-brand"
+          >
+            <IconCart className="h-5 w-5" />
+            <span className="absolute right-1 top-1 flex h-4 w-4 items-center justify-center rounded-full bg-brand text-[10px] font-bold text-white">
+              {CART_COUNT}
+            </span>
+          </Link>
+        </div>
+
+        {/* Desktop bar */}
+        <div className="mx-auto hidden h-20 w-full max-w-[1280px] items-center justify-between px-5 sm:px-6 lg:flex lg:px-8">
+          <Link href="/" className="flex shrink-0 items-center" aria-label="Kaicho Foods home">
             <Image
               src="/logo_07aad60c-0e17-4a1b-936b-88609e93a1cc.svg"
               alt="Kaicho Foods"
@@ -38,7 +85,7 @@ export default function Header() {
             />
           </Link>
 
-          <nav className="hidden items-center gap-8 lg:flex">
+          <nav className="flex items-center gap-8">
             {NAV_LINKS.map((link) => (
               <a
                 key={link.href}
@@ -55,21 +102,21 @@ export default function Header() {
             <button
               type="button"
               aria-label="Search"
-              className="hidden h-10 w-10 items-center justify-center rounded-full text-ink transition-colors hover:bg-brand-soft hover:text-brand sm:inline-flex"
+              className="inline-flex h-10 w-10 items-center justify-center rounded-full text-ink transition-colors hover:bg-brand-soft hover:text-brand"
             >
               <IconSearch className="h-5 w-5" />
             </button>
             <Link
               href="/login"
               aria-label="Account"
-              className="hidden h-10 w-10 items-center justify-center rounded-full text-ink transition-colors hover:bg-brand-soft hover:text-brand sm:inline-flex"
+              className="inline-flex h-10 w-10 items-center justify-center rounded-full text-ink transition-colors hover:bg-brand-soft hover:text-brand"
             >
               <IconUser className="h-5 w-5" />
             </Link>
             <Link
               href="/wishlist"
               aria-label="Wishlist"
-              className="relative hidden h-10 w-10 items-center justify-center rounded-full text-ink transition-colors hover:bg-brand-soft hover:text-brand sm:inline-flex"
+              className="relative inline-flex h-10 w-10 items-center justify-center rounded-full text-ink transition-colors hover:bg-brand-soft hover:text-brand"
             >
               <IconHeart className="h-5 w-5" />
               <span className="absolute right-1 top-1 flex h-4 w-4 items-center justify-center rounded-full bg-brand text-[10px] font-bold text-white">
@@ -78,27 +125,18 @@ export default function Header() {
             </Link>
             <Link
               href="/cart"
-              aria-label="Cart"
+              aria-label={`Cart, ${CART_COUNT} items`}
               className="relative inline-flex h-10 w-10 items-center justify-center rounded-full text-ink transition-colors hover:bg-brand-soft hover:text-brand"
             >
               <IconCart className="h-5 w-5" />
               <span className="absolute right-1 top-1 flex h-4 w-4 items-center justify-center rounded-full bg-brand text-[10px] font-bold text-white">
-                0
+                {CART_COUNT}
               </span>
             </Link>
 
-            <Button href="/#products" variant="primary" size="sm" className="ml-2 hidden lg:inline-flex">
+            <Button href="/products" variant="primary" size="sm" className="ml-2">
               Shop Now
             </Button>
-
-            <button
-              type="button"
-              aria-label="Open menu"
-              onClick={() => setMenuOpen(true)}
-              className="inline-flex h-10 w-10 items-center justify-center rounded-full text-ink hover:bg-brand-soft hover:text-brand lg:hidden"
-            >
-              <IconMenu className="h-6 w-6" />
-            </button>
           </div>
         </div>
       </header>

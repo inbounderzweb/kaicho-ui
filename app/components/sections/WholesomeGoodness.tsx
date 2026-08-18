@@ -20,7 +20,7 @@ export default function WholesomeGoodness() {
             Crafted with care using time-honored grains and modern technology
             to bring you the best of both worlds.
           </p>
-          <Button href="/#story" variant="outline" size="lg" className="mt-8">
+          <Button href="/about" variant="outline" size="lg" className="mt-8">
             Learn More
             <IconArrowRight className="h-4 w-4" />
           </Button>

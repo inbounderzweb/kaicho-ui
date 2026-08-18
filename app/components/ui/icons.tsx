@@ -214,6 +214,26 @@ export function IconFacebook(props: IconProps) {
   );
 }
 
+export function IconYoutube(props: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" {...props}>
+      <path
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M23 12c0-.1 0-3.6-.4-5.3a2.8 2.8 0 0 0-2.1-2.1C18.6 4 12 4 12 4s-6.6 0-8.5.6a2.8 2.8 0 0 0-2.1 2.1C1 8.4 1 11.9 1 12s0 3.6.4 5.3a2.8 2.8 0 0 0 2.1 2.1C5.4 20 12 20 12 20s6.6 0 8.5-.6a2.8 2.8 0 0 0 2.1-2.1c.4-1.7.4-5.2.4-5.3ZM9.8 15.5V8.5L15.8 12l-6 3.5Z"
+      />
+    </svg>
+  );
+}
+
+export function IconLinkedin(props: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" {...props}>
+      <path d="M20.5 2h-17A1.5 1.5 0 0 0 2 3.5v17A1.5 1.5 0 0 0 3.5 22h17a1.5 1.5 0 0 0 1.5-1.5v-17A1.5 1.5 0 0 0 20.5 2ZM8 19H5V9h3v10ZM6.5 7.7A1.7 1.7 0 1 1 6.5 4.3a1.7 1.7 0 0 1 0 3.4ZM19 19h-3v-5.3c0-1.3-.5-2.1-1.6-2.1-.9 0-1.4.6-1.6 1.2-.1.2-.1.5-.1.8V19h-3s.1-9 0-10h3v1.4c.4-.6 1.1-1.5 2.7-1.5 2 0 3.5 1.3 3.5 4V19Z" />
+    </svg>
+  );
+}
+
 export function IconTruck(props: IconProps) {
   return (
     <svg {...base} {...props}>

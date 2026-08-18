@@ -35,3 +35,20 @@ export const SAVER_PACKS: Product[] = [
   { name: "Mixed Millet Bulk Pack (10 Packs)", price: 1500, originalPrice: 1900, accent: OLIVE, count: 3, tags: ["100% Natural", "No Preservatives"], image: DUMMY_IMAGE },
   { name: "Navadhanya Bulk Pack (10 Packs)", price: 1350, originalPrice: 1875, accent: GOLD, count: 3, tags: ["100% Natural", "No Preservatives"], image: DUMMY_IMAGE },
 ];
+
+export function slugify(name: string): string {
+  return name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "");
+}
+
+export type SluggedProduct = Product & { slug: string };
+
+export const ALL_PRODUCTS: SluggedProduct[] = [...MEALS, ...COMBOS, ...SAVER_PACKS].map(
+  (product) => ({ ...product, slug: slugify(product.name) })
+);
+
+export function getProductBySlug(slug: string): SluggedProduct | undefined {
+  return ALL_PRODUCTS.find((product) => product.slug === slug);
+}
