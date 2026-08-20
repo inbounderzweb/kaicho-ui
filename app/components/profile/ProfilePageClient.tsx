@@ -7,8 +7,8 @@ import CustomerSupportSection from "./CustomerSupportSection";
 import OrdersSection from "./OrdersSection";
 import SavedItemsSection from "./SavedItemsSection";
 import ProfileSidebar, { type ProfileSectionId } from "./ProfileSidebar";
-import { USER } from "./profile-data";
 import { IconChevronRight } from "../ui/icons";
+import { useRequireAuth } from "@/lib/auth/useRequireAuth";
 
 const TITLES: Record<ProfileSectionId, string> = {
   orders: "My Orders",
@@ -19,8 +19,38 @@ const TITLES: Record<ProfileSectionId, string> = {
 
 export default function ProfilePageClient() {
   const [section, setSection] = useState<ProfileSectionId>("orders");
+  const { user, isAuthorized, authState, refetch } = useRequireAuth();
 
-  const initials = USER.name
+  if (authState === "error") {
+    return (
+      <section className="mx-auto flex max-w-[1280px] flex-col items-center justify-center gap-3 px-5 py-24 text-center sm:px-6 lg:px-8">
+        <p className="text-sm font-semibold text-ink">Couldn&apos;t load your account.</p>
+        <p className="max-w-sm text-sm text-ink-muted">
+          This looks like a connection problem, not a sign-out — your session should still
+          be fine. Try again in a moment.
+        </p>
+        <button
+          type="button"
+          onClick={() => refetch()}
+          className="mt-2 rounded-full bg-brand px-5 py-2 text-sm font-semibold text-white transition-colors hover:bg-brand-dark"
+        >
+          Retry
+        </button>
+      </section>
+    );
+  }
+
+  if (!isAuthorized || !user) {
+    return (
+      <section className="mx-auto flex max-w-[1280px] items-center justify-center px-5 py-24 sm:px-6 lg:px-8">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-brand/30 border-t-brand" />
+      </section>
+    );
+  }
+
+  const displayName =
+    [user.firstName, user.lastName].filter(Boolean).join(" ") || "Kaicho Customer";
+  const initials = displayName
     .split(" ")
     .map((part) => part[0])
     .join("")
@@ -51,7 +81,7 @@ export default function ProfilePageClient() {
             My Account
           </h1>
           <p className="mt-0.5 truncate text-sm text-ink-muted">
-            {USER.name} · {USER.phone}
+            {displayName} · {user.countryCode} {user.phone}
           </p>
         </div>
       </div>

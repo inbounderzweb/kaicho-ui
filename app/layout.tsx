@@ -1,11 +1,9 @@
 import type { Metadata, Viewport } from "next";
 import { Sora, Urbanist } from "next/font/google";
+import Providers from "./providers";
 import GoogleTagManager from "./components/analytics/GoogleTagManager";
 import JsonLd from "./components/seo/JsonLd";
-import Header from "./components/layout/Header";
-import Footer from "./components/layout/Footer";
-import MobileTabBar from "./components/layout/MobileTabBar";
-import WhatsAppButton from "./components/layout/WhatsAppButton";
+import StorefrontChrome from "./components/layout/StorefrontChrome";
 import {
   buildPageMetadata,
   DEFAULT_TITLE,
@@ -82,14 +80,12 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       className={`${urbanist.variable} ${sora.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col bg-white text-ink">
-        <GoogleTagManager />
-        <JsonLd data={organizationJsonLd()} />
-        <JsonLd data={websiteJsonLd()} />
-        <Header />
-        <main className="flex-1 pb-16 lg:pb-0">{children}</main>
-        <Footer />
-        <MobileTabBar />
-        <WhatsAppButton />
+        <Providers>
+          <GoogleTagManager />
+          <JsonLd data={organizationJsonLd()} />
+          <JsonLd data={websiteJsonLd()} />
+          <StorefrontChrome>{children}</StorefrontChrome>
+        </Providers>
       </body>
     </html>
   );

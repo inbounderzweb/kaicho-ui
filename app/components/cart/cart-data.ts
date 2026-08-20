@@ -1,45 +1,33 @@
-import { COMBOS, MEALS } from "../sections/product-data";
+// Previously seeded from the dummy MEALS/COMBOS marketing data
+// (app/components/sections/product-data.ts) with a hardcoded 3-item
+// INITIAL_CART. Now backed by real products: CartItem stores a productId
+// (the source of truth to re-verify against at checkout time — this app
+// has no backend Cart/Order module yet, so the cart itself stays the
+// existing client-side/persisted zustand store per the spec's "reuse the
+// existing cart module" instruction) plus a display-only price/image
+// snapshot taken when the item was added. That snapshot is never sent
+// anywhere as an authoritative price — there is no checkout submission
+// endpoint yet (see CartPageClient's disabled "Checkout coming soon"
+// button), and when one is built it must re-fetch each product's current
+// price/stock server-side rather than trust this snapshot.
 
 export const FREE_SHIPPING_THRESHOLD = 499;
 export const CASHBACK_THRESHOLD = 999;
 export const CASHBACK_PERCENT = 3;
 
-export type CartItem = {
-  id: string;
+export interface CartItem {
+  productId: string;
+  slug: string;
   name: string;
-  variant?: string;
+  /** Absolute, resolved image URL (thumbnail-sized) — null if the product has no image. */
+  image: string | null;
+  imageAlt: string;
+  /** Display-only price snapshot at add-to-cart time — not authoritative. */
   price: number;
-  accent: string;
-  artCount: 1 | 2 | 3;
+  mrp: number;
   quantity: number;
-};
+  /** Stock snapshot at add-to-cart time — informational cap on the quantity stepper, re-verified server-side at checkout. */
+  maxQuantity?: number;
+}
 
-export const INITIAL_CART: CartItem[] = [
-  {
-    id: "veg-oats-porridge",
-    name: MEALS[2].name,
-    variant: "Single Pack",
-    price: MEALS[2].price,
-    accent: MEALS[2].accent,
-    artCount: MEALS[2].count,
-    quantity: 2,
-  },
-  {
-    id: "chicken-oats-porridge",
-    name: MEALS[3].name,
-    variant: "Single Pack",
-    price: MEALS[3].price,
-    accent: MEALS[3].accent,
-    artCount: MEALS[3].count,
-    quantity: 1,
-  },
-  {
-    id: "millet-duo-combo",
-    name: COMBOS[0].name,
-    variant: "2-Pack Combo",
-    price: COMBOS[0].price,
-    accent: COMBOS[0].accent,
-    artCount: COMBOS[0].count,
-    quantity: 1,
-  },
-];
+export const INITIAL_CART: CartItem[] = [];

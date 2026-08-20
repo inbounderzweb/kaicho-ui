@@ -1,5 +1,7 @@
+import { Suspense } from "react";
 import PageBanner from "../components/ui/PageBanner";
-import ProductSection from "../components/sections/ProductSection";
+import ProductsPageClient from "../components/products/ProductsPageClient";
+import ProductGrid from "../components/products/ProductGrid";
 import { buildPageMetadata } from "@/lib/seo/metadata";
 
 export const metadata = buildPageMetadata({
@@ -17,7 +19,15 @@ export default function ProductsPage() {
         description="Healthy, ready-to-eat meals, combos and saver packs for busy lifestyles."
         breadcrumbs={[{ label: "Home", href: "/" }, { label: "Products", href: "/products" }]}
       />
-      <ProductSection />
+      {/* ProductsPageClient reads useSearchParams() (via useCatalogFilters)
+          for its URL-driven filter state — the App Router requires that to
+          be wrapped in Suspense, or a static prerender of this page fails
+          the build entirely. The fallback is the same grid skeleton the
+          client itself shows while its first fetch is in flight, so there's
+          no visible flash between the two. */}
+      <Suspense fallback={<ProductGrid items={[]} isLoading />}>
+        <ProductsPageClient />
+      </Suspense>
     </>
   );
 }

@@ -6,6 +6,8 @@ import { useEffect, useRef } from "react";
 import Button from "../ui/Button";
 import { NAV_LINKS } from "./nav-links";
 import { IconClose, IconMail, IconPhone, IconUser } from "../ui/icons";
+import { useCurrentUser } from "@/lib/hooks/useCurrentUser";
+import { getAccountHref } from "@/lib/auth/getAccountHref";
 
 export default function MobileMenu({
   open,
@@ -15,6 +17,8 @@ export default function MobileMenu({
   onClose: () => void;
 }) {
   const panelRef = useRef<HTMLDivElement>(null);
+  const { data: user } = useCurrentUser();
+  const accountHref = getAccountHref(user);
 
   useEffect(() => {
     if (!open) return;
@@ -90,11 +94,11 @@ export default function MobileMenu({
 
         <div className="space-y-3 border-t border-border px-5 py-6">
           <Link
-            href="/login"
+            href={accountHref}
             onClick={onClose}
             className="flex items-center gap-3 text-sm text-ink-muted"
           >
-            <IconUser className="h-4 w-4 text-brand" /> Login / Account
+            <IconUser className="h-4 w-4 text-brand" /> {user ? "My Account" : "Login / Account"}
           </Link>
           <a href="tel:+918792799631" className="flex items-center gap-3 text-sm text-ink-muted">
             <IconPhone className="h-4 w-4 text-brand" /> +91 87927 99631

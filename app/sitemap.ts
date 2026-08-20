@@ -1,6 +1,7 @@
 import type { MetadataRoute } from "next";
 import { absoluteUrl } from "@/lib/seo/urls";
-import { ALL_PRODUCTS } from "./components/sections/product-data";
+import { fetchPublicProducts } from "@/lib/api/publicProducts";
+import { fetchPublicCategories } from "@/lib/api/publicCategories";
 
 /**
  * Only real, indexable, public pages — kept in sync with each page's own
@@ -21,7 +22,26 @@ const ROUTES: { path: string; changeFrequency: MetadataRoute.Sitemap[number]["ch
   { path: "/refund-policy", changeFrequency: "yearly", priority: 0.3 },
 ];
 
-export default function sitemap(): MetadataRoute.Sitemap {
+const PRODUCT_PAGE_SIZE = 60; // the public API's max pageSize
+
+async function fetchAllProductSlugs(): Promise<string[]> {
+  const slugs: string[] = [];
+  let page = 1;
+
+  // Bounded to 50 pages (3000 products) as a sanity ceiling — this walks
+  // the live public listing endpoint page by page rather than assuming any
+  // particular catalog size.
+  for (let i = 0; i < 50; i++) {
+    const result = await fetchPublicProducts({ page, pageSize: PRODUCT_PAGE_SIZE });
+    slugs.push(...result.items.map((p) => p.slug));
+    if (page * PRODUCT_PAGE_SIZE >= result.total) break;
+    page += 1;
+  }
+
+  return slugs;
+}
+
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const lastModified = new Date();
 
   const staticEntries = ROUTES.map((route) => ({
@@ -31,12 +51,32 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: route.priority,
   }));
 
-  const productEntries = ALL_PRODUCTS.map((product) => ({
-    url: absoluteUrl(`/products/${product.slug}`),
-    lastModified,
-    changeFrequency: "weekly" as const,
-    priority: 0.8,
-  }));
+  // The sitemap must still build/render even if the backend is briefly
+  // unreachable — falling back to the static entries above rather than
+  // failing the whole route.
+  let productEntries: MetadataRoute.Sitemap = [];
+  let categoryEntries: MetadataRoute.Sitemap = [];
 
-  return [...staticEntries, ...productEntries];
+  try {
+    const [slugs, categoriesResult] = await Promise.all([fetchAllProductSlugs(), fetchPublicCategories()]);
+
+    productEntries = slugs.map((slug) => ({
+      url: absoluteUrl(`/products/${slug}`),
+      lastModified,
+      changeFrequency: "weekly" as const,
+      priority: 0.8,
+    }));
+
+    categoryEntries = categoriesResult.categories.map((category) => ({
+      url: absoluteUrl(`/category/${category.slug}`),
+      lastModified,
+      changeFrequency: "weekly" as const,
+      priority: 0.7,
+    }));
+  } catch {
+    // Backend unreachable at build/request time — ship the static routes
+    // only rather than failing sitemap generation entirely.
+  }
+
+  return [...staticEntries, ...categoryEntries, ...productEntries];
 }

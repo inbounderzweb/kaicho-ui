@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import LoginPageClient from "../components/login/LoginPageClient";
 import { buildPageMetadata } from "@/lib/seo/metadata";
 
@@ -9,5 +10,9 @@ export const metadata = buildPageMetadata({
 });
 
 export default function LoginPage() {
-  return <LoginPageClient />;
+  return (
+    <Suspense>
+      <LoginPageClient />
+    </Suspense>
+  );
 }

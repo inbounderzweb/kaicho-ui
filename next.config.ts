@@ -1,5 +1,27 @@
 import type { NextConfig } from "next";
 
+// Product/category/brand media is served from the backend's own origin
+// (see lib/api/client.ts's resolveMediaUrl — root-relative "/uploads/..."
+// URLs resolved against NEXT_PUBLIC_API_BASE_URL with the "/api" suffix
+// stripped). next/image refuses to optimize an unlisted remote host, so
+// that origin needs its own remotePattern entry — computed from the same
+// env var the API client uses, defaulting to the local dev backend,
+// rather than hardcoding a domain that would break in every other
+// environment.
+const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:4000/api";
+const apiOrigin = new URL(apiBaseUrl);
+
+// True only when the backend origin IS a loopback address (the local dev
+// setup, where NEXT_PUBLIC_API_BASE_URL points at http://localhost:4000).
+// next/image's optimizer resolves the remote host and, as an SSRF
+// safeguard, refuses to fetch anything that resolves to a private/loopback
+// IP unless dangerouslyAllowLocalIP is set — which is exactly why product
+// images 404'd through the optimizer in local dev ("hostname resolved to
+// private IP" error). Gating on the hostname itself (rather than e.g.
+// NODE_ENV) means this stays off automatically in any real deployment,
+// where the API origin is a real domain, not localhost/127.0.0.1/::1.
+const isLoopbackApiHost = ["localhost", "127.0.0.1", "::1"].includes(apiOrigin.hostname);
+
 const nextConfig: NextConfig = {
   images: {
     remotePatterns: [
@@ -11,7 +33,13 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "cdn.shopify.com",
       },
+      {
+        protocol: apiOrigin.protocol === "https:" ? "https" : "http",
+        hostname: apiOrigin.hostname,
+        port: apiOrigin.port || undefined,
+      },
     ],
+    ...(isLoopbackApiHost ? { dangerouslyAllowLocalIP: true } : {}),
   },
   // Conservative, universally-safe headers only. HSTS and a real
   // Content-Security-Policy are deliberately NOT set here: HSTS is a long-

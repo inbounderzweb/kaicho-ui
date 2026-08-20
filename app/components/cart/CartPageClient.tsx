@@ -1,15 +1,18 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import Link from "next/link";
 import Button from "../ui/Button";
 import CartItemRow from "./CartItemRow";
 import ShippingProgress from "./ShippingProgress";
-import { FREE_SHIPPING_THRESHOLD, INITIAL_CART, type CartItem } from "./cart-data";
+import { FREE_SHIPPING_THRESHOLD } from "./cart-data";
+import { useCartStore } from "@/lib/store/cart.store";
 import { IconArrowRight, IconCart, IconChevronRight } from "../ui/icons";
 
 export default function CartPageClient() {
-  const [items, setItems] = useState<CartItem[]>(INITIAL_CART);
+  const items = useCartStore((s) => s.items);
+  const updateQuantity = useCartStore((s) => s.updateQuantity);
+  const removeItem = useCartStore((s) => s.removeItem);
 
   const subtotal = useMemo(
     () => items.reduce((sum, item) => sum + item.price * item.quantity, 0),
@@ -20,15 +23,13 @@ export default function CartPageClient() {
     [items]
   );
 
-  const handleQuantityChange = (id: string, quantity: number) => {
+  const handleQuantityChange = (productId: string, quantity: number) => {
     if (quantity < 1) return;
-    setItems((prev) =>
-      prev.map((item) => (item.id === id ? { ...item, quantity } : item))
-    );
+    updateQuantity(productId, quantity);
   };
 
-  const handleRemove = (id: string) => {
-    setItems((prev) => prev.filter((item) => item.id !== id));
+  const handleRemove = (productId: string) => {
+    removeItem(productId);
   };
 
   return (
@@ -87,7 +88,7 @@ export default function CartPageClient() {
 
               {items.map((item) => (
                 <CartItemRow
-                  key={item.id}
+                  key={item.productId}
                   item={item}
                   onQuantityChange={handleQuantityChange}
                   onRemove={handleRemove}
@@ -125,6 +126,12 @@ export default function CartPageClient() {
                 </span>
               </div>
 
+              {/* Checkout isn't built yet, and this cart's totals are
+                  display-only client-side snapshots — a real checkout must
+                  re-price/re-verify stock for every line server-side rather
+                  than trust these numbers. When it is, wrap the click with
+                  useAuthGate() from lib/auth/useAuthGate.ts to require login
+                  first and return here afterwards. */}
               <button
                 type="button"
                 disabled

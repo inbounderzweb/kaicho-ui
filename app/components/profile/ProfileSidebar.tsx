@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   IconHeart,
   IconLogout,
@@ -8,6 +8,7 @@ import {
   IconMessageCircle,
   IconTruck,
 } from "../ui/icons";
+import { useLogout } from "@/lib/hooks/useLogout";
 
 export type ProfileSectionId = "orders" | "addresses" | "saved" | "support";
 
@@ -25,6 +26,15 @@ export default function ProfileSidebar({
   active: ProfileSectionId;
   onSelect: (section: ProfileSectionId) => void;
 }) {
+  const router = useRouter();
+  const logout = useLogout();
+
+  const handleLogout = () => {
+    logout.mutate(undefined, {
+      onSuccess: () => router.push("/login"),
+    });
+  };
+
   return (
     <nav className="flex gap-2 overflow-x-auto pb-1 lg:w-64 lg:shrink-0 lg:flex-col lg:overflow-visible lg:pb-0">
       {NAV_ITEMS.map(({ id, label, Icon }) => {
@@ -49,13 +59,20 @@ export default function ProfileSidebar({
 
       <div className="hidden h-px bg-border lg:my-2 lg:block" />
 
-      <Link
-        href="/login"
-        className="flex shrink-0 items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold text-sale transition-colors hover:bg-sale/10 lg:w-full"
+      <button
+        type="button"
+        onClick={handleLogout}
+        disabled={logout.isPending}
+        className="flex shrink-0 items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold text-sale transition-colors hover:bg-sale/10 disabled:opacity-50 lg:w-full"
       >
         <IconLogout className="h-5 w-5" />
-        Log out
-      </Link>
+        {logout.isPending ? "Logging out…" : "Log out"}
+      </button>
+      {logout.isError && (
+        <p className="px-4 text-xs font-semibold text-sale">
+          Couldn&apos;t log out. Please try again.
+        </p>
+      )}
     </nav>
   );
 }

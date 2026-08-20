@@ -1,5 +1,6 @@
 import { absoluteUrl, SITE_URL } from "./urls";
 import { SITE_NAME } from "./metadata";
+import { resolveMediaUrl } from "../api/client";
 
 type JsonLd = Record<string, unknown>;
 
@@ -49,35 +50,45 @@ export function breadcrumbJsonLd(items: { name: string; path: string }[]): JsonL
 }
 
 /**
- * Only real fields: name, price, currency and a stable per-product URL all
- * genuinely exist now that /products/[slug] routes do. `availability` is
- * InStock because that's what the visible page itself represents (no
- * out-of-stock state exists anywhere in the UI) — not a fabricated value.
- * No rating/review fields: no real review data exists yet.
+ * Every field here comes from the real public product DTO
+ * (lib/api/publicProducts.ts's PublicProductDetail) — sku, images, brand
+ * name, and pricing/availability are all genuine backend fields now that
+ * /api/products/:slug is real. Still no rating/review fields: no real
+ * review data exists. `availability` reflects the product's own
+ * inventory.inStock rather than being hardcoded, so an out-of-stock
+ * product is never misrepresented as available to search engines.
+ *
+ * `images` are resolved via resolveMediaUrl (the API origin), the same as
+ * every other product image in the app, not via absoluteUrl (the site's
+ * own domain) — they're backend-hosted media, not site-relative paths.
  */
 export function productJsonLd(product: {
   name: string;
   description: string;
-  price: number;
+  sku: string;
   slug: string;
-  image?: string;
+  images: string[];
+  pricing: { mrp: number; sellingPrice: number };
+  inStock: boolean;
+  brandName?: string;
 }): JsonLd {
   return {
     "@context": "https://schema.org",
     "@type": "Product",
     name: product.name,
     description: product.description,
+    sku: product.sku,
+    ...(product.images.length ? { image: product.images.map((url) => resolveMediaUrl(url)) } : {}),
     brand: {
       "@type": "Brand",
-      name: SITE_NAME,
+      name: product.brandName || SITE_NAME,
     },
-    ...(product.image ? { image: absoluteUrl(product.image) } : {}),
     offers: {
       "@type": "Offer",
       url: absoluteUrl(`/products/${product.slug}`),
       priceCurrency: "INR",
-      price: product.price.toFixed(2),
-      availability: "https://schema.org/InStock",
+      price: product.pricing.sellingPrice.toFixed(2),
+      availability: product.inStock ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
     },
   };
 }

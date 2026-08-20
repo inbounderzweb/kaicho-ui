@@ -1,5 +1,12 @@
 @import "tailwindcss";
 
+/* Manual, persisted light/dark toggle for the admin panel (AdminShell adds
+   /removes .dark on <html> and remembers the choice in localStorage) rather
+   than the browser's automatic prefers-color-scheme. Redefining Tailwind's
+   dark: variant this way is global, but harmless outside app/admin/** — no
+   storefront component uses a dark: utility anywhere in this codebase. */
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
   --background: #ffffff;
   --foreground: #1c1c1c;
@@ -41,6 +48,19 @@
      block, notch panels, mobile utility bar) so their left/right edges
      always line up, instead of each one tuning its own clamp(). */
   --hero-inset: clamp(1.25rem, 4vw, 3rem);
+
+  /* Admin panel identity — deliberately separate from the storefront's
+     brand green, scoped to app/admin/** components only. Dark-mode values
+     are a deep, desaturated olive-black (not pure #000) so --admin-primary
+     keeps reading as the same sage identity rather than a plain inversion. */
+  --color-admin-primary: #d2dcb6;
+  --color-admin-primary-dark: #b9c695;
+  --color-admin-surface: #eeeeee;
+  --color-admin-surface-dark: #15170f;
+  --color-admin-card: #ffffff;
+  --color-admin-card-dark: #1d2016;
+  --color-admin-border: #dcdcdc;
+  --color-admin-border-dark: #2a2e1f;
 }
 
 @theme inline {
@@ -66,6 +86,15 @@
   --color-gold: var(--color-gold);
   --color-terracotta: var(--color-terracotta);
   --color-charcoal: var(--color-charcoal);
+
+  --color-admin-primary: var(--color-admin-primary);
+  --color-admin-primary-dark: var(--color-admin-primary-dark);
+  --color-admin-surface: var(--color-admin-surface);
+  --color-admin-surface-dark: var(--color-admin-surface-dark);
+  --color-admin-card: var(--color-admin-card);
+  --color-admin-card-dark: var(--color-admin-card-dark);
+  --color-admin-border: var(--color-admin-border);
+  --color-admin-border-dark: var(--color-admin-border-dark);
 
   --font-sans: var(--font-urbanist);
   --font-display: var(--font-sora);

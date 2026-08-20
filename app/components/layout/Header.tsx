@@ -6,14 +6,20 @@ import { useEffect, useState } from "react";
 import Button from "../ui/Button";
 import MobileMenu from "./MobileMenu";
 import { NAV_LINKS } from "./nav-links";
-import { INITIAL_CART } from "../cart/cart-data";
+import { useCartStore } from "@/lib/store/cart.store";
+import { useCurrentUser } from "@/lib/hooks/useCurrentUser";
+import { useWishlist } from "@/lib/hooks/useWishlist";
+import { getAccountHref } from "@/lib/auth/getAccountHref";
 import { IconCart, IconHeart, IconMenu, IconSearch, IconUser } from "../ui/icons";
-
-const CART_COUNT = INITIAL_CART.reduce((sum, item) => sum + item.quantity, 0);
 
 export default function Header() {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const cartCount = useCartStore((s) => s.getTotalItems());
+  const { data: user } = useCurrentUser();
+  const { data: wishlist } = useWishlist();
+  const wishlistCount = wishlist?.total ?? 0;
+  const accountHref = getAccountHref(user);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8);
@@ -62,12 +68,12 @@ export default function Header() {
 
           <Link
             href="/cart"
-            aria-label={`Cart, ${CART_COUNT} items`}
+            aria-label={`Cart, ${cartCount} items`}
             className="relative inline-flex h-10 w-10 items-center justify-center rounded-full text-ink hover:bg-brand-soft hover:text-brand"
           >
             <IconCart className="h-5 w-5" />
             <span className="absolute right-1 top-1 flex h-4 w-4 items-center justify-center rounded-full bg-brand text-[10px] font-bold text-white">
-              {CART_COUNT}
+              {cartCount}
             </span>
           </Link>
         </div>
@@ -87,14 +93,14 @@ export default function Header() {
 
           <nav className="flex items-center gap-8">
             {NAV_LINKS.map((link) => (
-              <a
+              <Link
                 key={link.href}
                 href={link.href}
                 className="group relative py-2 text-[15px] font-semibold text-ink transition-colors hover:text-brand"
               >
                 {link.label}
                 <span className="absolute inset-x-0 -bottom-0.5 h-0.5 origin-left scale-x-0 rounded-full bg-brand transition-transform duration-200 group-hover:scale-x-100" />
-              </a>
+              </Link>
             ))}
           </nav>
 
@@ -107,7 +113,7 @@ export default function Header() {
               <IconSearch className="h-5 w-5" />
             </button>
             <Link
-              href="/login"
+              href={accountHref}
               aria-label="Account"
               className="inline-flex h-10 w-10 items-center justify-center rounded-full text-ink transition-colors hover:bg-brand-soft hover:text-brand"
             >
@@ -115,22 +121,22 @@ export default function Header() {
             </Link>
             <Link
               href="/wishlist"
-              aria-label="Wishlist"
+              aria-label={`Wishlist, ${wishlistCount} items`}
               className="relative inline-flex h-10 w-10 items-center justify-center rounded-full text-ink transition-colors hover:bg-brand-soft hover:text-brand"
             >
               <IconHeart className="h-5 w-5" />
               <span className="absolute right-1 top-1 flex h-4 w-4 items-center justify-center rounded-full bg-brand text-[10px] font-bold text-white">
-                0
+                {wishlistCount}
               </span>
             </Link>
             <Link
               href="/cart"
-              aria-label={`Cart, ${CART_COUNT} items`}
+              aria-label={`Cart, ${cartCount} items`}
               className="relative inline-flex h-10 w-10 items-center justify-center rounded-full text-ink transition-colors hover:bg-brand-soft hover:text-brand"
             >
               <IconCart className="h-5 w-5" />
               <span className="absolute right-1 top-1 flex h-4 w-4 items-center justify-center rounded-full bg-brand text-[10px] font-bold text-white">
-                {CART_COUNT}
+                {cartCount}
               </span>
             </Link>
 
