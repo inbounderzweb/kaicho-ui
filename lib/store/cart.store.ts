@@ -25,7 +25,8 @@ export const useCartStore = create<CartStoreState>()(
             // maxQuantity is an informational stock snapshot, not a hard
             // guarantee — still worth capping the local cart display so it
             // doesn't silently grow past what was last known in stock. The
-            // backend remains the authority when checkout is built.
+            // backend remains the authority: /checkout/preview and
+            // /checkout both re-check real stock before an order is placed.
             const capped =
               typeof item.maxQuantity === "number" ? Math.min(nextQuantity, item.maxQuantity) : nextQuantity;
             return {

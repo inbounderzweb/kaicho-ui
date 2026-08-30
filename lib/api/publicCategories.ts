@@ -10,6 +10,7 @@ export interface PublicCategoryImage {
 export interface PublicCategory {
   categoryId: string;
   name: string;
+  collectionName: string | null;
   slug: string;
   description: string | null;
   image: PublicCategoryImage | null;

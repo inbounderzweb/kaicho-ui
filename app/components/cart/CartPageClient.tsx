@@ -2,14 +2,18 @@
 
 import { useMemo } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import Button from "../ui/Button";
 import CartItemRow from "./CartItemRow";
 import ShippingProgress from "./ShippingProgress";
 import { FREE_SHIPPING_THRESHOLD } from "./cart-data";
 import { useCartStore } from "@/lib/store/cart.store";
+import { useAuthGate } from "@/lib/auth/useAuthGate";
 import { IconArrowRight, IconCart, IconChevronRight } from "../ui/icons";
 
 export default function CartPageClient() {
+  const router = useRouter();
+  const { guard, isLoading: isAuthLoading } = useAuthGate();
   const items = useCartStore((s) => s.items);
   const updateQuantity = useCartStore((s) => s.updateQuantity);
   const removeItem = useCartStore((s) => s.removeItem);
@@ -126,24 +130,20 @@ export default function CartPageClient() {
                 </span>
               </div>
 
-              {/* Checkout isn't built yet, and this cart's totals are
-                  display-only client-side snapshots — a real checkout must
-                  re-price/re-verify stock for every line server-side rather
-                  than trust these numbers. When it is, wrap the click with
-                  useAuthGate() from lib/auth/useAuthGate.ts to require login
-                  first and return here afterwards. */}
+              {/* These totals are display-only client-side snapshots — the
+                  checkout page ignores them and re-prices every line
+                  server-side via /checkout/preview. Login is required, so
+                  the click goes through useAuthGate(), which bounces to
+                  /login?redirect=/cart and returns here afterwards. */}
               <button
                 type="button"
-                disabled
-                title="Checkout coming soon"
-                className="mt-6 inline-flex h-12 w-full cursor-not-allowed items-center justify-center gap-2 rounded-full bg-brand/40 text-sm font-semibold tracking-wide text-white"
+                onClick={() => guard(() => router.push("/checkout"))}
+                disabled={isAuthLoading}
+                className="mt-6 inline-flex h-12 w-full items-center justify-center gap-2 rounded-full bg-brand text-sm font-semibold tracking-wide text-white transition-colors hover:bg-brand-dark disabled:cursor-not-allowed disabled:bg-brand/40"
               >
                 Proceed to Checkout
                 <IconArrowRight className="h-4 w-4" />
               </button>
-              <p className="mt-2 text-center text-[11px] text-ink-faint">
-                Checkout coming soon
-              </p>
 
               <Link
                 href="/products"

@@ -2,6 +2,12 @@ import { z } from "zod";
 
 export const categoryFormSchema = z.object({
   name: z.string().trim().min(1, "Name is required").max(120, "Name is too long"),
+  collectionName: z
+    .string()
+    .trim()
+    .max(160, "Collection name is too long")
+    .optional()
+    .or(z.literal("")),
   slug: z
     .string()
     .trim()

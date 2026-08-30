@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useAdminDashboard } from "@/lib/hooks/admin/useAdminDashboard";
 import StatCard from "./StatCard";
 import TrendChart from "./TrendChart";
-import StatusBadge from "./StatusBadge";
+import { OrderStatusBadge } from "./OrderStatusBadge";
 
 const currency = new Intl.NumberFormat("en-IN", {
   style: "currency",
@@ -81,7 +81,7 @@ export default function DashboardClient() {
                 <p className="truncate text-black/55 dark:text-white/55">{order.customer}</p>
               </div>
               <p className="shrink-0 font-semibold tabular-nums">{currency.format(order.total)}</p>
-              <StatusBadge status={order.status} />
+              <OrderStatusBadge status={order.status} />
             </div>
           ))}
         </div>

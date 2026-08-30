@@ -6,10 +6,10 @@
 // existing client-side/persisted zustand store per the spec's "reuse the
 // existing cart module" instruction) plus a display-only price/image
 // snapshot taken when the item was added. That snapshot is never sent
-// anywhere as an authoritative price — there is no checkout submission
-// endpoint yet (see CartPageClient's disabled "Checkout coming soon"
-// button), and when one is built it must re-fetch each product's current
-// price/stock server-side rather than trust this snapshot.
+// anywhere as an authoritative price: checkout sends only
+// {productId, quantity} to POST /checkout/preview and POST /checkout, both
+// of which re-read price, discount and stock from the DB — the numbers
+// shown on the checkout page come from those responses, never from here.
 
 export const FREE_SHIPPING_THRESHOLD = 499;
 export const CASHBACK_THRESHOLD = 999;

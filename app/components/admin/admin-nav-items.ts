@@ -37,6 +37,7 @@ export const ADMIN_NAV_ITEMS: AdminNavItem[] = [
     Icon: IconTag,
     children: [
       { href: "/admin/categories", label: "Categories", Icon: IconTag },
+      { href: "/admin/collections", label: "Collections", Icon: IconPackage },
       { href: "/admin/brands", label: "Brands", Icon: IconStar },
       { href: "/admin/products", label: "Products", Icon: IconPackage },
     ],

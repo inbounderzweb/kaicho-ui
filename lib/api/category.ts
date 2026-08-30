@@ -10,6 +10,7 @@ export interface CategoryImage {
 export interface AdminCategory {
   categoryId: string;
   name: string;
+  collectionName: string | null;
   slug: string;
   description: string | null;
   image: CategoryImage | null;
@@ -43,6 +44,7 @@ export interface CategoryQueryParams extends PageParams {
 
 export interface CategoryFormInput {
   name: string;
+  collectionName?: string;
   slug?: string;
   description?: string;
   parentId?: string | null;

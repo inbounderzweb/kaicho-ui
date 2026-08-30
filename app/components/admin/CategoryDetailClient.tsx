@@ -72,7 +72,16 @@ export default function CategoryDetailClient({ id }: { id?: string }) {
     formState: { errors },
   } = useForm<CategoryFormValues>({
     resolver: zodResolver(categoryFormSchema),
-    defaultValues: { name: "", slug: "", description: "", parentId: "", imageMediaId: "", isActive: true, sortOrder: 0 },
+    defaultValues: {
+      name: "",
+      collectionName: "",
+      slug: "",
+      description: "",
+      parentId: "",
+      imageMediaId: "",
+      isActive: true,
+      sortOrder: 0,
+    },
   });
 
   useEffect(() => {
@@ -80,6 +89,7 @@ export default function CategoryDetailClient({ id }: { id?: string }) {
       const c = data.category;
       reset({
         name: c.name,
+        collectionName: c.collectionName ?? "",
         slug: c.slug,
         description: c.description ?? "",
         parentId: c.parentId ?? "",
@@ -151,6 +161,7 @@ export default function CategoryDetailClient({ id }: { id?: string }) {
   const onSubmit = (values: CategoryFormValues) => {
     const payload = {
       name: values.name,
+      collectionName: values.collectionName || undefined,
       slug: values.slug || undefined,
       description: values.description || undefined,
       parentId: values.parentId || null,
@@ -204,6 +215,20 @@ export default function CategoryDetailClient({ id }: { id?: string }) {
               className="w-full rounded-xl border border-admin-border bg-admin-surface px-3 py-2 text-sm outline-none focus:border-admin-primary-dark dark:border-admin-border-dark dark:bg-admin-surface-dark"
             />
             {errors.name && <p className="mt-1 text-xs text-red-600 dark:text-red-400">{errors.name.message}</p>}
+          </div>
+
+          <div>
+            <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-black/50 dark:text-white/50">
+              Collection Name
+            </label>
+            <input
+              {...register("collectionName")}
+              placeholder="Shown on homepage"
+              className="w-full rounded-xl border border-admin-border bg-admin-surface px-3 py-2 text-sm outline-none focus:border-admin-primary-dark dark:border-admin-border-dark dark:bg-admin-surface-dark"
+            />
+            {errors.collectionName && (
+              <p className="mt-1 text-xs text-red-600 dark:text-red-400">{errors.collectionName.message}</p>
+            )}
           </div>
 
           <div>

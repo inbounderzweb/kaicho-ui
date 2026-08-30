@@ -1,5 +1,6 @@
 import { apiFetch } from "./client";
 import type { UserRole } from "../constants/roles";
+import type { Order, OrderStatus, PaymentStatus } from "./order";
 
 export interface DashboardTrendPoint {
   date: string;
@@ -7,12 +8,19 @@ export interface DashboardTrendPoint {
   orders: number;
 }
 
+// The admin order LIST projection — deliberately slimmer than the full
+// Order (lib/api/order.ts), which is what /admin/orders/:id returns.
+// `items` is a count here, not the line items.
 export interface AdminOrder {
   id: string;
   customer: string;
   items: number;
   total: number;
-  status: "Processing" | "On the way" | "Delivered" | "Cancelled";
+  status: OrderStatus;
+  /** Optional because the dashboard's `recentOrders` projection reuses this
+   *  same type and isn't guaranteed to carry payment state — the /admin/orders
+   *  list does. Render it conditionally rather than assuming it's there. */
+  paymentStatus?: PaymentStatus;
   placedAt: string;
 }
 
@@ -142,6 +150,62 @@ export function updateAdminUser(id: string, patch: UpdateUserInput): Promise<{ u
   });
 }
 
-export function fetchAdminOrders(params: PageParams = {}): Promise<Paginated<AdminOrder>> {
-  return apiFetch<Paginated<AdminOrder>>(`/admin/orders${query(params)}`, { method: "GET" });
+export interface AdminOrdersQueryParams extends PageParams {
+  status?: OrderStatus | "all";
+  paymentStatus?: PaymentStatus | "all";
+}
+
+export function fetchAdminOrders({
+  status,
+  paymentStatus,
+  ...pageParams
+}: AdminOrdersQueryParams = {}): Promise<Paginated<AdminOrder>> {
+  let qs = query(pageParams);
+  if (status && status !== "all") qs += `&status=${status}`;
+  if (paymentStatus && paymentStatus !== "all") qs += `&paymentStatus=${paymentStatus}`;
+  return apiFetch<Paginated<AdminOrder>>(`/admin/orders${qs}`, { method: "GET" });
+}
+
+// /admin/orders/:id returns the full Order — the same document the
+// customer sees, so it reuses lib/api/order.ts's Order type rather than a
+// parallel admin-only copy. `customer` is whatever the backend can join in;
+// it may be absent, in which case the UI falls back to userId.
+export interface AdminOrderDetail extends Order {
+  customer?: {
+    userId?: string;
+    name?: string;
+    phone?: string | null;
+    email?: string | null;
+  } | null;
+  allowedNextStatuses?: OrderStatus[];
+}
+
+// adminOrder.controller.ts wraps these as {order}, matching every other
+// single-entity controller in the codebase — unwrap that level here.
+export async function fetchAdminOrderDetail(id: string): Promise<AdminOrderDetail> {
+  const { order } = await apiFetch<{ order: AdminOrderDetail }>(`/admin/orders/${encodeURIComponent(id)}`, {
+    method: "GET",
+  });
+  return order;
+}
+
+export async function updateAdminOrderStatus(
+  id: string,
+  input: { status: OrderStatus; note?: string }
+): Promise<AdminOrderDetail> {
+  const { order } = await apiFetch<{ order: AdminOrderDetail }>(`/admin/orders/${encodeURIComponent(id)}/status`, {
+    method: "PATCH",
+    body: JSON.stringify(input),
+  });
+  return order;
+}
+
+/** Omit `amount` for a full refund — the backend computes the remaining
+ *  refundable amount itself rather than trusting a client-sent total. */
+export async function refundAdminOrder(id: string, amount?: number): Promise<AdminOrderDetail> {
+  const { order } = await apiFetch<{ order: AdminOrderDetail }>(`/admin/orders/${encodeURIComponent(id)}/refund`, {
+    method: "POST",
+    body: JSON.stringify(amount === undefined ? {} : { amount }),
+  });
+  return order;
 }
