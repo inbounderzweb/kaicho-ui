@@ -102,8 +102,10 @@ export function deleteMedia(id: string): Promise<void> {
   return apiFetch<void>(`/admin/media/${encodeURIComponent(id)}`, { method: "DELETE" });
 }
 
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:4000/api";
+// Uploads run in the browser (XHR, for progress events), so — like apiFetch —
+// they go through the frontend's own origin and the next.config.ts proxy
+// rewrite, never straight to the backend / dev tunnel.
+const API_BASE_URL = "/api";
 
 interface UploadResponseBody {
   success?: boolean;

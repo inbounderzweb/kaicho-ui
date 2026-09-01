@@ -3,6 +3,11 @@
 import { FormEvent, ReactNode, useState } from "react";
 import Container from "../ui/Container";
 import { IconCheck, IconMail, IconPhone, IconWhatsapp } from "../ui/icons";
+import { submitContactInquiry } from "@/lib/api/inquiryPublic";
+import { ApiError } from "@/lib/api/ApiError";
+import { isValidIndianMobile, MOBILE_ERROR } from "@/lib/validation/phone";
+
+const MESSAGE_MAX = 5000;
 
 const CHANNELS = [
   {
@@ -45,6 +50,8 @@ export default function ContactSection() {
   const [form, setForm] = useState<FormState>(INITIAL_STATE);
   const [errors, setErrors] = useState<Partial<Record<keyof FormState, string>>>({});
   const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [apiError, setApiError] = useState<string | null>(null);
 
   const update =
     (key: keyof FormState) =>
@@ -55,16 +62,37 @@ export default function ContactSection() {
     const next: Partial<Record<keyof FormState, string>> = {};
     if (!form.name.trim()) next.name = "Please enter your name";
     if (!EMAIL_RE.test(form.email)) next.email = "Enter a valid email";
+    if (form.phone.trim() && !isValidIndianMobile(form.phone)) next.phone = MOBILE_ERROR;
     if (!form.message.trim()) next.message = "Please enter a message";
+    else if (form.message.length > MESSAGE_MAX) next.message = "Message is too long";
     setErrors(next);
     return Object.keys(next).length === 0;
   };
 
-  const onSubmit = (e: FormEvent) => {
+  const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    if (!validate()) return;
-    setSubmitted(true);
-    setForm(INITIAL_STATE);
+    setApiError(null);
+    if (!validate() || submitting) return;
+    setSubmitting(true);
+    try {
+      await submitContactInquiry({
+        name: form.name.trim(),
+        email: form.email.trim(),
+        phone: form.phone.trim() || undefined,
+        message: form.message.trim(),
+      });
+      setSubmitted(true);
+      setForm(INITIAL_STATE);
+      setErrors({});
+    } catch (err) {
+      setApiError(
+        err instanceof ApiError
+          ? err.message
+          : "Something went wrong sending your message. Please try again."
+      );
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -142,13 +170,14 @@ export default function ContactSection() {
                     className={fieldClasses(!!errors.email)}
                   />
                 </Field>
-                <Field label="Phone (Optional)" className="sm:col-span-2">
+                <Field label="Phone (Optional)" error={errors.phone} className="sm:col-span-2">
                   <input
                     value={form.phone}
                     onChange={update("phone")}
                     type="tel"
-                    placeholder="Enter your phone number"
-                    className={fieldClasses(false)}
+                    inputMode="tel"
+                    placeholder="10-digit mobile number"
+                    className={fieldClasses(!!errors.phone)}
                   />
                 </Field>
                 <Field label="Message*" error={errors.message} className="sm:col-span-2">
@@ -156,16 +185,24 @@ export default function ContactSection() {
                     value={form.message}
                     onChange={update("message")}
                     rows={4}
+                    maxLength={MESSAGE_MAX}
                     placeholder="How can we help?"
                     className={`${fieldClasses(!!errors.message)} resize-none`}
                   />
                 </Field>
 
+                {apiError && (
+                  <p className="rounded-lg bg-sale/10 px-4 py-3 text-sm font-medium text-sale sm:col-span-2">
+                    {apiError}
+                  </p>
+                )}
+
                 <button
                   type="submit"
-                  className="mt-2 h-12 rounded-lg bg-brand text-sm font-bold uppercase tracking-wide text-white transition-colors hover:bg-brand-dark sm:col-span-2"
+                  disabled={submitting}
+                  className="mt-2 h-12 rounded-lg bg-brand text-sm font-bold uppercase tracking-wide text-white transition-colors hover:bg-brand-dark disabled:opacity-60 sm:col-span-2"
                 >
-                  Send Message
+                  {submitting ? "Sending…" : "Send Message"}
                 </button>
               </form>
             )}

@@ -36,7 +36,26 @@ const isLoopbackApiHost =
   LOOPBACK_HOSTS.includes(apiOrigin.hostname) ||
   LOOPBACK_HOSTS.includes(mediaOrigin.hostname);
 
+// Where "/api/*" and "/uploads/media/*" browser requests are proxied to.
+// The browser (lib/api/client.ts) always calls the frontend's own origin so
+// requests stay same-origin (no CORS, no mixed content, and — with the dev
+// tunnel — the browser never hits the tunnel directly and can't be served
+// its interstitial HTML instead of the API JSON). The Next server runs on
+// the same host as the backend in local dev, so the default is the local
+// backend; set BACKEND_PROXY_ORIGIN to point elsewhere.
+const backendProxyOrigin = (process.env.BACKEND_PROXY_ORIGIN || "http://localhost:4000").replace(/\/$/, "");
+
 const nextConfig: NextConfig = {
+  async rewrites() {
+    return {
+      beforeFiles: [
+        { source: "/api/:path*", destination: `${backendProxyOrigin}/api/:path*` },
+        { source: "/uploads/media/:path*", destination: `${backendProxyOrigin}/uploads/media/:path*` },
+      ],
+      afterFiles: [],
+      fallback: [],
+    };
+  },
   images: {
     remotePatterns: [
       {

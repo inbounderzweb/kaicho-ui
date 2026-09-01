@@ -7,6 +7,7 @@ import type { PublicProductListParams } from "../api/publicProducts";
 import type { CategoryProductsParams } from "../api/publicCategories";
 import type { AdminBlogQueryParams } from "../api/blog";
 import type { PublicBlogListParams } from "../api/blogPublic";
+import type { AdminInquiryQueryParams } from "../api/inquiry";
 
 export const authKeys = {
   me: ["auth", "me"] as const,
@@ -93,6 +94,13 @@ export const publicBlogKeys = {
   detail: (slug: string) => ["public", "blogs", "detail", slug] as const,
   related: (slug: string, limit: number) => ["public", "blogs", "related", slug, limit] as const,
   categories: ["public", "blogs", "categories"] as const,
+};
+
+export const inquiryKeys = {
+  list: (params: AdminInquiryQueryParams) => ["admin", "inquiries", "list", params] as const,
+  detail: (id: string) => ["admin", "inquiries", "detail", id] as const,
+  stats: ["admin", "inquiries", "stats"] as const,
+  assignees: ["admin", "inquiries", "assignees"] as const,
 };
 
 export const wishlistKeys = {

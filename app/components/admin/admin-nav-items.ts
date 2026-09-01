@@ -8,6 +8,8 @@ import {
   IconTag,
   IconStar,
   IconFileText,
+  IconMessageCircle,
+  IconMail,
   type IconProps,
 } from "../ui/icons";
 
@@ -44,6 +46,15 @@ export const ADMIN_NAV_ITEMS: AdminNavItem[] = [
     ],
   },
   { href: "/admin/orders", label: "Orders", Icon: IconTruck },
+  {
+    label: "Inquiries",
+    Icon: IconMessageCircle,
+    children: [
+      { href: "/admin/inquiries", label: "All Inquiries", Icon: IconMessageCircle },
+      { href: "/admin/inquiries/bulk-order", label: "Bulk Order Inquiries", Icon: IconPackage, exact: true },
+      { href: "/admin/inquiries/contact", label: "Contact Inquiries", Icon: IconMail, exact: true },
+    ],
+  },
   {
     label: "Content",
     Icon: IconFileText,

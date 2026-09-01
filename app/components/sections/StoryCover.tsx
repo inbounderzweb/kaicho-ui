@@ -5,6 +5,9 @@ import { FormEvent, useEffect, useRef, useState } from "react";
 import Button from "../ui/Button";
 import Container from "../ui/Container";
 import { IconCheck } from "../ui/icons";
+import { submitBulkOrderInquiry } from "@/lib/api/inquiryPublic";
+import { ApiError } from "@/lib/api/ApiError";
+import { isValidIndianMobile, MOBILE_ERROR } from "@/lib/validation/phone";
 
 const HIGHLIGHTS = [
   {
@@ -48,7 +51,6 @@ const INITIAL_STATE: FormState = {
 };
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const PHONE_RE = /^[0-9+\s-]{7,15}$/;
 
 function fieldClasses(hasError: boolean) {
   return `h-12 w-full rounded-lg border bg-white/10 px-4 text-sm text-white placeholder:text-white/50 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-white/30 ${
@@ -63,6 +65,8 @@ export default function StoryCover() {
   const [form, setForm] = useState<FormState>(INITIAL_STATE);
   const [errors, setErrors] = useState<Partial<Record<keyof FormState, string>>>({});
   const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [apiError, setApiError] = useState<string | null>(null);
 
   useEffect(() => {
     const el = sectionRef.current;
@@ -88,18 +92,39 @@ export default function StoryCover() {
     const next: Partial<Record<keyof FormState, string>> = {};
     if (!form.name.trim()) next.name = "Please enter your name";
     if (!EMAIL_RE.test(form.email)) next.email = "Enter a valid email";
-    if (!PHONE_RE.test(form.phone)) next.phone = "Enter a valid phone number";
+    if (!isValidIndianMobile(form.phone)) next.phone = MOBILE_ERROR;
     if (!form.quantity.trim() || Number(form.quantity) <= 0) next.quantity = "Enter quantity required";
     if (!form.purpose) next.purpose = "Select a purpose";
     setErrors(next);
     return Object.keys(next).length === 0;
   };
 
-  const onSubmit = (e: FormEvent) => {
+  const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    if (!validate()) return;
-    setSubmitted(true);
-    setForm(INITIAL_STATE);
+    setApiError(null);
+    if (!validate() || submitting) return;
+    setSubmitting(true);
+    try {
+      await submitBulkOrderInquiry({
+        name: form.name.trim(),
+        email: form.email.trim(),
+        phone: form.phone.trim(),
+        quantity: Number(form.quantity),
+        purpose: form.purpose,
+        message: form.message.trim() || undefined,
+      });
+      setSubmitted(true);
+      setForm(INITIAL_STATE);
+      setErrors({});
+    } catch (err) {
+      setApiError(
+        err instanceof ApiError
+          ? err.message
+          : "Something went wrong sending your inquiry. Please try again."
+      );
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -222,8 +247,9 @@ export default function StoryCover() {
                   <input
                     value={form.phone}
                     onChange={update("phone")}
-                    placeholder="Enter Your Phone Number"
+                    placeholder="10-digit mobile number"
                     type="tel"
+                    inputMode="tel"
                     className={fieldClasses(!!errors.phone)}
                   />
                 </Field>
@@ -262,11 +288,18 @@ export default function StoryCover() {
                   />
                 </Field>
 
+                {apiError && (
+                  <p className="rounded-lg border border-red-300/40 bg-red-500/15 px-4 py-3 text-sm font-medium text-red-100 sm:col-span-2">
+                    {apiError}
+                  </p>
+                )}
+
                 <button
                   type="submit"
-                  className="mt-2 h-12 rounded-lg bg-white text-sm font-bold uppercase tracking-wide text-forest transition-colors hover:bg-cream-deep sm:col-span-2"
+                  disabled={submitting}
+                  className="mt-2 h-12 rounded-lg bg-white text-sm font-bold uppercase tracking-wide text-forest transition-colors hover:bg-cream-deep disabled:opacity-60 sm:col-span-2"
                 >
-                  Submit Inquiry
+                  {submitting ? "Submitting…" : "Submit Inquiry"}
                 </button>
               </form>
             )}

@@ -1,24 +1,31 @@
 import { ApiError } from "./ApiError";
 
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:4000/api";
+const IS_BROWSER = typeof window !== "undefined";
+
+// The real, absolute backend URL — used for server-side (SSR / route-handler)
+// fetches, which have no origin to resolve a relative path against.
+const RAW_API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:4000/api";
+
+// In the browser we deliberately call the frontend's OWN origin ("/api/…")
+// and let a next.config.ts rewrite proxy it to the backend. This keeps every
+// request same-origin: no CORS preflight, no mixed-content when the site is
+// served over HTTPS, and — critically for the dev-tunnel setup — the browser
+// never talks to the tunnel directly, so it can't be served the tunnel's
+// anti-abuse interstitial HTML in place of the API response.
+const API_BASE_URL = IS_BROWSER ? "/api" : RAW_API_BASE;
 
 // The backend's origin, without the /api suffix — for resolving the
-// root-relative asset URLs it returns (e.g. "/uploads/media/..."), which
-// are only valid against the backend's own origin, not wherever the
-// frontend happens to be served from.
-const API_ORIGIN = API_BASE_URL.replace(/\/api\/?$/, "");
+// root-relative asset URLs it returns (e.g. "/uploads/media/..."). Always
+// derived from the absolute value, never the relative browser one.
+const API_ORIGIN = RAW_API_BASE.replace(/\/api\/?$/, "");
 
-// One reusable base URL for backend-served media (/uploads/media/...).
-// Kept as its own env var so it can point somewhere other than the API
-// origin — e.g. hit the backend directly at http://localhost:4000 while
-// API calls go through a dev tunnel, so next/image's server-side fetch
-// never depends on the tunnel. Falls back to the API origin when unset,
-// so existing setups keep working. Trailing slash trimmed so joining with
-// a root-relative "/uploads/..." path never doubles the slash.
-const MEDIA_BASE_URL = (
-  process.env.NEXT_PUBLIC_MEDIA_BASE_URL || API_ORIGIN
-).replace(/\/$/, "");
+// Backend-served media (/uploads/media/...). On the server, an absolute URL
+// (the next/image optimizer fetches it). In the browser, empty — so
+// resolveMediaUrl yields a root-relative "/uploads/media/..." that the same
+// next.config.ts rewrite proxies to the backend. Trailing slash trimmed so
+// joining with a root-relative path never doubles the slash.
+const RAW_MEDIA_BASE = (process.env.NEXT_PUBLIC_MEDIA_BASE_URL || API_ORIGIN).replace(/\/$/, "");
+const MEDIA_BASE_URL = IS_BROWSER ? "" : RAW_MEDIA_BASE;
 
 export function resolveMediaUrl(url: string): string {
   if (/^https?:\/\//.test(url)) {
@@ -65,14 +72,23 @@ export async function apiFetch<T>(
   });
 
   let body: ApiResponse<T> | undefined;
+  let parseFailed = false;
   try {
     body = await res.json();
   } catch {
     body = undefined;
+    parseFailed = true;
   }
 
   if (!res.ok) {
     throw new ApiError(body?.message ?? "Something went wrong. Please try again.", res.status, body?.details);
+  }
+
+  // A 2xx whose body isn't the JSON envelope means something other than our
+  // API answered (a proxy error page, a tunnel interstitial, an HTML 200).
+  // Surface it instead of silently resolving with `undefined`.
+  if (parseFailed && res.status !== 204) {
+    throw new ApiError("The server returned an unexpected response. Please try again.", res.status);
   }
 
   return (body?.data as T) ?? (undefined as T);
