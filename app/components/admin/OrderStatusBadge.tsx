@@ -1,8 +1,10 @@
 import {
   ORDER_STATUS_LABELS,
   PAYMENT_STATUS_LABELS,
+  SHIPMENT_STATUS_LABELS,
   type OrderStatus,
   type PaymentStatus,
+  type ShipmentStatus,
 } from "@/lib/api/order";
 
 // Order/payment enums get their own badge rather than reusing StatusBadge:
@@ -32,6 +34,18 @@ const PAYMENT_STATUS_STYLES: Record<PaymentStatus, string> = {
   PARTIALLY_REFUNDED: "bg-amber-500/15 text-amber-700 dark:text-amber-400",
 };
 
+const SHIPMENT_STATUS_STYLES: Record<ShipmentStatus, string> = {
+  ORDER_CONFIRMED: "bg-sky-500/15 text-sky-700 dark:text-sky-400",
+  PROCESSING: "bg-sky-500/15 text-sky-700 dark:text-sky-400",
+  PACKED: "bg-sky-500/15 text-sky-700 dark:text-sky-400",
+  SHIPPED: "bg-indigo-500/15 text-indigo-700 dark:text-indigo-400",
+  IN_TRANSIT: "bg-indigo-500/15 text-indigo-700 dark:text-indigo-400",
+  OUT_FOR_DELIVERY: "bg-indigo-500/15 text-indigo-700 dark:text-indigo-400",
+  DELIVERED: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400",
+  CANCELLED: "bg-red-500/15 text-red-700 dark:text-red-400",
+  FAILED_DELIVERY: "bg-red-500/15 text-red-700 dark:text-red-400",
+};
+
 const base = "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold";
 const fallback = "bg-black/10 text-black/70 dark:bg-white/10 dark:text-white/70";
 
@@ -47,6 +61,14 @@ export function PaymentStatusBadge({ status }: { status: PaymentStatus }) {
   return (
     <span className={`${base} ${PAYMENT_STATUS_STYLES[status] ?? fallback}`}>
       {PAYMENT_STATUS_LABELS[status] ?? status}
+    </span>
+  );
+}
+
+export function ShipmentStatusBadge({ status }: { status: ShipmentStatus }) {
+  return (
+    <span className={`${base} ${SHIPMENT_STATUS_STYLES[status] ?? fallback}`}>
+      {SHIPMENT_STATUS_LABELS[status] ?? status}
     </span>
   );
 }

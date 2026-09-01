@@ -25,12 +25,13 @@ export default function CartItemRow({
       >
         {item.image ? (
           <Image
-            // item.image is stored already-resolved (see cart-data.ts), but
-            // resolveMediaUrl is a no-op on an already-absolute URL — this
-            // is a defensive re-resolve so a cart item persisted by an
-            // older build (before image resolution was added at
-            // add-to-cart time) doesn't silently render a broken image
-            // from a bare "/uploads/media/..." path.
+            // item.image is stored already-resolved (see cart-data.ts).
+            // This defensive re-resolve covers a cart persisted by an
+            // older build (bare "/uploads/media/..." path) *and* one
+            // whose absolute URL points at a stale backend origin — see
+            // resolveMediaUrl, which re-points "/uploads/" URLs at the
+            // currently-configured MEDIA_BASE_URL so next/image doesn't
+            // reject an unlisted host.
             src={resolveMediaUrl(item.image)}
             alt={item.imageAlt}
             fill

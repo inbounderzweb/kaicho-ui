@@ -11,6 +11,17 @@ import type { NextConfig } from "next";
 const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:4000/api";
 const apiOrigin = new URL(apiBaseUrl);
 
+// Where backend media (/uploads/media/...) is fetched from — see
+// lib/api/client.ts's resolveMediaUrl. Its own env var so it can differ
+// from the API origin (e.g. localhost:4000 for media while the API goes
+// through a dev tunnel). next/image only optimizes hosts listed in
+// remotePatterns, so this origin needs its own entry, computed from the
+// same env var the client uses. Falls back to the API origin when unset.
+const mediaOrigin = new URL(
+  process.env.NEXT_PUBLIC_MEDIA_BASE_URL ||
+    apiBaseUrl.replace(/\/api\/?$/, "")
+);
+
 // True only when the backend origin IS a loopback address (the local dev
 // setup, where NEXT_PUBLIC_API_BASE_URL points at http://localhost:4000).
 // next/image's optimizer resolves the remote host and, as an SSRF
@@ -20,7 +31,10 @@ const apiOrigin = new URL(apiBaseUrl);
 // private IP" error). Gating on the hostname itself (rather than e.g.
 // NODE_ENV) means this stays off automatically in any real deployment,
 // where the API origin is a real domain, not localhost/127.0.0.1/::1.
-const isLoopbackApiHost = ["localhost", "127.0.0.1", "::1"].includes(apiOrigin.hostname);
+const LOOPBACK_HOSTS = ["localhost", "127.0.0.1", "::1"];
+const isLoopbackApiHost =
+  LOOPBACK_HOSTS.includes(apiOrigin.hostname) ||
+  LOOPBACK_HOSTS.includes(mediaOrigin.hostname);
 
 const nextConfig: NextConfig = {
   images: {
@@ -37,6 +51,11 @@ const nextConfig: NextConfig = {
         protocol: apiOrigin.protocol === "https:" ? "https" : "http",
         hostname: apiOrigin.hostname,
         port: apiOrigin.port || undefined,
+      },
+      {
+        protocol: mediaOrigin.protocol === "https:" ? "https" : "http",
+        hostname: mediaOrigin.hostname,
+        port: mediaOrigin.port || undefined,
       },
     ],
     ...(isLoopbackApiHost ? { dangerouslyAllowLocalIP: true } : {}),

@@ -1,16 +1,25 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useAdminOrderDetail } from "@/lib/hooks/admin/useAdminOrderDetail";
 import { useUpdateOrderStatus } from "@/lib/hooks/admin/useUpdateOrderStatus";
 import { useRefundOrder } from "@/lib/hooks/admin/useRefundOrder";
+import { useSaveOrderShipment } from "@/lib/hooks/admin/useSaveOrderShipment";
+import { useUpdateOrderShipmentStatus } from "@/lib/hooks/admin/useUpdateOrderShipmentStatus";
 import { resolveMediaUrl } from "@/lib/api/client";
 import { ApiError } from "@/lib/api/ApiError";
-import { ORDER_STATUS_LABELS, type OrderStatus } from "@/lib/api/order";
+import {
+  ORDER_STATUS_LABELS,
+  SHIPMENT_STATUSES,
+  SHIPMENT_STATUS_LABELS,
+  type OrderStatus,
+  type ShipmentStatus,
+} from "@/lib/api/order";
+import type { AdminOrderDetail, SaveShipmentInput } from "@/lib/api/admin";
 import { nextStatuses } from "@/lib/api/orderTransitions";
-import { OrderStatusBadge, PaymentStatusBadge } from "./OrderStatusBadge";
+import { OrderStatusBadge, PaymentStatusBadge, ShipmentStatusBadge } from "./OrderStatusBadge";
 import ConfirmDialog from "./ConfirmDialog";
 import { IconChevronLeft } from "../ui/icons";
 
@@ -310,6 +319,9 @@ export default function OrderDetailClient({ id }: { id: string }) {
             )}
           </section>
 
+          {/* Shipment */}
+          <ShipmentSection id={id} order={order} />
+
           {/* Refund */}
           <section className={`space-y-3 ${cardClass}`}>
             <h2 className={sectionTitleClass}>Refund</h2>
@@ -388,5 +400,297 @@ export default function OrderDetailClient({ id }: { id: string }) {
         }}
       />
     </div>
+  );
+}
+
+const COMMON_CARRIERS = [
+  "Delhivery",
+  "Blue Dart",
+  "DTDC",
+  "XpressBees",
+  "Ekart Logistics",
+  "India Post",
+  "Shadowfax",
+  "Ecom Express",
+  "Amazon Shipping",
+  "Shiprocket",
+];
+
+// Mirrors kaicho-be's TRACKING_NUMBER_RE — the server re-validates.
+const TRACKING_NUMBER_RE = /^[A-Za-z0-9-]{4,40}$/;
+
+function isHttpUrl(value: string): boolean {
+  try {
+    const url = new URL(value);
+    return url.protocol === "http:" || url.protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
+function toDateInput(iso: string | null): string {
+  return iso ? iso.slice(0, 10) : "";
+}
+
+function ShipmentRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex justify-between gap-3">
+      <dt className="text-black/55 dark:text-white/55">{label}</dt>
+      <dd className="text-right font-medium break-all">{value}</dd>
+    </div>
+  );
+}
+
+function ShipmentField({
+  label,
+  error,
+  children,
+}: {
+  label: string;
+  error?: string;
+  children: ReactNode;
+}) {
+  return (
+    <label className="block space-y-1">
+      <span className="text-xs font-semibold uppercase tracking-wider text-black/50 dark:text-white/50">
+        {label}
+      </span>
+      {children}
+      {error && <span className="block text-xs font-semibold text-red-600 dark:text-red-400">{error}</span>}
+    </label>
+  );
+}
+
+function ShipmentSection({ id, order }: { id: string; order: AdminOrderDetail }) {
+  const shipment = order.shipment;
+  const saveMutation = useSaveOrderShipment(id);
+  const statusMutation = useUpdateOrderShipmentStatus(id);
+
+  const [editing, setEditing] = useState(!shipment);
+  const [form, setForm] = useState(() => ({
+    carrier: shipment?.carrier ?? "",
+    trackingNumber: shipment?.trackingNumber ?? "",
+    shipmentId: shipment?.shipmentId ?? "",
+    trackingUrl: shipment?.trackingUrl ?? "",
+    shippedAt: toDateInput(shipment?.shippedAt ?? null),
+    estimatedDeliveryAt: toDateInput(shipment?.estimatedDeliveryAt ?? null),
+    status: (shipment?.status ?? "SHIPPED") as ShipmentStatus,
+  }));
+  const [quickStatus, setQuickStatus] = useState<ShipmentStatus | "">("");
+  const [quickNote, setQuickNote] = useState("");
+
+  const set = <K extends keyof typeof form>(key: K, value: (typeof form)[K]) =>
+    setForm((f) => ({ ...f, [key]: value }));
+
+  const trackingValid = TRACKING_NUMBER_RE.test(form.trackingNumber.trim());
+  const carrierValid = form.carrier.trim().length >= 2;
+  const urlValid = form.trackingUrl.trim() === "" || isHttpUrl(form.trackingUrl.trim());
+  const datesValid =
+    !form.shippedAt || !form.estimatedDeliveryAt || form.estimatedDeliveryAt >= form.shippedAt;
+  const formValid = trackingValid && carrierValid && urlValid && datesValid;
+
+  const submit = () => {
+    if (!formValid) return;
+    const payload: SaveShipmentInput = {
+      carrier: form.carrier.trim(),
+      trackingNumber: form.trackingNumber.trim(),
+      status: form.status,
+    };
+    if (form.shipmentId.trim()) payload.shipmentId = form.shipmentId.trim();
+    if (form.trackingUrl.trim()) payload.trackingUrl = form.trackingUrl.trim();
+    if (form.shippedAt) payload.shippedAt = form.shippedAt;
+    if (form.estimatedDeliveryAt) payload.estimatedDeliveryAt = form.estimatedDeliveryAt;
+    saveMutation.mutate(payload, { onSuccess: () => setEditing(false) });
+  };
+
+  return (
+    <section className={`space-y-3 ${cardClass}`}>
+      <div className="flex items-center justify-between gap-2">
+        <h2 className={sectionTitleClass}>Shipment</h2>
+        {shipment && !editing && (
+          <button
+            type="button"
+            onClick={() => setEditing(true)}
+            className="text-xs font-semibold text-black/60 hover:text-black dark:text-white/60 dark:hover:text-white"
+          >
+            Edit details
+          </button>
+        )}
+      </div>
+
+      {shipment && !editing ? (
+        <>
+          <dl className="space-y-1.5 text-sm">
+            <ShipmentRow label="Courier" value={shipment.carrier} />
+            <ShipmentRow label="AWB / Tracking" value={shipment.trackingNumber} />
+            {shipment.shipmentId && <ShipmentRow label="Shipment ID" value={shipment.shipmentId} />}
+            {shipment.estimatedDeliveryAt && (
+              <ShipmentRow label="Expected" value={formatDateTime(shipment.estimatedDeliveryAt)} />
+            )}
+          </dl>
+          <div className="flex flex-wrap items-center gap-2">
+            <ShipmentStatusBadge status={shipment.status} />
+            {shipment.trackingUrl && (
+              <a
+                href={shipment.trackingUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs font-semibold text-black/60 underline hover:text-black dark:text-white/60 dark:hover:text-white"
+              >
+                Open tracking ↗
+              </a>
+            )}
+          </div>
+
+          <div className="space-y-2 border-t border-admin-border pt-3 dark:border-admin-border-dark">
+            <select
+              value={quickStatus}
+              onChange={(e) => setQuickStatus(e.target.value as ShipmentStatus | "")}
+              className={inputClass}
+            >
+              <option value="">Update shipping status…</option>
+              {SHIPMENT_STATUSES.map((s) => (
+                <option key={s} value={s}>
+                  {SHIPMENT_STATUS_LABELS[s]}
+                </option>
+              ))}
+            </select>
+            <input
+              value={quickNote}
+              onChange={(e) => setQuickNote(e.target.value)}
+              maxLength={300}
+              placeholder="Note (optional)"
+              className={inputClass}
+            />
+            {statusMutation.isError && (
+              <p className="rounded-xl bg-red-500/10 p-3 text-xs font-semibold text-red-600 dark:text-red-400">
+                {messageOf(statusMutation.error, "Couldn't update the shipping status.")}
+              </p>
+            )}
+            <button
+              type="button"
+              disabled={!quickStatus || statusMutation.isPending}
+              onClick={() => {
+                if (!quickStatus) return;
+                statusMutation.mutate(
+                  { status: quickStatus, note: quickNote.trim() || undefined },
+                  {
+                    onSuccess: () => {
+                      setQuickStatus("");
+                      setQuickNote("");
+                    },
+                  }
+                );
+              }}
+              className="w-full rounded-full bg-admin-primary px-5 py-2.5 text-sm font-semibold text-black transition-opacity hover:opacity-90 disabled:opacity-50"
+            >
+              {statusMutation.isPending ? "Updating…" : "Update shipping status"}
+            </button>
+          </div>
+        </>
+      ) : (
+        <div className="space-y-2">
+          <ShipmentField label="Delivery partner / courier *">
+            <input
+              list="carrier-options"
+              value={form.carrier}
+              onChange={(e) => set("carrier", e.target.value)}
+              placeholder="e.g. Delhivery"
+              className={inputClass}
+            />
+            <datalist id="carrier-options">
+              {COMMON_CARRIERS.map((c) => (
+                <option key={c} value={c} />
+              ))}
+            </datalist>
+          </ShipmentField>
+          <ShipmentField
+            label="AWB / tracking number *"
+            error={form.trackingNumber !== "" && !trackingValid ? "4–40 letters, digits or hyphens" : undefined}
+          >
+            <input
+              value={form.trackingNumber}
+              onChange={(e) => set("trackingNumber", e.target.value)}
+              className={inputClass}
+            />
+          </ShipmentField>
+          <ShipmentField label="Shipment ID">
+            <input
+              value={form.shipmentId}
+              onChange={(e) => set("shipmentId", e.target.value)}
+              className={inputClass}
+            />
+          </ShipmentField>
+          <div className="grid grid-cols-2 gap-2">
+            <ShipmentField label="Shipping date">
+              <input
+                type="date"
+                value={form.shippedAt}
+                onChange={(e) => set("shippedAt", e.target.value)}
+                className={inputClass}
+              />
+            </ShipmentField>
+            <ShipmentField label="Expected delivery" error={!datesValid ? "Before shipping date" : undefined}>
+              <input
+                type="date"
+                value={form.estimatedDeliveryAt}
+                onChange={(e) => set("estimatedDeliveryAt", e.target.value)}
+                className={inputClass}
+              />
+            </ShipmentField>
+          </div>
+          <ShipmentField
+            label="Tracking URL"
+            error={!urlValid ? "Must start with http:// or https://" : undefined}
+          >
+            <input
+              type="url"
+              value={form.trackingUrl}
+              onChange={(e) => set("trackingUrl", e.target.value)}
+              placeholder="https://…"
+              className={inputClass}
+            />
+          </ShipmentField>
+          <ShipmentField label="Shipping status">
+            <select
+              value={form.status}
+              onChange={(e) => set("status", e.target.value as ShipmentStatus)}
+              className={inputClass}
+            >
+              {SHIPMENT_STATUSES.map((s) => (
+                <option key={s} value={s}>
+                  {SHIPMENT_STATUS_LABELS[s]}
+                </option>
+              ))}
+            </select>
+          </ShipmentField>
+
+          {saveMutation.isError && (
+            <p className="rounded-xl bg-red-500/10 p-3 text-xs font-semibold text-red-600 dark:text-red-400">
+              {messageOf(saveMutation.error, "Couldn't save the shipping details.")}
+            </p>
+          )}
+          <div className="flex gap-2">
+            <button
+              type="button"
+              disabled={!formValid || saveMutation.isPending}
+              onClick={submit}
+              className="flex-1 rounded-full bg-admin-primary px-5 py-2.5 text-sm font-semibold text-black transition-opacity hover:opacity-90 disabled:opacity-50"
+            >
+              {saveMutation.isPending ? "Saving…" : "Save shipping details"}
+            </button>
+            {shipment && (
+              <button
+                type="button"
+                onClick={() => setEditing(false)}
+                className="rounded-full border border-admin-border px-4 py-2.5 text-sm font-semibold dark:border-admin-border-dark"
+              >
+                Cancel
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+    </section>
   );
 }

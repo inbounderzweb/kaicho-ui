@@ -7,14 +7,21 @@ import Breadcrumbs from "../ui/Breadcrumbs";
 import Button from "../ui/Button";
 import AddressLines from "../address/AddressLines";
 import CancelOrderDialog from "./CancelOrderDialog";
-import { OrderStatusBadge, PaymentStatusBadge } from "./OrderStatusBadge";
+import { OrderStatusBadge, PaymentStatusBadge, ShipmentStatusBadge } from "./OrderStatusBadge";
+import ShipmentTimeline from "./ShipmentTimeline";
 import { useOrder } from "@/lib/hooks/useOrder";
 import { useCancelOrder } from "@/lib/hooks/useCancelOrder";
 import { useRequireAuth } from "@/lib/auth/useRequireAuth";
 import { resolveMediaUrl } from "@/lib/api/client";
 import { ApiError } from "@/lib/api/ApiError";
-import { isCancellable, ORDER_STATUS_LABELS, type OrderStatus } from "@/lib/api/order";
-import { IconPackage } from "../ui/icons";
+import {
+  isCancellable,
+  ORDER_STATUS_LABELS,
+  SHIPMENT_STATUS_LABELS,
+  type OrderStatus,
+  type ShipmentStatus,
+} from "@/lib/api/order";
+import { IconPackage, IconTruck } from "../ui/icons";
 
 function formatDateTime(value: string): string {
   const date = new Date(value);
@@ -26,6 +33,12 @@ function formatDateTime(value: string): string {
     hour: "2-digit",
     minute: "2-digit",
   });
+}
+
+function formatDate(value: string): string {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
 }
 
 /** statusHistory entries carry a raw status string from the backend; fall
@@ -106,6 +119,23 @@ export default function OrderDetailClient({ orderNumber }: { orderNumber: string
   }
 
   const canCancel = isCancellable(order.status);
+  const shipment = order.shipment;
+
+  // Detailed log below the visual timeline: prefer the shipment's own history
+  // (finer-grained — Packed / In transit have no order-status equivalent),
+  // falling back to the order status history when there's no shipment yet.
+  const detailLog =
+    shipment && shipment.history.length > 0
+      ? shipment.history.map((entry) => ({
+          label: SHIPMENT_STATUS_LABELS[entry.status as ShipmentStatus] ?? entry.status,
+          at: entry.at,
+          note: entry.note,
+        }))
+      : order.statusHistory.map((entry) => ({
+          label: labelForStatus(entry.status),
+          at: entry.at,
+          note: entry.note,
+        }));
 
   return (
     <section className="mx-auto max-w-[1280px] px-5 py-8 sm:px-6 sm:py-10 lg:px-8">
@@ -177,17 +207,26 @@ export default function OrderDetailClient({ orderNumber }: { orderNumber: string
             </ul>
           </section>
 
-          {/* Status timeline */}
+          {/* Delivery progress / status timeline */}
           <section className="rounded-2xl border border-border bg-white p-5 sm:p-6">
-            <h2 className="font-display text-lg font-bold text-ink">Order timeline</h2>
-            {order.statusHistory.length === 0 ? (
+            <h2 className="font-display text-lg font-bold text-ink">
+              {shipment ? "Delivery progress" : "Order timeline"}
+            </h2>
+
+            {shipment && (
+              <div className="mt-5">
+                <ShipmentTimeline shipment={shipment} />
+              </div>
+            )}
+
+            {detailLog.length === 0 ? (
               <p className="mt-3 text-sm text-ink-muted">No updates yet.</p>
             ) : (
-              <ol className="mt-4 space-y-0">
-                {order.statusHistory.map((entry, i) => {
-                  const isLatest = i === order.statusHistory.length - 1;
+              <ol className={shipment ? "mt-6 space-y-0 border-t border-border pt-5" : "mt-4 space-y-0"}>
+                {detailLog.map((entry, i) => {
+                  const isLatest = i === detailLog.length - 1;
                   return (
-                    <li key={`${entry.status}-${entry.at}-${i}`} className="flex gap-3">
+                    <li key={`${entry.label}-${entry.at}-${i}`} className="flex gap-3">
                       <div className="flex flex-col items-center">
                         <span
                           className={`mt-1 h-2.5 w-2.5 shrink-0 rounded-full ${
@@ -197,7 +236,7 @@ export default function OrderDetailClient({ orderNumber }: { orderNumber: string
                         {!isLatest && <span className="w-px flex-1 bg-border" />}
                       </div>
                       <div className={isLatest ? "pb-0" : "pb-5"}>
-                        <p className="text-sm font-semibold text-ink">{labelForStatus(entry.status)}</p>
+                        <p className="text-sm font-semibold text-ink">{entry.label}</p>
                         <p className="mt-0.5 text-xs text-ink-muted">{formatDateTime(entry.at)}</p>
                         {entry.note && <p className="mt-1 text-sm text-ink-muted">{entry.note}</p>}
                       </div>
@@ -240,6 +279,60 @@ export default function OrderDetailClient({ orderNumber }: { orderNumber: string
             <p className="mt-3 text-xs text-ink-muted">
               {order.paymentMethod === "COD" ? "Cash on delivery" : "Paid online (Razorpay)"}
             </p>
+          </section>
+
+          {/* Shipment tracking */}
+          <section className="rounded-2xl border border-border bg-white p-5 sm:p-6">
+            <h2 className="font-display text-lg font-bold text-ink">Shipment tracking</h2>
+            {shipment ? (
+              <>
+                <dl className="mt-4 space-y-2.5 text-sm">
+                  <div className="flex justify-between gap-3">
+                    <dt className="text-ink-muted">Delivery partner</dt>
+                    <dd className="text-right font-semibold text-ink">{shipment.carrier}</dd>
+                  </div>
+                  <div className="flex justify-between gap-3">
+                    <dt className="text-ink-muted">Tracking / AWB</dt>
+                    <dd className="break-all text-right font-semibold text-ink">
+                      {shipment.trackingNumber}
+                    </dd>
+                  </div>
+                  {shipment.estimatedDeliveryAt && (
+                    <div className="flex justify-between gap-3">
+                      <dt className="text-ink-muted">Expected delivery</dt>
+                      <dd className="text-right font-semibold text-ink">
+                        {formatDate(shipment.estimatedDeliveryAt)}
+                      </dd>
+                    </div>
+                  )}
+                  <div className="flex items-center justify-between gap-3">
+                    <dt className="text-ink-muted">Status</dt>
+                    <dd>
+                      <ShipmentStatusBadge status={shipment.status} />
+                    </dd>
+                  </div>
+                </dl>
+                {shipment.trackingUrl ? (
+                  <a
+                    href={shipment.trackingUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-full bg-brand px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-brand-dark"
+                  >
+                    <IconTruck className="h-4 w-4" />
+                    Track shipment
+                  </a>
+                ) : (
+                  <p className="mt-4 text-xs text-ink-muted">
+                    A live tracking link will appear here once the courier shares it.
+                  </p>
+                )}
+              </>
+            ) : (
+              <p className="mt-3 text-sm text-ink-muted">
+                Tracking details will appear here once your order ships.
+              </p>
+            )}
           </section>
 
           {/* Shipping address */}

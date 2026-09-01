@@ -1,6 +1,6 @@
 import { apiFetch } from "./client";
 import type { UserRole } from "../constants/roles";
-import type { Order, OrderStatus, PaymentStatus } from "./order";
+import type { Order, OrderStatus, PaymentStatus, ShipmentStatus } from "./order";
 
 export interface DashboardTrendPoint {
   date: string;
@@ -207,5 +207,42 @@ export async function refundAdminOrder(id: string, amount?: number): Promise<Adm
     method: "POST",
     body: JSON.stringify(amount === undefined ? {} : { amount }),
   });
+  return order;
+}
+
+// Shipment fields the admin form submits. Dates are ISO "YYYY-MM-DD" strings
+// straight from <input type="date">; the backend coerces them to Date. All
+// optional — carrier + trackingNumber are only required on the first save
+// (enforced server-side).
+export interface SaveShipmentInput {
+  carrier?: string;
+  trackingNumber?: string;
+  shipmentId?: string;
+  trackingUrl?: string;
+  shippedAt?: string;
+  estimatedDeliveryAt?: string;
+  status?: ShipmentStatus;
+  notes?: string;
+}
+
+export async function saveAdminOrderShipment(
+  id: string,
+  input: SaveShipmentInput
+): Promise<AdminOrderDetail> {
+  const { order } = await apiFetch<{ order: AdminOrderDetail }>(
+    `/admin/orders/${encodeURIComponent(id)}/shipment`,
+    { method: "PUT", body: JSON.stringify(input) }
+  );
+  return order;
+}
+
+export async function updateAdminOrderShipmentStatus(
+  id: string,
+  input: { status: ShipmentStatus; note?: string }
+): Promise<AdminOrderDetail> {
+  const { order } = await apiFetch<{ order: AdminOrderDetail }>(
+    `/admin/orders/${encodeURIComponent(id)}/shipment/status`,
+    { method: "PATCH", body: JSON.stringify(input) }
+  );
   return order;
 }

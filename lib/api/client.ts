@@ -9,9 +9,39 @@ const API_BASE_URL =
 // frontend happens to be served from.
 const API_ORIGIN = API_BASE_URL.replace(/\/api\/?$/, "");
 
+// One reusable base URL for backend-served media (/uploads/media/...).
+// Kept as its own env var so it can point somewhere other than the API
+// origin — e.g. hit the backend directly at http://localhost:4000 while
+// API calls go through a dev tunnel, so next/image's server-side fetch
+// never depends on the tunnel. Falls back to the API origin when unset,
+// so existing setups keep working. Trailing slash trimmed so joining with
+// a root-relative "/uploads/..." path never doubles the slash.
+const MEDIA_BASE_URL = (
+  process.env.NEXT_PUBLIC_MEDIA_BASE_URL || API_ORIGIN
+).replace(/\/$/, "");
+
 export function resolveMediaUrl(url: string): string {
-  if (/^https?:\/\//.test(url)) return url;
-  return `${API_ORIGIN}${url}`;
+  if (/^https?:\/\//.test(url)) {
+    // Already absolute. But backend media ("/uploads/...") may have been
+    // persisted against a *different* backend origin than the one
+    // configured now — e.g. a cart item added while
+    // NEXT_PUBLIC_MEDIA_BASE_URL was http://localhost:4000, then reopened
+    // after it moved to a dev tunnel. next/image rejects any host not in
+    // next.config.ts's remotePatterns (which track the current env), so a
+    // stale "/uploads/" URL would crash the whole page. Re-point it at
+    // the current MEDIA_BASE_URL. Non-backend absolutes (Shopify CDN,
+    // kaicho.in) don't live under "/uploads/" and pass through untouched.
+    try {
+      const parsed = new URL(url);
+      if (parsed.pathname.startsWith("/uploads/")) {
+        return `${MEDIA_BASE_URL}${parsed.pathname}${parsed.search}`;
+      }
+    } catch {
+      // Not a parseable URL — leave it as-is.
+    }
+    return url;
+  }
+  return `${MEDIA_BASE_URL}${url}`;
 }
 
 interface ApiResponse<T> {

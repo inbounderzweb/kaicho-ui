@@ -25,6 +25,88 @@ export type PaymentStatus = (typeof PAYMENT_STATUSES)[number];
 export const PAYMENT_METHODS = ["RAZORPAY", "COD"] as const;
 export type PaymentMethod = (typeof PAYMENT_METHODS)[number];
 
+// Mirrors kaicho-be's SHIPMENT_STATUSES. Subordinate to `status` above — it
+// adds courier-level detail (Packed / In transit / Failed delivery have no
+// order-status equivalent); the backend keeps `status` in sync as this moves.
+export const SHIPMENT_STATUSES = [
+  "ORDER_CONFIRMED",
+  "PROCESSING",
+  "PACKED",
+  "SHIPPED",
+  "IN_TRANSIT",
+  "OUT_FOR_DELIVERY",
+  "DELIVERED",
+  "CANCELLED",
+  "FAILED_DELIVERY",
+] as const;
+export type ShipmentStatus = (typeof SHIPMENT_STATUSES)[number];
+
+export const SHIPMENT_STATUS_LABELS: Record<ShipmentStatus, string> = {
+  ORDER_CONFIRMED: "Order confirmed",
+  PROCESSING: "Processing",
+  PACKED: "Packed",
+  SHIPPED: "Shipped",
+  IN_TRANSIT: "In transit",
+  OUT_FOR_DELIVERY: "Out for delivery",
+  DELIVERED: "Delivered",
+  CANCELLED: "Cancelled",
+  FAILED_DELIVERY: "Failed delivery",
+};
+
+// The ordered happy-path steps the customer timeline renders. The two
+// exception states are handled with a callout, not a step.
+export const SHIPMENT_TIMELINE_STEPS: readonly ShipmentStatus[] = [
+  "ORDER_CONFIRMED",
+  "PROCESSING",
+  "PACKED",
+  "SHIPPED",
+  "IN_TRANSIT",
+  "OUT_FOR_DELIVERY",
+  "DELIVERED",
+] as const;
+
+export interface OrderShipmentHistoryEntry {
+  status: ShipmentStatus;
+  at: string;
+  note?: string;
+}
+
+export interface OrderShipment {
+  carrier: string;
+  trackingNumber: string;
+  shipmentId: string | null;
+  status: ShipmentStatus;
+  shippedAt: string | null;
+  estimatedDeliveryAt: string | null;
+  deliveredAt: string | null;
+  trackingUrl: string | null;
+  history: OrderShipmentHistoryEntry[];
+}
+
+export type ShipmentTimelineState = "pending" | "in_progress" | "delivered" | "exception";
+
+/** Where a shipment sits on the visual timeline. `stepIndex` is the index into
+ *  SHIPMENT_TIMELINE_STEPS of the furthest-reached step (−1 if none); for the
+ *  two exception states it's the last on-path step recorded in history. */
+export function shipmentProgress(shipment: Pick<OrderShipment, "status" | "history">): {
+  stepIndex: number;
+  state: ShipmentTimelineState;
+} {
+  const onPathIndex = (s: ShipmentStatus) => SHIPMENT_TIMELINE_STEPS.indexOf(s);
+
+  if (shipment.status === "CANCELLED" || shipment.status === "FAILED_DELIVERY") {
+    const lastOnPath = [...shipment.history]
+      .reverse()
+      .map((h) => onPathIndex(h.status))
+      .find((i) => i >= 0);
+    return { stepIndex: lastOnPath ?? -1, state: "exception" };
+  }
+
+  const stepIndex = onPathIndex(shipment.status);
+  if (stepIndex === SHIPMENT_TIMELINE_STEPS.length - 1) return { stepIndex, state: "delivered" };
+  return { stepIndex, state: stepIndex >= 0 ? "in_progress" : "pending" };
+}
+
 export interface OrderItem {
   productId: string;
   name: string;
@@ -75,6 +157,8 @@ export interface Order {
   paymentMethod: PaymentMethod;
   paymentStatus: PaymentStatus;
   statusHistory: OrderStatusHistoryEntry[];
+  /** Courier / tracking record — null until an admin creates a shipment. */
+  shipment: OrderShipment | null;
   cancelReason?: string;
   createdAt: string;
   updatedAt: string;

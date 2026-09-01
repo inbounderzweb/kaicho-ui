@@ -70,12 +70,12 @@ export default function Footer() {
             <ul className="mt-4 space-y-3">
               {NAV_LINKS.map((link) => (
                 <li key={link.href}>
-                  <a
+                  <Link
                     href={link.href}
                     className="text-sm text-ink-muted transition-colors hover:text-brand"
                   >
                     {link.label}
-                  </a>
+                  </Link>
                 </li>
               ))}
             </ul>

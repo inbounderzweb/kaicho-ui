@@ -1,8 +1,10 @@
 import {
   ORDER_STATUS_LABELS,
   PAYMENT_STATUS_LABELS,
+  SHIPMENT_STATUS_LABELS,
   type OrderStatus,
   type PaymentStatus,
+  type ShipmentStatus,
 } from "@/lib/api/order";
 
 // Storefront-side status pills. Deliberately uses the brand token set
@@ -29,6 +31,18 @@ const PAYMENT_STATUS_STYLES: Record<PaymentStatus, string> = {
   PARTIALLY_REFUNDED: "bg-gold/15 text-gold",
 };
 
+const SHIPMENT_STATUS_STYLES: Record<ShipmentStatus, string> = {
+  ORDER_CONFIRMED: "bg-brand-soft text-brand",
+  PROCESSING: "bg-gold/15 text-gold",
+  PACKED: "bg-gold/15 text-gold",
+  SHIPPED: "bg-terracotta/15 text-terracotta",
+  IN_TRANSIT: "bg-terracotta/15 text-terracotta",
+  OUT_FOR_DELIVERY: "bg-terracotta/15 text-terracotta",
+  DELIVERED: "bg-brand-soft text-brand",
+  CANCELLED: "bg-sale/10 text-sale",
+  FAILED_DELIVERY: "bg-sale/10 text-sale",
+};
+
 const base = "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-bold";
 
 export function OrderStatusBadge({ status }: { status: OrderStatus }) {
@@ -43,6 +57,14 @@ export function PaymentStatusBadge({ status }: { status: PaymentStatus }) {
   return (
     <span className={`${base} ${PAYMENT_STATUS_STYLES[status] ?? "bg-cream text-ink-muted"}`}>
       {PAYMENT_STATUS_LABELS[status] ?? status}
+    </span>
+  );
+}
+
+export function ShipmentStatusBadge({ status }: { status: ShipmentStatus }) {
+  return (
+    <span className={`${base} ${SHIPMENT_STATUS_STYLES[status] ?? "bg-cream text-ink-muted"}`}>
+      {SHIPMENT_STATUS_LABELS[status] ?? status}
     </span>
   );
 }

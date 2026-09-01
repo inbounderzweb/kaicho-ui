@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { OrderStatusBadge, PaymentStatusBadge } from "../orders/OrderStatusBadge";
+import { OrderStatusBadge, PaymentStatusBadge, ShipmentStatusBadge } from "../orders/OrderStatusBadge";
 import { useOrders } from "@/lib/hooks/useOrders";
 import { resolveMediaUrl } from "@/lib/api/client";
 import type { Order } from "@/lib/api/order";
@@ -188,6 +188,26 @@ function OrderCard({ order }: { order: Order }) {
             {order.shippingAddress.pincode}
           </span>
         </div>
+        {order.shipment && (
+          <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1.5">
+            <span className="inline-flex items-center gap-1.5 text-ink-muted">
+              <IconTruck className="h-4 w-4 shrink-0" />
+              {order.shipment.carrier} · AWB {order.shipment.trackingNumber}
+            </span>
+            <span className="flex items-center gap-2">
+              {order.shipment.estimatedDeliveryAt && (
+                <span className="text-ink-muted">
+                  Arriving{" "}
+                  {new Date(order.shipment.estimatedDeliveryAt).toLocaleDateString("en-IN", {
+                    day: "numeric",
+                    month: "short",
+                  })}
+                </span>
+              )}
+              <ShipmentStatusBadge status={order.shipment.status} />
+            </span>
+          </div>
+        )}
         <div className="flex justify-between gap-4 pt-1">
           <span className="font-bold text-ink">Total</span>
           <span className="font-bold text-ink">Rs. {order.pricing.grandTotal.toFixed(2)}</span>
