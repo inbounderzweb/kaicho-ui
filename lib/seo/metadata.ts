@@ -26,6 +26,17 @@ type PageMetadataInput = {
   image?: { url: string; width?: number; height?: number; alt?: string };
   /** Set true for pages that shouldn't be indexed (thank-you pages, etc.) */
   noIndex?: boolean;
+  /** Independent of noIndex — a page can be indexable but nofollow, or vice
+   *  versa (blog posts expose both robots switches). Defaults to follow. */
+  noFollow?: boolean;
+  /** Explicit canonical URL (absolute or site-relative). Overrides the one
+   *  derived from `path` — e.g. a blog post with a hand-set canonicalUrl. */
+  canonical?: string;
+  /** Open Graph type. "article" for blog posts; defaults to "website". */
+  ogType?: "website" | "article";
+  /** Article-only OG timestamps, ISO strings. */
+  publishedTime?: string;
+  modifiedTime?: string;
 };
 
 /**
@@ -41,9 +52,14 @@ export function buildPageMetadata({
   path = "/",
   image = DEFAULT_OG_IMAGE,
   noIndex = false,
+  noFollow = false,
+  canonical: canonicalOverride,
+  ogType = "website",
+  publishedTime,
+  modifiedTime,
 }: PageMetadataInput = {}): Metadata {
   const resolvedTitle = title ?? DEFAULT_TITLE;
-  const canonical = absoluteUrl(path);
+  const canonical = canonicalOverride ? absoluteUrl(canonicalOverride) : absoluteUrl(path);
   const ogImage = {
     url: absoluteUrl(image.url),
     width: image.width,
@@ -57,16 +73,17 @@ export function buildPageMetadata({
     alternates: {
       canonical,
     },
-    robots: noIndex
-      ? { index: false, follow: false }
-      : { index: true, follow: true },
+    robots: { index: !noIndex, follow: !noFollow },
     openGraph: {
       title: resolvedTitle,
       description,
       url: canonical,
       siteName: SITE_NAME,
       locale: "en_IN",
-      type: "website",
+      type: ogType,
+      ...(ogType === "article" && (publishedTime || modifiedTime)
+        ? { publishedTime, modifiedTime }
+        : {}),
       images: [ogImage],
     },
     twitter: {

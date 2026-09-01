@@ -36,6 +36,56 @@ export function websiteJsonLd(): JsonLd {
   };
 }
 
+/**
+ * BlogPosting for a blog detail page. Every field is real content from the
+ * public blog DTO — no invented ratings or authorship. `image` is a
+ * backend-hosted media URL, so it goes through resolveMediaUrl (the API
+ * origin), not absoluteUrl (the site domain), same as productJsonLd's images.
+ */
+export function blogPostingJsonLd(post: {
+  title: string;
+  description: string;
+  slug: string;
+  imageUrl?: string | null;
+  authorName?: string | null;
+  datePublished?: string | null;
+  dateModified?: string | null;
+}): JsonLd {
+  return {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    headline: post.title,
+    description: post.description,
+    mainEntityOfPage: { "@type": "WebPage", "@id": absoluteUrl(`/blog/${post.slug}`) },
+    ...(post.imageUrl ? { image: [resolveMediaUrl(post.imageUrl)] } : {}),
+    author: { "@type": "Person", name: post.authorName || SITE_NAME },
+    publisher: {
+      "@type": "Organization",
+      name: SITE_NAME,
+      logo: { "@type": "ImageObject", url: absoluteUrl("/logo_07aad60c-0e17-4a1b-936b-88609e93a1cc.svg") },
+    },
+    ...(post.datePublished ? { datePublished: post.datePublished } : {}),
+    ...(post.dateModified ? { dateModified: post.dateModified } : {}),
+  };
+}
+
+/**
+ * FAQPage — ONLY emit this when the same Q&A pairs are actually rendered on
+ * the visible page (see BlogArticle.tsx's FAQ section). Fabricated or
+ * hidden FAQ markup is a Search Console penalty risk.
+ */
+export function faqJsonLd(faqs: { question: string; answer: string }[]): JsonLd {
+  return {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: faqs.map((faq) => ({
+      "@type": "Question",
+      name: faq.question,
+      acceptedAnswer: { "@type": "Answer", text: faq.answer },
+    })),
+  };
+}
+
 export function breadcrumbJsonLd(items: { name: string; path: string }[]): JsonLd {
   return {
     "@context": "https://schema.org",

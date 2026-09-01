@@ -234,3 +234,109 @@ body {
     }
   }
 }
+
+/* ── Blog article typography ──────────────────────────────────────────────
+   Hand-rolled (no @tailwindcss/typography dependency) so it can lean on the
+   existing design tokens and stay consistent in the storefront (light) and
+   the admin editor (which may be .dark). Used by RichTextEditor.tsx and the
+   public BlogArticle.tsx. */
+.blog-prose {
+  color: var(--color-ink);
+  font-size: 1.0625rem;
+  line-height: 1.75;
+}
+.blog-prose > :first-child { margin-top: 0; }
+.blog-prose > :last-child { margin-bottom: 0; }
+.blog-prose p { margin: 1.15em 0; }
+.blog-prose h2 {
+  font-family: var(--font-display), var(--font-sans), sans-serif;
+  font-weight: 700;
+  font-size: 1.6rem;
+  line-height: 1.25;
+  margin: 2em 0 0.7em;
+  scroll-margin-top: calc(var(--header-height) + 1.5rem);
+}
+.blog-prose h3 {
+  font-family: var(--font-display), var(--font-sans), sans-serif;
+  font-weight: 700;
+  font-size: 1.3rem;
+  line-height: 1.3;
+  margin: 1.6em 0 0.6em;
+  scroll-margin-top: calc(var(--header-height) + 1.5rem);
+}
+.blog-prose h4 { font-weight: 700; font-size: 1.1rem; margin: 1.4em 0 0.5em; }
+.blog-prose a {
+  color: var(--color-brand-dark);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.blog-prose a:hover { color: var(--color-brand-darker); }
+.blog-prose ul,
+.blog-prose ol { margin: 1.15em 0; padding-left: 1.5em; }
+.blog-prose ul { list-style: disc; }
+.blog-prose ol { list-style: decimal; }
+.blog-prose li { margin: 0.4em 0; }
+.blog-prose li > ul,
+.blog-prose li > ol { margin: 0.4em 0; }
+.blog-prose blockquote {
+  border-left: 3px solid var(--color-brand);
+  padding: 0.25em 0 0.25em 1.1em;
+  margin: 1.5em 0;
+  color: var(--color-ink-muted);
+  font-style: italic;
+}
+.blog-prose hr { border: 0; border-top: 1px solid var(--color-border); margin: 2.5em 0; }
+.blog-prose img { border-radius: 0.75rem; margin: 1.75em 0; }
+.blog-prose figure { margin: 1.75em 0; }
+.blog-prose figure img { margin: 0; }
+.blog-prose figcaption {
+  margin-top: 0.6em;
+  font-size: 0.875rem;
+  color: var(--color-ink-faint);
+  text-align: center;
+}
+.blog-prose pre {
+  background: var(--color-charcoal);
+  color: #e6edf3;
+  padding: 1em 1.15em;
+  border-radius: 0.75rem;
+  overflow-x: auto;
+  margin: 1.6em 0;
+  font-size: 0.9rem;
+}
+.blog-prose :not(pre) > code {
+  background: var(--color-cream);
+  padding: 0.15em 0.4em;
+  border-radius: 0.35rem;
+  font-size: 0.9em;
+}
+.blog-prose table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.6em 0;
+  font-size: 0.95rem;
+  display: block;
+  overflow-x: auto;
+}
+.blog-prose th,
+.blog-prose td { border: 1px solid var(--color-border); padding: 0.55em 0.8em; text-align: left; }
+.blog-prose th { background: var(--color-cream); font-weight: 700; }
+
+/* Admin editor renders inside the dark surface */
+.dark .blog-prose { color: rgba(255, 255, 255, 0.9); }
+.dark .blog-prose a { color: var(--color-admin-primary); }
+.dark .blog-prose blockquote { color: rgba(255, 255, 255, 0.6); border-left-color: var(--color-admin-primary); }
+.dark .blog-prose hr { border-top-color: var(--color-admin-border-dark); }
+.dark .blog-prose :not(pre) > code { background: rgba(255, 255, 255, 0.1); }
+.dark .blog-prose th,
+.dark .blog-prose td { border-color: var(--color-admin-border-dark); }
+.dark .blog-prose th { background: rgba(255, 255, 255, 0.06); }
+
+/* TipTap placeholder + focus niceties in the editor */
+.blog-prose .tiptap p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  color: var(--color-ink-faint);
+  float: left;
+  height: 0;
+  pointer-events: none;
+}

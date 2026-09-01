@@ -24,15 +24,41 @@ export interface AdminOrder {
   placedAt: string;
 }
 
+export interface DashboardStats {
+  /** All-time, cancelled orders excluded. */
+  totalRevenue: number;
+  totalOrders: number;
+  /** Rolling 30-day window. */
+  revenue30d: number;
+  orders30d: number;
+  averageOrderValue: number;
+  /** Paid but not yet shipped — needs admin action. */
+  pendingOrders: number;
+  totalUsers: number;
+  newUsers30d: number;
+  totalProducts: number;
+  lowStockProducts: number;
+  publishedBlogs: number;
+}
+
+export interface DashboardStatusCount {
+  status: OrderStatus;
+  count: number;
+}
+
+export interface DashboardTopProduct {
+  productId: string;
+  name: string;
+  unitsSold: number;
+  revenue: number;
+}
+
 export interface DashboardSummary {
-  stats: {
-    totalRevenue: number;
-    totalOrders: number;
-    totalUsers: number;
-    totalProducts: number;
-  };
+  stats: DashboardStats;
   trend: DashboardTrendPoint[];
   recentOrders: AdminOrder[];
+  ordersByStatus: DashboardStatusCount[];
+  topProducts: DashboardTopProduct[];
 }
 
 export type UsersSortField = "createdAt" | "lastLoginAt" | "phone" | "role";

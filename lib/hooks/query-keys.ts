@@ -5,6 +5,8 @@ import type { BrandQueryParams } from "../api/brand";
 import type { ProductQueryParams } from "../api/product";
 import type { PublicProductListParams } from "../api/publicProducts";
 import type { CategoryProductsParams } from "../api/publicCategories";
+import type { AdminBlogQueryParams } from "../api/blog";
+import type { PublicBlogListParams } from "../api/blogPublic";
 
 export const authKeys = {
   me: ["auth", "me"] as const,
@@ -66,6 +68,31 @@ export const collectionKeys = {
   list: ["admin", "collections", "list"] as const,
   detail: (id: string) => ["admin", "collections", "detail", id] as const,
   homepage: ["public", "collections", "active"] as const,
+};
+
+export const blogKeys = {
+  list: (params: AdminBlogQueryParams) => ["admin", "blogs", "list", params] as const,
+  detail: (id: string) => ["admin", "blogs", "detail", id] as const,
+};
+
+export const blogCategoryKeys = {
+  list: (params: { search?: string; status?: string }) => ["admin", "blog-categories", "list", params] as const,
+  options: ["admin", "blog-categories", "options"] as const,
+  detail: (id: string) => ["admin", "blog-categories", "detail", id] as const,
+};
+
+export const blogTagKeys = {
+  list: (search: string) => ["admin", "blog-tags", "list", search] as const,
+};
+
+// Public/customer-facing blog — NOT under the "admin" prefix, cached
+// separately (an admin edit invalidating ["admin","blogs",…] never touches
+// these), same convention as publicProductKeys.
+export const publicBlogKeys = {
+  list: (params: PublicBlogListParams) => ["public", "blogs", "list", params] as const,
+  detail: (slug: string) => ["public", "blogs", "detail", slug] as const,
+  related: (slug: string, limit: number) => ["public", "blogs", "related", slug, limit] as const,
+  categories: ["public", "blogs", "categories"] as const,
 };
 
 export const wishlistKeys = {

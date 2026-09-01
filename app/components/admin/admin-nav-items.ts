@@ -7,6 +7,7 @@ import {
   IconImages,
   IconTag,
   IconStar,
+  IconFileText,
   type IconProps,
 } from "../ui/icons";
 
@@ -43,5 +44,14 @@ export const ADMIN_NAV_ITEMS: AdminNavItem[] = [
     ],
   },
   { href: "/admin/orders", label: "Orders", Icon: IconTruck },
+  {
+    label: "Content",
+    Icon: IconFileText,
+    children: [
+      { href: "/admin/blogs", label: "All Blogs", Icon: IconFileText },
+      { href: "/admin/blogs/new", label: "Add Blog", Icon: IconFileText, exact: true },
+      { href: "/admin/blogs/categories", label: "Categories", Icon: IconTag },
+    ],
+  },
   { href: "/admin/media", label: "Media", Icon: IconImages },
 ];

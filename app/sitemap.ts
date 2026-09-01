@@ -2,6 +2,7 @@ import type { MetadataRoute } from "next";
 import { absoluteUrl } from "@/lib/seo/urls";
 import { fetchPublicProducts } from "@/lib/api/publicProducts";
 import { fetchPublicCategories } from "@/lib/api/publicCategories";
+import { fetchPublicBlogs, fetchPublicBlogCategories } from "@/lib/api/blogPublic";
 
 /**
  * Only real, indexable, public pages — kept in sync with each page's own
@@ -41,6 +42,31 @@ async function fetchAllProductSlugs(): Promise<string[]> {
   return slugs;
 }
 
+const BLOG_PAGE_SIZE = 24; // the public blog API's max pageSize
+
+// Walks the live public blog listing — which already excludes
+// draft/scheduled/archived/noIndex posts server-side (see kaicho-be
+// blog.service.ts's getPublishedBlogSlugsForSitemap / publicMatch) — so
+// nothing unpublished can leak into the sitemap.
+async function fetchAllBlogEntries(lastModified: Date): Promise<MetadataRoute.Sitemap> {
+  const entries: MetadataRoute.Sitemap = [];
+  let page = 1;
+  for (let i = 0; i < 50; i++) {
+    const result = await fetchPublicBlogs({ page, pageSize: BLOG_PAGE_SIZE });
+    for (const post of result.items) {
+      entries.push({
+        url: absoluteUrl(`/blog/${post.slug}`),
+        lastModified: post.publishedAt ? new Date(post.publishedAt) : lastModified,
+        changeFrequency: "monthly",
+        priority: 0.6,
+      });
+    }
+    if (page * BLOG_PAGE_SIZE >= result.total) break;
+    page += 1;
+  }
+  return entries;
+}
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const lastModified = new Date();
 
@@ -56,9 +82,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // failing the whole route.
   let productEntries: MetadataRoute.Sitemap = [];
   let categoryEntries: MetadataRoute.Sitemap = [];
+  let blogEntries: MetadataRoute.Sitemap = [];
+  let blogCategoryEntries: MetadataRoute.Sitemap = [];
 
   try {
-    const [slugs, categoriesResult] = await Promise.all([fetchAllProductSlugs(), fetchPublicCategories()]);
+    const [slugs, categoriesResult, blogs, blogCategoriesResult] = await Promise.all([
+      fetchAllProductSlugs(),
+      fetchPublicCategories(),
+      fetchAllBlogEntries(lastModified),
+      fetchPublicBlogCategories(),
+    ]);
 
     productEntries = slugs.map((slug) => ({
       url: absoluteUrl(`/products/${slug}`),
@@ -73,10 +106,25 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: "weekly" as const,
       priority: 0.7,
     }));
+
+    blogEntries = blogs;
+
+    blogCategoryEntries = blogCategoriesResult.categories.map((category) => ({
+      url: absoluteUrl(`/blog/category/${category.slug}`),
+      lastModified,
+      changeFrequency: "weekly" as const,
+      priority: 0.5,
+    }));
   } catch {
     // Backend unreachable at build/request time — ship the static routes
     // only rather than failing sitemap generation entirely.
   }
 
-  return [...staticEntries, ...categoryEntries, ...productEntries];
+  return [
+    ...staticEntries,
+    ...categoryEntries,
+    ...productEntries,
+    ...blogCategoryEntries,
+    ...blogEntries,
+  ];
 }
