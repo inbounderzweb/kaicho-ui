@@ -17,7 +17,7 @@ const HIGHLIGHTS = [
 
 export default function GetStarted() {
   return (
-    <section className="bg-cream py-20 sm:py-24">
+    <section className="bg-cream py-20 md:py-12 sm:py-24">
       <Container className="grid grid-cols-1 items-center gap-12 lg:grid-cols-2 lg:gap-16">
         <div>
           <span className="text-xs font-bold uppercase tracking-[0.2em] text-terracotta">

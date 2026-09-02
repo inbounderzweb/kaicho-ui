@@ -29,6 +29,9 @@
   --color-cream-deep: #f1e9d8;
   --color-gold: #c9a24a;
   --color-terracotta: #c97b4a;
+  /* Vivid orange accent used on the hero (highlighted product word + CTA). */
+  --color-hero-orange: #ec6a1e;
+  --color-hero-orange-dark: #d65f18;
 
   /* Neutral near-black, deliberately NOT green — used for dark sections
      that need to read as a distinct visual beat from the brand-green hero. */
@@ -85,6 +88,8 @@
   --color-cream-deep: var(--color-cream-deep);
   --color-gold: var(--color-gold);
   --color-terracotta: var(--color-terracotta);
+  --color-hero-orange: var(--color-hero-orange);
+  --color-hero-orange-dark: var(--color-hero-orange-dark);
   --color-charcoal: var(--color-charcoal);
 
   --color-admin-primary: var(--color-admin-primary);

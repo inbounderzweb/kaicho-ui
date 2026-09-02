@@ -3,83 +3,345 @@
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import Button from "../ui/Button";
-import {
-  IconArrowRight,
-  IconChevronRight,
-  IconHeart,
-  IconLeaf,
-  IconPackage,
-  IconPulse,
-  IconShieldCheck,
-  IconWheat,
-} from "../ui/icons";
-
-// const SLIDES = [
-//   {
-//     headline:(<>
-//     Veg </br> Oats Porridge</>),
-//     description: "Wholesome oats with real vegetables, sealed fresh with Japanese retort technology. A nourishing meal, ready in minutes.",
-//     image: "/kaicho-hero.png",
-//     alt: "Kaicho Veg Oats Porridge pouch beside a served bowl of porridge garnished with coriander, next to a wooden spoon",
-//   },
-//   {
-//     headline: "Chicken </br> Oats Porridge",
-//     description: "Protein-rich oats simmered with tender chicken, sealed fresh with Japanese retort technology. A nourishing meal, ready in minutes.",
-//     image: "/kaicho-chickenoats.png",
-//     alt: "Kaicho Chicken Oats Porridge pouch beside a served bowl of porridge",
-//     // Next's image optimizer flattens this PNG's transparent background to
-//     // solid black (reproducible via /_next/image?url=...); serve as-is.
-//     unoptimized: true,
-//   },
-// ];
+import { IconArrowRight, IconHeart, IconLeaf, IconShieldCheck, IconWheat } from "../ui/icons";
 
 const SLIDES = [
   {
-    headline: (
-      <>
-        Veg 
-        Oats Porridge
-      </>
-    ),
+    name: "Veg Oats",
     description:
-      "Wholesome oats with real vegetables, sealed fresh with Japanese retort technology. A nourishing meal, ready in minutes.",
-    image: "/kaicho-hero.png",
+      "Wholesome oats with real vegetables, sealed fresh with Japanese ",
+    accent: "A nourishing meal, ready in minutes.",
+    image: "/Broccoli-&-Mushroom-Oats-Porridge.png",
     alt: "Kaicho Veg Oats Porridge pouch beside a served bowl of porridge garnished with coriander, next to a wooden spoon",
+    // Per-slide scale so both product shots read at the same visual size in
+    // the shared frame — the two source PNGs are framed differently
+    // (kaicho-hero.png is 3:2 with the pouch+bowl spread wide;
+    // kaicho-chickenoats.png is 1:1 with the product filling the square).
+    // The real fix is re-exporting both on one common canvas; this keeps
+    // them consistent until then.
+    imgScale: 1,
   },
   {
-    headline: (
-      <>
-        Chicken 
-        Oats Porridge
-      </>
-    ),
+    name: "Veg Oats",
     description:
-      "Protein-rich oats simmered with tender chicken, sealed fresh with Japanese retort technology. A nourishing meal, ready in minutes.",
-    image: "/kaicho-chickenoats.png",
-    alt: "Kaicho Chicken Oats Porridge pouch beside a served bowl of porridge",
-    unoptimized: true,
-  },
+      "Wholesome oats with real vegetables, sealed fresh with Japanese ",
+    accent: "A nourishing meal, ready in minutes.",
+    image: "/image_navadhanya.png",
+    alt: "Kaicho Veg Oats Porridge pouch beside a served bowl of porridge garnished with coriander, next to a wooden spoon",
+    // Per-slide scale so both product shots read at the same visual size in
+    // the shared frame — the two source PNGs are framed differently
+    // (kaicho-hero.png is 3:2 with the pouch+bowl spread wide;
+    // kaicho-chickenoats.png is 1:1 with the product filling the square).
+    // The real fix is re-exporting both on one common canvas; this keeps
+    // them consistent until then.
+    imgScale: 1,
+  }
 ];
 
-const FEATURES_LEFT = [
+const FEATURES = [
   { title: "100% Natural", Icon: IconLeaf },
   { title: "No Preservatives", Icon: IconShieldCheck },
-  { title: "Diabetic-Friendly", Icon: IconHeart },
-];
-
-const FEATURES_RIGHT = [
+  { title: "Diabetic Friendly", Icon: IconHeart },
   { title: "High in Fiber & Protein", Icon: IconWheat },
-  { title: "Gut-Healthy Ingredients", Icon: IconPulse },
-  { title: "Japanese Retort Technology", Icon: IconPackage },
 ];
 
-const FEATURE_TOPS = ["2%", "38%", "74%"];
+type LayoutProps = {
+  slide: (typeof SLIDES)[number];
+  active: number;
+  setActive: (i: number) => void;
+  markLoaded: (i: number) => void;
+};
+
+/* ── Shared product carousel ───────────────────────────────────────────────
+   Same crossfade + rising steam in both layouts; only the outer frame size
+   differs, passed in as `frameClassName`. Every slide's image is contained
+   in the exact same 4:3 box, then nudged by its own imgScale so the products
+   read at a consistent size as the carousel rotates. */
+function ProductStage({
+  active,
+  markLoaded,
+  frameClassName,
+  scale = 1,
+  steamX = 62,
+  steamY = 55,
+}: {
+  active: number;
+  markLoaded: (i: number) => void;
+  frameClassName: string;
+  /* multiplies each slide's imgScale — raise it to enlarge the product shot
+     (both dimensions) without touching the frame's aspect ratio */
+  scale?: number;
+  /* bowl position as a % of the frame — where the steam rises from. The steam
+     is scaled with the same `scale` as the art, so this stays glued to the
+     bowl at any size; nudge if a new image frames the bowl differently. */
+  steamX?: number;
+  steamY?: number;
+}) {
+  return (
+    <div className={`relative ${frameClassName}`}>
+      {SLIDES.map((s, i) => (
+        <div
+          key={s.image}
+          className={`absolute inset-0 transition-opacity duration-700 ${
+            i === active ? "opacity-100" : "opacity-0"
+          }`}
+          style={{ transform: `scale(${s.imgScale * scale})` }}
+        >
+          <Image
+            src={s.image}
+            alt={s.alt}
+            fill
+            priority={i === 0}
+            unoptimized={s.unoptimized}
+            onLoad={() => markLoaded(i)}
+            sizes="(min-width: 1280px) 820px, (min-width: 1024px) 720px, (min-width: 640px) 460px, 84vw"
+            className="object-contain drop-shadow-[0_34px_54px_rgba(20,50,25,0.3)]"
+          />
+        </div>
+      ))}
+
+      {/* Rising steam over the served bowl — wrapped in the same `scale` as the
+          product art so it tracks the bowl as the image grows/shrinks. */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0"
+        style={{ transform: `scale(${scale})` }}
+      >
+        <div className="absolute h-0 w-0" style={{ left: `${steamX}%`, top: `${steamY}%` }}>
+          {[
+            { left: -30, w: 16, h: 56, dur: 4.2, delay: 0 },
+            { left: -14, w: 22, h: 72, dur: 5.0, delay: 0.5 },
+            { left: 1, w: 30, h: 88, dur: 5.8, delay: 1.0 },
+            { left: 17, w: 22, h: 70, dur: 4.7, delay: 1.6 },
+            { left: 32, w: 16, h: 58, dur: 4.4, delay: 2.2 },
+          ].map((wisp, i) => (
+            <span
+              key={i}
+              className="animate-steam absolute bottom-0 rounded-full bg-[radial-gradient(circle,rgba(255,255,255,0.9),rgba(255,255,255,0)_70%)] blur-[4px]"
+              style={{
+                left: `${wisp.left}px`,
+                width: `${wisp.w}px`,
+                height: `${wisp.h}px`,
+                animationDuration: `${wisp.dur}s`,
+                animationDelay: `${wisp.delay}s`,
+              }}
+            />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── Right-side feature rail (lg only) ────────────────────────────────────
+   Vertical list of the same points, sitting to the right of the product
+   shot: each point is an outlined circle badge holding its icon, joined by
+   a dashed connector down the rail. Rendered only inside DesktopHero, so
+   it is desktop-only. */
+function FeatureRail({ className = "" }: { className?: string }) {
+  return (
+    <ul className={`flex flex-col gap-8 px-10 ${className}`}>
+      {FEATURES.map(({ title, Icon }, i) => (
+        <li key={title} className="relative flex items-center gap-4">
+          {/* dashed connector down to the next badge */}
+          {i < FEATURES.length - 1 && (
+            <span
+              aria-hidden
+              className="pointer-events-none absolute left-6 top-full h-8 -translate-x-1/2 border-l-2 border-dashed border-white/55"
+            />
+          )}
+          {/* outlined circle badge */}
+          <span className="relative z-10 flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-white/70 bg-white/15 text-white backdrop-blur-sm">
+            <Icon className="h-6 w-6" strokeWidth={1.7} />
+          </span>
+          <span className="whitespace-nowrap text-[17px] font-bold leading-tight text-white">
+            {title}
+          </span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+function SlideDots({ active, setActive }: { active: number; setActive: (i: number) => void }) {
+  return (
+    <div className="flex items-center gap-1.5">
+      {SLIDES.map((s, i) => (
+        <button
+          key={s.image}
+          type="button"
+          aria-label={`Show ${s.name} Porridge`}
+          onClick={() => setActive(i)}
+          className={`h-1.5 rounded-full transition-all duration-300 ${
+            i === active ? "w-6 bg-white" : "w-1.5 bg-brand/30 hover:bg-brand/50"
+          }`}
+        />
+      ))}
+    </div>
+  );
+}
+
+/* ── Shared 4-point strip ──────────────────────────────────────────────────
+   Same box size, same cell sizing, same alignment on every screen — one row
+   of four equal columns. `min-h` on the label keeps the box height and the
+   icon row identical whether a label wraps to one line or two. */
+function FeatureGrid({ className = "" }: { className?: string }) {
+  return (
+    <div
+      className={`grid w-full max-w-md grid-cols-4 rounded-2xl border border-brand/50 p-1 backdrop-blur-sm ${className}`}
+    >
+      {FEATURES.map(({ title, Icon }, i) => (
+        <div
+          key={title}
+          className={`flex flex-col items-center gap-1.5 px-1.5 text-center ${
+            i > 0 ? "border-l border-brand/50" : ""
+          }`}
+        >
+          <span className="flex h-9 w-9 items-center justify-center rounded-full text-white">
+            <Icon className="h-6 w-6" strokeWidth={1.7} />
+          </span>
+          <p className="flex min-h-[3.2em] items-start justify-center text-balance text-[10px] md:text-[12px] font-bold leading-tight text-white">
+            {title}
+          </p>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/* ══ SMALL SCREENS (< lg) ═════════════════════════════════════════════════
+   One viewport, no scroll: image + headline + description + 4 points + CTA,
+   tuned tight and vertically centred. Visual highlights are the product
+   image, the headline, and the CTA. */
+function MobileHero({ slide, active, setActive, markLoaded }: LayoutProps) {
+  return (
+    <div className="relative z-10 flex flex-1 flex-col items-center justify-center gap-4 px-5 py-4 text-center lg:hidden">
+     {/* eyebrow */}
+      <span className="inline-flex items-center gap-1.5 text-[10.5px] font-bold uppercase tracking-[0.16em] text-[#f5f5f5]">
+        <IconLeaf className="h-3.5 w-3.5 shrink-0" />
+        Ready-to-Eat · Japanese Retort Tech
+      </span>
+
+      {/* headline */}
+      <h1 className="font-display font-bold leading-[1.02] tracking-tight text-[#f5f5f5]">
+        <span key={active} className="animate-fade-up block">
+          <span className="block text-[clamp(1.6rem,6.5vw,2.4rem)]">{slide.name}</span>
+          <span className="relative mt-0.5 inline-block text-[clamp(1.9rem,7.5vw,2.9rem)]">
+            Porridge
+            <span
+              aria-hidden
+              className="absolute -bottom-1 left-0 h-[3px] w-2/3 rounded-full bg-brand/60"
+            />
+          </span>
+        </span>
+      </h1>
+
+      {/* description */}
+      <p
+        key={`d-${active}`}
+        className="animate-fade-up max-w-md text-[12.5px] leading-snug text-[#f5f5f5]"
+      >
+        {slide.description}
+        <span className="mt-0.5 block font-semibold text-[#f5f5f5]">{slide.accent}</span>
+      </p>
+    
+      <ProductStage
+        active={active}
+        markLoaded={markLoaded}
+        frameClassName="aspect-4/3 h-[32vh] max-h-64 w-auto"
+      />
+      {/* 4 points */}
+      <FeatureGrid />
+
+
+      {/* CTA + slide dots */}
+      <div className="flex flex-col items-center gap-2.5">
+        <Button
+          href="/products"
+          size="lg"
+          className="group h-11 gap-2 rounded-full px-7 shadow-[0_16px_34px_-14px_rgba(236,106,30,0.7)]"
+        >
+          Explore Our Meals
+          <IconArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
+        </Button>
+        <SlideDots active={active} setActive={setActive} />
+      </div>
+    </div>
+  );
+}
+
+/* ══ LARGE SCREENS (>= lg) ════════════════════════════════════════════════
+   Two-column layout: full-scale copy on the left, large product shot right. */
+function DesktopHero({ slide, active, setActive, markLoaded }: LayoutProps) {
+  return (
+    <div className="relative z-10 mx-auto hidden w-full max-w-7xl flex-1 lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1.5fr)] lg:items-center lg:gap-10 lg:px-8 lg:py-2">
+      {/* LEFT — copy */}
+      <div className="w-full max-w-xl text-left">
+        {/* eyebrow */}
+        <span className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.16em] text-[#f5f5f5]">
+          <IconLeaf className="h-3.5 w-3.5 shrink-0" />
+          Ready-to-Eat · Japanese Retort Tech
+        </span>
+
+        {/* headline + highlighted product name */}
+        <h1 className="mt-3 font-display font-bold leading-[1.02] tracking-tight text-[#f5f5f5]">
+          <span key={active} className="animate-fade-up block">
+            <span className="block text-[clamp(2.75rem,3.4vw+1rem,4.5rem)]">{slide.name}</span>
+            <span className="relative mt-0.5 inline-block text-[clamp(3rem,3.8vw+1rem,5rem)]">
+              Porridge
+              <span
+                aria-hidden
+                className="absolute -bottom-1 left-0 h-[3px] w-2/3 rounded-full bg-brand/60"
+              />
+            </span>
+          </span>
+        </h1>
+
+        {/* description */}
+        <p
+          key={`d-${active}`}
+          className="animate-fade-up mt-5 max-w-md text-base leading-relaxed text-[#f5f5f5]"
+        >
+          {slide.description}
+          <span className="mt-1 block font-semibold text-[#f5f5f5]">{slide.accent}</span>
+        </p>
+
+        {/* feature box — 4 items (shared: identical size + alignment on every screen) */}
+        {/* <FeatureGrid className="mt-6" /> */}
+
+        {/* CTA + slide dots */}
+        <div className="mt-7 flex flex-col items-start gap-4">
+          <Button
+            href="/products"
+            size="lg"
+            className="group h-13 gap-2 rounded-full px-8 shadow-[0_16px_34px_-14px_rgba(236,106,30,0.7)]"
+          >
+            Explore Our Meals
+            <IconArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
+          </Button>
+          <SlideDots active={active} setActive={setActive} />
+        </div>
+      </div>
+
+      {/* RIGHT — large product image + dotted feature rail */}
+      <div className="flex w-full items-center justify-center gap-5 h-full">
+        {/* 4:3 frame; scale enlarges the product shot itself (width + height) on desktop */}
+        <ProductStage
+          active={active}
+          markLoaded={markLoaded}
+          frameClassName="aspect-4/3 w-full min-w-0 flex-1"
+          scale={1.7}
+        />
+        <FeatureRail className="shrink-0" />
+      </div>
+    </div>
+  );
+}
 
 export default function Hero() {
   const [active, setActive] = useState(0);
   // How long each slide's image actually took to load, in ms — null until
-  // its onLoad has fired. Measured from mount, so a heavier/unoptimized
-  // photo (e.g. the chicken oats slide) naturally gets a longer readout.
+  // its onLoad has fired.
   const [loadMs, setLoadMs] = useState<(number | null)[]>(() => SLIDES.map(() => null));
   const mountedAt = useRef(0);
 
@@ -93,212 +355,41 @@ export default function Hero() {
     );
 
   useEffect(() => {
-    // Hold the current slide until its image has actually finished loading,
-    // then keep it on screen for a beat — that beat is the image's own
-    // measured load time (floor 3s, cap 9s) layered on a 5s base, so a
-    // slower-loading photo genuinely gets more time on screen, not a flat
-    // duration shared by every slide.
+    // Hold each slide for a 5s base plus its own measured image-load time
+    // (capped at 4s), so a slower-loading photo genuinely gets more screen time.
     const ms = loadMs[active];
     if (ms === null) return;
     const hold = 5000 + Math.min(4000, Math.max(0, ms));
-    const id = setTimeout(() => {
-      setActive((a) => (a + 1) % SLIDES.length);
-    }, hold);
+    const id = setTimeout(() => setActive((a) => (a + 1) % SLIDES.length), hold);
     return () => clearTimeout(id);
   }, [active, loadMs]);
 
+  const slide = SLIDES[active];
+
   return (
-    <section id="home" className="hero-viewport relative flex flex-col bg-white">
-      <div className="flex w-full flex-1 flex-col p-3 sm:p-4 md:p-5 lg:p-6">
-        {/* premium panel */}
-        <div className="relative flex flex-1 flex-col overflow-hidden rounded-xl bg-forest bg-[url('/mobile-coverimage.png')] bg-cover bg-center md:bg-[url('/desktop-coverimage.png')]">
-          <div
-            aria-hidden
-            className="pointer-events-none absolute inset-0 bg-forest/35 md:bg-forest/45"
-          />
-          <div
-            aria-hidden
-            className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_36%,rgba(255,255,255,0.09),transparent_60%)]"
-          />
-          <span
-            aria-hidden
-            className="pointer-events-none absolute left-1/2 top-[40%] -translate-x-1/2 -translate-y-1/2 select-none whitespace-nowrap font-display text-[clamp(6rem,22vw,16rem)] font-bold text-white/[0.045]"
-          >
-            KAICHO
-          </span>
+    <section id="home" className="hero-viewport relative flex flex-col overflow-hidden bg-brand-soft">
+      {/* nature background — blurred foliage + warm light */}
+      <Image
+        src="/desktop-coverimage.png"
+        alt=""
+        fill
+        priority
+        sizes="100vw"
+        className="object-cover"
+      />
+      {/* light wash: keeps the left-column dark text readable while letting the
+          foliage show through on the right */}
+      <div aria-hidden className="pointer-events-none absolute inset-0 sm:bg-gradient-to-r" />
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 bg-gradient-to-b via-transparent to-white/25"
+      />
 
-          <div className="relative z-10 mt-3 md:mt-2 flex flex-1 flex-col px-(--hero-inset) py-[clamp(1rem,2.5svh,2.5rem)]">
-            {/* eyebrow */}
-            <span className="animate-fade-up mx-auto inline-flex items-center gap-1.5 text-center text-[10px] font-bold uppercase tracking-[0.18em] text-white sm:text-xs">
-  <IconLeaf className="h-3 w-3 shrink-0" />
-  Ready-to-Eat · Japanese Retort Tech
-</span>
-
-            {/* headline */}
-            <h1 className="mt-6 md:mt-4 text-center font-display text-[clamp(1.15rem,6vw,2.75rem)] font-bold leading-[0.9] tracking-tight sm:mt-4 sm:text-[clamp(2.5rem,5vw+1rem,5.5rem)] lg:text-[clamp(2.5rem,2svh+1.6vw,4.75rem)]">
-              <span key={active} className="animate-fade-up block text-white">
-                {SLIDES[active].headline}
-              </span>
-            </h1>
-
-            {/* product photography */}
-            <div className="relative mt-6 md:mt-2 flex h-[30svh] min-h-52.5 flex-none items-center justify-center sm:h-auto sm:min-h-0 sm:flex-1 sm:py-[clamp(0.25rem,1.5svh,1.25rem)]">
-              <div className="relative h-full w-[94%] max-w-215 sm:aspect-3/2 sm:h-auto sm:w-full sm:max-h-[42svh] lg:max-h-[36svh]">
-                {SLIDES.map((slide, i) => (
-                  <Image
-                    key={slide.image}
-                    src={slide.image}
-                    alt={slide.alt}
-                    fill
-                    priority={i === 0}
-                    unoptimized={slide.unoptimized}
-                    onLoad={() => markLoaded(i)}
-                    sizes="(min-width: 1024px) 720px, 90vw"
-                    className={`absolute inset-0 h-full w-full object-contain drop-shadow-[0_25px_40px_rgba(0,0,0,0.35)] transition-all duration-1200 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${
-                      i === active ? "opacity-100 scale-100" : "opacity-0 scale-90"
-                    }`}
-                  />
-                ))}
-
-                {/* rising steam over the served bowl */}
-                <div
-                  aria-hidden
-                  className="pointer-events-none mt-6 absolute left-[62%] top-[56%] h-0 w-0 sm:left-[64%]"
-                >
-                  {[
-                    { left: -34, w: 14, h: 46, dur: 3.6, delay: 0 },
-                    { left: -16, w: 20, h: 62, dur: 4.4, delay: 0.4 },
-                    { left: 2, w: 26, h: 78, dur: 5, delay: 0.9 },
-                    { left: 20, w: 22, h: 68, dur: 4.2, delay: 1.4 },
-                    { left: 38, w: 16, h: 52, dur: 3.8, delay: 1.9 },
-                    { left: -4, w: 12, h: 40, dur: 3.4, delay: 2.4 },
-                  ].map((wisp, i) => (
-                    <span
-                      key={i}
-                      className="animate-steam mt-4 absolute bottom-0 rounded-full bg-[radial-gradient(circle,rgba(255,255,255,0.9),rgba(255,255,255,0)_70%)] blur-[4px]"
-                      style={{
-                        left: `${wisp.left}px`,
-                        width: `${wisp.w}px`,
-                        height: `${wisp.h}px`,
-                        animationDuration: `${wisp.dur}s`,
-                        animationDelay: `${wisp.delay}s`,
-                      }}
-                    />
-                  ))}
-                </div>
-
-                {/* squared-elbow connector lines from badges to pin markers, tablet+ */}
-                <svg
-                  aria-hidden
-                  viewBox="0 0 100 100"
-                  preserveAspectRatio="none"
-                  className="pointer-events-none absolute inset-0 hidden h-full w-full md:block"
-                >
-                  <polyline points="1.5,8.6 23,8.6 36,10" fill="none" stroke="white" strokeOpacity="0.55" strokeWidth="1" strokeDasharray="1 4" strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
-                  <polyline points="1.5,44.6 21,44.6 33,46" fill="none" stroke="white" strokeOpacity="0.55" strokeWidth="1" strokeDasharray="1 4" strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
-                  <polyline points="1.5,80.6 20,80.6 30,79" fill="none" stroke="white" strokeOpacity="0.55" strokeWidth="1" strokeDasharray="1 4" strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
-                  <polyline points="98.5,8.6 77,8.6 74,30" fill="none" stroke="white" strokeOpacity="0.55" strokeWidth="1" strokeDasharray="1 4" strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
-                  <polyline points="98.5,44.6 79,44.6 76,55" fill="none" stroke="white" strokeOpacity="0.55" strokeWidth="1" strokeDasharray="1 4" strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
-                  <polyline points="98.5,80.6 78,80.6 73,78" fill="none" stroke="white" strokeOpacity="0.55" strokeWidth="1" strokeDasharray="1 4" strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
-                </svg>
-
-                {/* pin markers on the photo, tablet+ only — mobile shows the feature grid below the photo instead */}
-                <span className="absolute left-[36%] top-[10%] hidden h-2.5 w-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white shadow-[0_0_0_3px_rgba(255,255,255,0.25)] md:block" />
-                <span className="absolute left-[33%] top-[46%] hidden h-2.5 w-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white shadow-[0_0_0_3px_rgba(255,255,255,0.25)] md:block" />
-                <span className="absolute left-[30%] top-[79%] hidden h-2.5 w-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white shadow-[0_0_0_3px_rgba(255,255,255,0.25)] md:block" />
-                <span className="absolute left-[74%] top-[30%] hidden h-2.5 w-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white shadow-[0_0_0_3px_rgba(255,255,255,0.25)] md:block" />
-                <span className="absolute left-[76%] top-[55%] hidden h-2.5 w-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white shadow-[0_0_0_3px_rgba(255,255,255,0.25)] md:block" />
-                <span className="absolute left-[73%] top-[78%] hidden h-2.5 w-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white shadow-[0_0_0_3px_rgba(255,255,255,0.25)] md:block" />
-
-                {/* feature badges: left column — icon square + title */}
-                {FEATURES_LEFT.map(({ title, Icon }, i) => (
-                  <div
-                    key={title}
-                    className="absolute left-0 hidden w-37.5 translate-x-[-14%] flex-col items-start gap-1 md:flex"
-                    style={{ top: FEATURE_TOPS[i] }}
-                  >
-                    <span className="flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-forest-light/80 backdrop-blur-sm lg:h-10 lg:w-10 lg:border-forest/15 lg:bg-white">
-                      <Icon className="h-3.5 w-3.5 text-cream-deep lg:h-5 lg:w-5 lg:text-forest" strokeWidth={1.6} />
-                    </span>
-                    <p className="line-clamp-2 text-[9px] font-bold leading-tight text-white lg:text-[11px]">{title}</p>
-                  </div>
-                ))}
-
-                {/* feature badges: right column — icon square + title */}
-                {FEATURES_RIGHT.map(({ title, Icon }, i) => (
-                  <div
-                    key={title}
-                    className="absolute right-0 hidden w-37.5 translate-x-[14%] flex-col items-end gap-1 md:flex"
-                    style={{ top: FEATURE_TOPS[i] }}
-                  >
-                    <span className="flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-forest-light/80 backdrop-blur-sm lg:h-10 lg:w-10 lg:border-forest/15 lg:bg-white">
-                      <Icon className="h-3.5 w-3.5 text-cream-deep lg:h-5 lg:w-5 lg:text-forest" strokeWidth={1.6} />
-                    </span>
-                    <p className="line-clamp-2 text-right text-[11px] font-bold leading-tight text-white lg:text-[13px]">{title}</p>
-                  </div>
-                ))}
-
-              </div>
-            </div>
-
-            {/* feature grid — mobile */}
-            <div className="mt-2 grid grid-cols-3 gap-x-2 gap-y-2 px-2 md:hidden">
-              {[...FEATURES_LEFT, ...FEATURES_RIGHT].map(({ title, Icon }) => (
-                <div key={title} className="flex min-w-0 flex-col items-center justify-start gap-1 text-center">
-                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-white/10 bg-forest-light/80 backdrop-blur-sm">
-                    <Icon className="h-3.5 w-3.5 text-cream-deep" strokeWidth={1.8} />
-                  </span>
-                  <p className="line-clamp-2 text-[8.5px] font-bold leading-[1.1] text-white">{title}</p>
-                </div>
-              ))}
-            </div>
-
-            {/* slide indicators */}
-            <div className="mx-auto mt-6 flex items-center justify-center gap-1.5 sm:mt-4">
-              {SLIDES.map((slide, i) => (
-                <button
-                  key={slide.image}
-                  type="button"
-                  aria-label={`Show ${slide.headline}`}
-                  onClick={() => setActive(i)}
-                  className={`h-1.5 rounded-full transition-all duration-300 ${
-                    i === active ? "w-5 bg-white" : "w-1.5 bg-white/40 hover:bg-white/70"
-                  }`}
-                />
-              ))}
-            </div>
-
-            {/* description + CTA — rotates in sync with the product photo */}
-            <p
-              key={active}
-              className="animate-fade-up mx-auto mt-3 max-w-[92%] text-center text-[clamp(0.78rem,3vw,0.9rem)] leading-[1.55] text-cream-deep/85 sm:mt-[clamp(0.5rem,1.5svh,1.75rem)] sm:max-w-md sm:text-[clamp(0.85rem,0.3vw+0.78rem,1rem)]"
-            >
-              {SLIDES[active].description}
-            </p>
-
-            <div className="animate-fade-up mx-auto mt-3 sm:mt-[clamp(0.75rem,1.5svh,1.75rem)]">
-              <Button
-                href="/products"
-                size="lg"
-                className="group h-10! gap-1.5! px-6! text-sm! bg-white! text-forest! hover:bg-cream-deep! sm:h-12! sm:gap-2! sm:px-8! sm:text-base!"
-              >
-                Explore Our Meals
-                <IconArrowRight className="h-3.5 w-3.5 transition-transform duration-300 group-hover:translate-x-1 sm:h-4 sm:w-4" />
-              </Button>
-            </div>
-
-            {/* scroll hint — bounces gently to signal there's more content below */}
-            <button
-              type="button"
-              onClick={() => window.scrollTo({ top: window.innerHeight, behavior: "smooth" })}
-              aria-label="Scroll to next section"
-              className="animate-bounce mx-auto mt-6 text-white/70 transition-colors hover:text-white sm:mt-1"
-            >
-              <IconChevronRight className="h-4 w-4 rotate-90" />
-            </button>
-          </div>
-        </div>
-      </div>
+      {/* Two independent layouts, swapped at `lg` via hidden/visible so each
+          can be tuned without responsive-override churn. Carousel state lives
+          here and feeds both. */}
+      <MobileHero slide={slide} active={active} setActive={setActive} markLoaded={markLoaded} />
+      <DesktopHero slide={slide} active={active} setActive={setActive} markLoaded={markLoaded} />
     </section>
   );
 }

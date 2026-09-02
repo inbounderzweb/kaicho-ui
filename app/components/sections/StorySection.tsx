@@ -33,11 +33,11 @@ export default function StorySection() {
   return (
     <section
       id="story"
-      className="relative overflow-hidden bg-[#f6f5ef] py-24 sm:py-32"
+      className="relative overflow-hidden bg-[#f6f5ef] py-24 md:py-12 sm:py-32"
     >
       <Container>
         {/* Header */}
-        <div className="mb-14 flex items-end justify-between gap-6">
+        <div className="mb-14 md:mb-2 flex items-end justify-between gap-6 md:gap-2">
           <div>
             <div className="flex items-center gap-3">
               <span className="h-px w-8 bg-brand" />

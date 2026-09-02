@@ -14,7 +14,7 @@ async function loadCollections(): Promise<AdminCollection[]> {
 export default async function CategoryShowcase() {
   const collections = await loadCollections();
   return (
-    <section className="bg-white py-20 sm:py-24">
+    <section className="bg-white md:py-12 py-20 sm:py-24">
       <Container>
         <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>

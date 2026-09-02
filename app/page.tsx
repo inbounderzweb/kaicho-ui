@@ -20,7 +20,7 @@ export default function Home() {
       <StoryCover />
       <HowItWorks />
       <UseCaseGrid />
-      <Testimonials />
+      {/* <Testimonials /> */}
       <BlogSection />
     </>
   );
