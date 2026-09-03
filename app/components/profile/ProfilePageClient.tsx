@@ -5,7 +5,7 @@ import Link from "next/link";
 import AddressesSection from "./AddressesSection";
 import CustomerSupportSection from "./CustomerSupportSection";
 import OrdersSection from "./OrdersSection";
-import SavedItemsSection from "./SavedItemsSection";
+// import SavedItemsSection from "./SavedItemsSection";
 import ProfileSidebar, { type ProfileSectionId } from "./ProfileSidebar";
 import { IconChevronRight } from "../ui/icons";
 import { useRequireAuth } from "@/lib/auth/useRequireAuth";
@@ -96,7 +96,7 @@ export default function ProfilePageClient() {
           </h2>
           {section === "orders" && <OrdersSection />}
           {section === "addresses" && <AddressesSection />}
-          {section === "saved" && <SavedItemsSection />}
+          {/* {section === "saved" && <SavedItemsSection />} */}
           {section === "support" && <CustomerSupportSection />}
         </div>
       </div>

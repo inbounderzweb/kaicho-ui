@@ -1,3 +1,5 @@
+import { DEFAULT_STORE_SETTINGS } from "@/lib/api/settings";
+
 // Previously seeded from the dummy MEALS/COMBOS marketing data
 // (app/components/sections/product-data.ts) with a hardcoded 3-item
 // INITIAL_CART. Now backed by real products: CartItem stores a productId
@@ -11,7 +13,13 @@
 // of which re-read price, discount and stock from the DB — the numbers
 // shown on the checkout page come from those responses, never from here.
 
-export const FREE_SHIPPING_THRESHOLD = 499;
+// Free-delivery threshold and flat fee are admin-configurable (Admin →
+// Settings, persisted in StoreSettings, served at GET /settings). These
+// constants are only the fallback the storefront renders with until that
+// fetch resolves — components should read the live values via
+// useShippingPolicy(). CASHBACK_* stay storefront-only display values.
+export const FREE_SHIPPING_THRESHOLD = DEFAULT_STORE_SETTINGS.freeShippingThreshold;
+export const FLAT_SHIPPING_FEE = DEFAULT_STORE_SETTINGS.flatShippingFee;
 export const CASHBACK_THRESHOLD = 999;
 export const CASHBACK_PERCENT = 3;
 

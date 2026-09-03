@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import Button from "../ui/Button";
 import CartItemRow from "./CartItemRow";
 import ShippingProgress from "./ShippingProgress";
-import { FREE_SHIPPING_THRESHOLD } from "./cart-data";
+import { useShippingPolicy } from "@/lib/hooks/useShippingPolicy";
 import { useCartStore } from "@/lib/store/cart.store";
 import { useAuthGate } from "@/lib/auth/useAuthGate";
 import { IconArrowRight, IconCart, IconChevronRight } from "../ui/icons";
@@ -14,6 +14,7 @@ import { IconArrowRight, IconCart, IconChevronRight } from "../ui/icons";
 export default function CartPageClient() {
   const router = useRouter();
   const { guard, isLoading: isAuthLoading } = useAuthGate();
+  const { freeShippingThreshold } = useShippingPolicy();
   const items = useCartStore((s) => s.items);
   const updateQuantity = useCartStore((s) => s.updateQuantity);
   const removeItem = useCartStore((s) => s.removeItem);
@@ -115,10 +116,10 @@ export default function CartPageClient() {
                   <span>Shipping</span>
                   <span
                     className={`font-semibold ${
-                      subtotal >= FREE_SHIPPING_THRESHOLD ? "text-brand" : "text-ink"
+                      subtotal >= freeShippingThreshold ? "text-brand" : "text-ink"
                     }`}
                   >
-                    {subtotal >= FREE_SHIPPING_THRESHOLD ? "Free" : "Calculated at checkout"}
+                    {subtotal >= freeShippingThreshold ? "Free" : "Calculated at checkout"}
                   </span>
                 </div>
               </div>

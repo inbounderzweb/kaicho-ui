@@ -1,14 +1,12 @@
-import {
-  CASHBACK_PERCENT,
-  CASHBACK_THRESHOLD,
-  FREE_SHIPPING_THRESHOLD,
-} from "./cart-data";
+import { CASHBACK_PERCENT, CASHBACK_THRESHOLD } from "./cart-data";
+import { useShippingPolicy } from "@/lib/hooks/useShippingPolicy";
 
 export default function ShippingProgress({ subtotal }: { subtotal: number }) {
-  const reachedFreeShipping = subtotal >= FREE_SHIPPING_THRESHOLD;
+  const { freeShippingThreshold } = useShippingPolicy();
+  const reachedFreeShipping = subtotal >= freeShippingThreshold;
   const reachedCashback = subtotal >= CASHBACK_THRESHOLD;
   const progress = Math.min((subtotal / CASHBACK_THRESHOLD) * 100, 100);
-  const freeShippingMark = (FREE_SHIPPING_THRESHOLD / CASHBACK_THRESHOLD) * 100;
+  const freeShippingMark = (freeShippingThreshold / CASHBACK_THRESHOLD) * 100;
 
   return (
     <div className="rounded-2xl border border-border bg-white p-5 shadow-sm sm:p-6">
@@ -38,7 +36,7 @@ export default function ShippingProgress({ subtotal }: { subtotal: number }) {
           <>
             Add{" "}
             <span className="font-bold text-brand">
-              Rs. {(FREE_SHIPPING_THRESHOLD - subtotal).toFixed(2)}
+              Rs. {(freeShippingThreshold - subtotal).toFixed(2)}
             </span>{" "}
             more to unlock <span className="font-bold text-brand">FREE SHIPPING</span>
           </>

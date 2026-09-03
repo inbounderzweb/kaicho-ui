@@ -107,6 +107,14 @@ export const wishlistKeys = {
   all: ["wishlist"] as const,
 };
 
+// Store settings — the admin doc and the public storefront read are cached
+// separately (an admin save invalidates both), same non-clashing convention
+// as the catalog namespaces above.
+export const settingsKeys = {
+  admin: ["admin", "settings"] as const,
+  public: ["public", "settings"] as const,
+};
+
 // Customer-facing commerce namespaces — same non-"admin"-prefixed
 // convention as wishlistKeys/publicProductKeys above. An admin mutating an
 // order invalidates ["admin", "orders", ...]; these are a separate cache.

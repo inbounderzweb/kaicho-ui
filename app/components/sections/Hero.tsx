@@ -13,6 +13,8 @@ const SLIDES = [
     accent: "A nourishing meal, ready in minutes.",
     image: "/Broccoli-&-Mushroom-Oats-Porridge.png",
     alt: "Kaicho Veg Oats Porridge pouch beside a served bowl of porridge garnished with coriander, next to a wooden spoon",
+    // set true only if Next's optimizer flattens this PNG's transparency
+    unoptimized: false,
     // Per-slide scale so both product shots read at the same visual size in
     // the shared frame — the two source PNGs are framed differently
     // (kaicho-hero.png is 3:2 with the pouch+bowl spread wide;
@@ -28,6 +30,7 @@ const SLIDES = [
     accent: "A nourishing meal, ready in minutes.",
     image: "/image_navadhanya.png",
     alt: "Kaicho Veg Oats Porridge pouch beside a served bowl of porridge garnished with coriander, next to a wooden spoon",
+    unoptimized: false,
     // Per-slide scale so both product shots read at the same visual size in
     // the shared frame — the two source PNGs are framed differently
     // (kaicho-hero.png is 3:2 with the pouch+bowl spread wide;

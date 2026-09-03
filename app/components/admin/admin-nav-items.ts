@@ -10,6 +10,7 @@ import {
   IconFileText,
   IconMessageCircle,
   IconMail,
+  IconSettings,
   type IconProps,
 } from "../ui/icons";
 
@@ -65,4 +66,5 @@ export const ADMIN_NAV_ITEMS: AdminNavItem[] = [
     ],
   },
   { href: "/admin/media", label: "Media", Icon: IconImages },
+  { href: "/admin/settings", label: "Settings", Icon: IconSettings },
 ];

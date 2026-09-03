@@ -15,7 +15,7 @@ export type ProfileSectionId = "orders" | "addresses" | "saved" | "support";
 const NAV_ITEMS: { id: ProfileSectionId; label: string; Icon: typeof IconTruck }[] = [
   { id: "orders", label: "My Orders", Icon: IconTruck },
   { id: "addresses", label: "Your Addresses", Icon: IconMapPin },
-  { id: "saved", label: "Saved Items", Icon: IconHeart },
+  // { id: "saved", label: "Saved Items", Icon: IconHeart },
   { id: "support", label: "Customer Support", Icon: IconMessageCircle },
 ];
 
