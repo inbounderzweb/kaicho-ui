@@ -1,4 +1,4 @@
-import { apiFetch } from "./client";
+import { apiFetch, type PublicReadOptions } from "./client";
 
 export interface PublicBrandLogo {
   mediaId: string;
@@ -14,6 +14,6 @@ export interface PublicBrand {
   logo: PublicBrandLogo | null;
 }
 
-export function fetchPublicBrands(): Promise<{ brands: PublicBrand[] }> {
-  return apiFetch<{ brands: PublicBrand[] }>("/brands", { method: "GET" });
+export function fetchPublicBrands(opts?: PublicReadOptions): Promise<{ brands: PublicBrand[] }> {
+  return apiFetch<{ brands: PublicBrand[] }>("/brands", { method: "GET", ...opts });
 }

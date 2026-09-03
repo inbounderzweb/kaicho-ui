@@ -9,7 +9,7 @@ import { publicCategoryKeys } from "./query-keys";
 export function useCategories() {
   return useQuery({
     queryKey: publicCategoryKeys.list,
-    queryFn: fetchPublicCategories,
+    queryFn: () => fetchPublicCategories(),
     staleTime: 5 * 60_000,
   });
 }

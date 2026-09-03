@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { notFound } from "next/navigation";
 import JsonLd from "../../components/seo/JsonLd";
 import ProductDetailClient from "../../components/products/ProductDetailClient";
@@ -7,20 +8,28 @@ import { resolveMediaUrl } from "@/lib/api/client";
 import { buildPageMetadata } from "@/lib/seo/metadata";
 import { productJsonLd, breadcrumbJsonLd } from "@/lib/seo/structured-data";
 
-// No generateStaticParams here on purpose: the real catalog changes
-// continuously (new products, price/stock updates, deactivations), so this
-// route renders per-request against the live backend rather than a
-// build-time snapshot that would go stale.
+// The catalog changes continuously, so nothing is pre-rendered at build
+// time — but returning [] here (with the default dynamicParams: true) turns
+// this route into on-demand ISR: the first visitor to a slug renders it and
+// the full HTML is cached for `revalidate` seconds, so the next 99 visitors
+// in that minute get a static file and never touch the render server or
+// Mongo. A background re-render keeps it fresh.
+export const revalidate = 60;
+export function generateStaticParams() {
+  return [];
+}
 
-async function getProduct(slug: string) {
+// cache() de-dupes: generateMetadata and the page body both call getProduct,
+// but only one backend round-trip happens per request.
+const getProduct = cache(async (slug: string) => {
   try {
-    const { product } = await fetchPublicProductBySlug(slug);
+    const { product } = await fetchPublicProductBySlug(slug, { revalidate: 60 });
     return product;
   } catch (err) {
     if (err instanceof ApiError && err.status === 404) return null;
     throw err;
   }
-}
+});
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;

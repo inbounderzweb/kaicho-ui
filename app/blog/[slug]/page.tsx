@@ -1,3 +1,4 @@
+import { cache } from "react";
 import Link from "next/link";
 import { notFound, permanentRedirect } from "next/navigation";
 import JsonLd from "../../components/seo/JsonLd";
@@ -9,18 +10,26 @@ import { resolveMediaUrl } from "@/lib/api/client";
 import { buildPageMetadata } from "@/lib/seo/metadata";
 import { blogPostingJsonLd, breadcrumbJsonLd, faqJsonLd } from "@/lib/seo/structured-data";
 
-export const dynamic = "force-dynamic";
-
-async function getBlog(
-  slug: string
-): Promise<{ blog: PublicBlogDetail; redirectedFrom: string | null } | null> {
-  try {
-    return await fetchPublicBlogBySlug(slug);
-  } catch (err) {
-    if (err instanceof ApiError && err.status === 404) return null;
-    throw err;
-  }
+// Published articles rarely change — on-demand ISR caches each one's HTML
+// for `revalidate` seconds after its first view. generateMetadata + the
+// page body share a single backend fetch via cache().
+export const revalidate = 600;
+export function generateStaticParams() {
+  return [];
 }
+
+const getBlog = cache(
+  async (
+    slug: string
+  ): Promise<{ blog: PublicBlogDetail; redirectedFrom: string | null } | null> => {
+    try {
+      return await fetchPublicBlogBySlug(slug, { revalidate: 600 });
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 404) return null;
+      throw err;
+    }
+  }
+);
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
@@ -58,7 +67,7 @@ export default async function BlogDetailPage({ params }: { params: Promise<{ slu
     permanentRedirect(`/blog/${blog.slug}`);
   }
 
-  const related = await fetchRelatedBlogs(blog.slug, 3)
+  const related = await fetchRelatedBlogs(blog.slug, 3, { revalidate: 600 })
     .then((r) => r.blogs)
     .catch(() => []);
 

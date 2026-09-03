@@ -4,7 +4,10 @@ import { fetchPublicBlogs, fetchPublicBlogCategories } from "@/lib/api/blogPubli
 import { buildPageMetadata } from "@/lib/seo/metadata";
 import { BLOG_PAGE_SIZE } from "@/lib/blog-constants";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
+export function generateStaticParams() {
+  return [];
+}
 
 type Params = Promise<{ page: string }>;
 
@@ -34,13 +37,13 @@ export default async function BlogPaginatedPage({ params }: { params: Params }) 
   if (n === null) redirect("/blog");
 
   const [list, categoriesRes] = await Promise.all([
-    fetchPublicBlogs({ page: n, pageSize: BLOG_PAGE_SIZE }).catch(() => ({
+    fetchPublicBlogs({ page: n, pageSize: BLOG_PAGE_SIZE }, { revalidate: 300 }).catch(() => ({
       items: [],
       page: n,
       pageSize: BLOG_PAGE_SIZE,
       total: 0,
     })),
-    fetchPublicBlogCategories().catch(() => ({ categories: [] })),
+    fetchPublicBlogCategories({ revalidate: 600 }).catch(() => ({ categories: [] })),
   ]);
 
   const totalPages = Math.max(1, Math.ceil(list.total / BLOG_PAGE_SIZE));

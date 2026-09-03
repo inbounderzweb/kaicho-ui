@@ -1,4 +1,4 @@
-import { apiFetch } from "./client";
+import { apiFetch, type PublicReadOptions } from "./client";
 import { buildProductQueryString, type PublicProductListParams, type PublicProductListResult } from "./publicProducts";
 
 export interface PublicCategoryImage {
@@ -16,12 +16,18 @@ export interface PublicCategory {
   image: PublicCategoryImage | null;
 }
 
-export function fetchPublicCategories(): Promise<{ categories: PublicCategory[] }> {
-  return apiFetch<{ categories: PublicCategory[] }>("/categories", { method: "GET" });
+export function fetchPublicCategories(opts?: PublicReadOptions): Promise<{ categories: PublicCategory[] }> {
+  return apiFetch<{ categories: PublicCategory[] }>("/categories", { method: "GET", ...opts });
 }
 
-export function fetchPublicCategoryBySlug(slug: string): Promise<{ category: PublicCategory }> {
-  return apiFetch<{ category: PublicCategory }>(`/categories/${encodeURIComponent(slug)}`, { method: "GET" });
+export function fetchPublicCategoryBySlug(
+  slug: string,
+  opts?: PublicReadOptions
+): Promise<{ category: PublicCategory }> {
+  return apiFetch<{ category: PublicCategory }>(`/categories/${encodeURIComponent(slug)}`, {
+    method: "GET",
+    ...opts,
+  });
 }
 
 // The category landing page's product grid — same query params as
@@ -32,10 +38,11 @@ export type CategoryProductsParams = Omit<PublicProductListParams, "category">;
 
 export function fetchCategoryProducts(
   slug: string,
-  params: CategoryProductsParams = {}
+  params: CategoryProductsParams = {},
+  opts?: PublicReadOptions
 ): Promise<PublicProductListResult> {
   return apiFetch<PublicProductListResult>(
     `/categories/${encodeURIComponent(slug)}/products${buildProductQueryString(params)}`,
-    { method: "GET" }
+    { method: "GET", ...opts }
   );
 }

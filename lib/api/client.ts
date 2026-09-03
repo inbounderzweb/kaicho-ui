@@ -55,16 +55,41 @@ interface ApiResponse<T> {
   details?: unknown;
 }
 
+export interface ApiFetchOptions extends RequestInit {
+  /**
+   * SERVER-ONLY hint. When set (and running in a Server Component / route
+   * handler), the GET is stored in Next's Data Cache for this many seconds
+   * instead of hitting the backend on every render, and the session cookie
+   * is NOT sent (these are public, unauthenticated reads). Ignored in the
+   * browser, where React Query owns caching and the request stays
+   * same-origin + credentialed.
+   */
+  revalidate?: number;
+  /** Optional cache tags for on-demand revalidation. Server-only. */
+  tags?: string[];
+}
+
+/** What a public read function accepts to opt its server-side call into the
+ *  Data Cache. `fn(params)` from the browser (React Query) passes nothing. */
+export type PublicReadOptions = Pick<ApiFetchOptions, "revalidate" | "tags">;
+
 export async function apiFetch<T>(
   path: string,
-  options: RequestInit = {}
+  options: ApiFetchOptions = {}
 ): Promise<T> {
+  const { revalidate, tags, ...init } = options;
+  const serverCacheable = !IS_BROWSER && typeof revalidate === "number";
+
   const res = await fetch(`${API_BASE_URL}${path}`, {
-    ...options,
-    credentials: "include",
+    ...init,
+    // Public server read → cache it, no cookie. Everything else keeps the
+    // credentialed, uncached behaviour it had before.
+    ...(serverCacheable
+      ? { next: { revalidate, ...(tags ? { tags } : {}) } }
+      : { credentials: "include" }),
     headers: {
       "Content-Type": "application/json",
-      ...options.headers,
+      ...init.headers,
     },
   });
 

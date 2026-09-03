@@ -3,10 +3,11 @@ import { fetchPublicBlogs, fetchPublicBlogCategories } from "@/lib/api/blogPubli
 import { buildPageMetadata } from "@/lib/seo/metadata";
 import { BLOG_PAGE_SIZE } from "@/lib/blog-constants";
 
-// The catalog of posts changes continuously; render per-request against the
-// live backend rather than a build-time snapshot (same rationale as
-// app/products).
-export const dynamic = "force-dynamic";
+// Post list/categories are cached for a few minutes and refreshed in the
+// background — a spike of readers hits the cache. (A new post appears within
+// the window.) The `?q=`/`?category=` variants render dynamically but still
+// reuse the per-URL Data Cache for their backend calls.
+export const revalidate = 300;
 
 type SearchParams = Promise<{ q?: string; category?: string }>;
 
@@ -29,13 +30,16 @@ export default async function BlogPage({ searchParams }: { searchParams: SearchP
   const search = q?.trim() || undefined;
 
   const [list, categoriesRes] = await Promise.all([
-    fetchPublicBlogs({ page: 1, pageSize: BLOG_PAGE_SIZE, search, category }).catch(() => ({
+    fetchPublicBlogs(
+      { page: 1, pageSize: BLOG_PAGE_SIZE, search, category },
+      { revalidate: 300 }
+    ).catch(() => ({
       items: [],
       page: 1,
       pageSize: BLOG_PAGE_SIZE,
       total: 0,
     })),
-    fetchPublicBlogCategories().catch(() => ({ categories: [] })),
+    fetchPublicBlogCategories({ revalidate: 600 }).catch(() => ({ categories: [] })),
   ]);
 
   const isPlain = !search && !category;

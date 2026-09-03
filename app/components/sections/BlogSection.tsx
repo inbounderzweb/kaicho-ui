@@ -6,7 +6,9 @@ import SectionHeading from "../ui/SectionHeading";
 import { IconArrowRight } from "../ui/icons";
 
 export default async function BlogSection() {
-  const { items } = await fetchPublicBlogs({ page: 1, pageSize: 3 }).catch(() => ({ items: [] }));
+  const { items } = await fetchPublicBlogs({ page: 1, pageSize: 3 }, { revalidate: 300 }).catch(
+    () => ({ items: [] })
+  );
 
   // Nothing published yet — omit the section rather than show an empty rail.
   if (items.length === 0) return null;

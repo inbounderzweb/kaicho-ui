@@ -4,7 +4,7 @@ import { fetchHomepageCollections, type AdminCollection } from "@/lib/api/collec
 
 async function loadCollections(): Promise<AdminCollection[]> {
   try {
-    const { collections } = await fetchHomepageCollections();
+    const { collections } = await fetchHomepageCollections({ revalidate: 120 });
     return collections;
   } catch {
     return [];

@@ -1,4 +1,4 @@
-import { Suspense } from "react";
+import { cache, Suspense } from "react";
 import { notFound } from "next/navigation";
 import PageBanner from "../../components/ui/PageBanner";
 import CategoryPageClient from "../../components/products/CategoryPageClient";
@@ -8,15 +8,23 @@ import { ApiError } from "@/lib/api/ApiError";
 import { buildPageMetadata } from "@/lib/seo/metadata";
 import { resolveMediaUrl } from "@/lib/api/client";
 
-async function getCategory(slug: string) {
+// On-demand ISR (see products/[slug] for the rationale): the first hit to a
+// category slug caches the page HTML for `revalidate` seconds. The product
+// grid inside is client-fetched and stays live regardless.
+export const revalidate = 300;
+export function generateStaticParams() {
+  return [];
+}
+
+const getCategory = cache(async (slug: string) => {
   try {
-    const { category } = await fetchPublicCategoryBySlug(slug);
+    const { category } = await fetchPublicCategoryBySlug(slug, { revalidate: 300 });
     return category;
   } catch (err) {
     if (err instanceof ApiError && err.status === 404) return null;
     throw err;
   }
-}
+});
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;

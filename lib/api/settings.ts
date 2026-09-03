@@ -1,4 +1,4 @@
-import { apiFetch } from "./client";
+import { apiFetch, type PublicReadOptions } from "./client";
 
 export interface StoreSettings {
   freeShippingThreshold: number;
@@ -35,6 +35,8 @@ export function updateStoreSettings(
 }
 
 // Public, unauthenticated — same shape, used by the storefront cart.
-export function fetchPublicStoreSettings(): Promise<{ settings: StoreSettings }> {
-  return apiFetch<{ settings: StoreSettings }>("/settings", { method: "GET" });
+export function fetchPublicStoreSettings(
+  opts?: PublicReadOptions
+): Promise<{ settings: StoreSettings }> {
+  return apiFetch<{ settings: StoreSettings }>("/settings", { method: "GET", ...opts });
 }

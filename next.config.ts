@@ -57,6 +57,15 @@ const nextConfig: NextConfig = {
     };
   },
   images: {
+    // Keep an optimised image in the on-disk cache for 24h instead of the
+    // 60s default — product photos don't change, so re-optimising them on
+    // every viewer is wasted CPU on the render server.
+    minimumCacheTTL: 60 * 60 * 24,
+    // Only emit the formats and widths the storefront actually uses — a
+    // smaller matrix means fewer Sharp jobs and a smaller cache.
+    formats: ["image/webp"],
+    deviceSizes: [360, 480, 640, 828, 1080, 1200, 1600],
+    imageSizes: [64, 96, 128, 256, 384],
     remotePatterns: [
       {
         protocol: "https",
@@ -78,6 +87,11 @@ const nextConfig: NextConfig = {
       },
     ],
     ...(isLoopbackApiHost ? { dangerouslyAllowLocalIP: true } : {}),
+  },
+  // Keep already-rendered route segments in the client router cache longer,
+  // so back/forward and re-navigation don't re-hit the server.
+  experimental: {
+    staleTimes: { dynamic: 30, static: 300 },
   },
   // Conservative, universally-safe headers only. HSTS and a real
   // Content-Security-Policy are deliberately NOT set here: HSTS is a long-

@@ -8,6 +8,11 @@ import StorySection from "./components/sections/StorySection";
 import Testimonials from "./components/sections/Testimonials";
 import UseCaseGrid from "./components/sections/UseCaseGrid";
 
+// The homepage is served from cache and refreshed in the background at most
+// once every 2 minutes — a burst of visitors hits a static file, not the
+// backend + Mongo. New collections / blog posts appear within the window.
+export const revalidate = 120;
+
 export default function Home() {
   return (
     <>

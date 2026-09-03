@@ -1,4 +1,4 @@
-import { apiFetch } from "./client";
+import { apiFetch, type PublicReadOptions } from "./client";
 import type { BlogImage, BlogFaq, BlogTocItem, BlogCategoryRef, BlogTagRef } from "./blog";
 
 // Unauthenticated customer-facing blog client. Published-only, slug-addressed,
@@ -86,32 +86,51 @@ export function buildBlogQueryString(params: PublicBlogListParams): string {
   return s ? `?${s}` : "";
 }
 
-export function fetchPublicBlogs(params: PublicBlogListParams = {}): Promise<PublicBlogListResult> {
-  return apiFetch<PublicBlogListResult>(`/blogs${buildBlogQueryString(params)}`, { method: "GET" });
+export function fetchPublicBlogs(
+  params: PublicBlogListParams = {},
+  opts?: PublicReadOptions
+): Promise<PublicBlogListResult> {
+  return apiFetch<PublicBlogListResult>(`/blogs${buildBlogQueryString(params)}`, {
+    method: "GET",
+    ...opts,
+  });
 }
 
 export function fetchPublicBlogBySlug(
-  slug: string
+  slug: string,
+  opts?: PublicReadOptions
 ): Promise<{ blog: PublicBlogDetail; redirectedFrom: string | null }> {
   return apiFetch<{ blog: PublicBlogDetail; redirectedFrom: string | null }>(
     `/blogs/${encodeURIComponent(slug)}`,
-    { method: "GET" }
+    { method: "GET", ...opts }
   );
 }
 
-export function fetchRelatedBlogs(slug: string, limit = 3): Promise<{ blogs: PublicBlogListItem[] }> {
+export function fetchRelatedBlogs(
+  slug: string,
+  limit = 3,
+  opts?: PublicReadOptions
+): Promise<{ blogs: PublicBlogListItem[] }> {
   return apiFetch<{ blogs: PublicBlogListItem[] }>(
     `/blogs/${encodeURIComponent(slug)}/related?limit=${limit}`,
-    { method: "GET" }
+    { method: "GET", ...opts }
   );
 }
 
-export function fetchPublicBlogCategories(): Promise<{ categories: PublicBlogCategory[] }> {
-  return apiFetch<{ categories: PublicBlogCategory[] }>("/blogs/categories", { method: "GET" });
+export function fetchPublicBlogCategories(
+  opts?: PublicReadOptions
+): Promise<{ categories: PublicBlogCategory[] }> {
+  return apiFetch<{ categories: PublicBlogCategory[] }>("/blogs/categories", {
+    method: "GET",
+    ...opts,
+  });
 }
 
-export function fetchPublicBlogCategoryBySlug(slug: string): Promise<{
+export function fetchPublicBlogCategoryBySlug(
+  slug: string,
+  opts?: PublicReadOptions
+): Promise<{
   category: { categoryId: string; name: string; slug: string; description: string | null; image: BlogImage | null; metaTitle: string | null; metaDescription: string | null };
 }> {
-  return apiFetch(`/blogs/categories/${encodeURIComponent(slug)}`, { method: "GET" });
+  return apiFetch(`/blogs/categories/${encodeURIComponent(slug)}`, { method: "GET", ...opts });
 }

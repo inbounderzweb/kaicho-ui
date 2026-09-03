@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { notFound } from "next/navigation";
 import BlogListLayout from "../../../components/blog/BlogListLayout";
 import {
@@ -9,20 +10,20 @@ import { ApiError } from "@/lib/api/ApiError";
 import { buildPageMetadata } from "@/lib/seo/metadata";
 import { BLOG_PAGE_SIZE } from "@/lib/blog-constants";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
 
-type Params = Promise<{ slug: string }>;
-type SearchParams = Promise<{ page?: string }>;
-
-async function getCategory(slug: string) {
+const getCategory = cache(async (slug: string) => {
   try {
-    const { category } = await fetchPublicBlogCategoryBySlug(slug);
+    const { category } = await fetchPublicBlogCategoryBySlug(slug, { revalidate: 600 });
     return category;
   } catch (err) {
     if (err instanceof ApiError && err.status === 404) return null;
     throw err;
   }
-}
+});
+
+type Params = Promise<{ slug: string }>;
+type SearchParams = Promise<{ page?: string }>;
 
 export async function generateMetadata({ params }: { params: Params }) {
   const { slug } = await params;
@@ -52,13 +53,16 @@ export default async function BlogCategoryPage({
   if (!category) notFound();
 
   const [list, categoriesRes] = await Promise.all([
-    fetchPublicBlogs({ page, pageSize: BLOG_PAGE_SIZE, category: slug }).catch(() => ({
+    fetchPublicBlogs(
+      { page, pageSize: BLOG_PAGE_SIZE, category: slug },
+      { revalidate: 300 }
+    ).catch(() => ({
       items: [],
       page,
       pageSize: BLOG_PAGE_SIZE,
       total: 0,
     })),
-    fetchPublicBlogCategories().catch(() => ({ categories: [] })),
+    fetchPublicBlogCategories({ revalidate: 600 }).catch(() => ({ categories: [] })),
   ]);
 
   const totalPages = Math.max(1, Math.ceil(list.total / BLOG_PAGE_SIZE));

@@ -1,4 +1,4 @@
-import { apiFetch } from "./client";
+import { apiFetch, type PublicReadOptions } from "./client";
 import type { PublicProductListItem } from "./publicProducts";
 
 export interface CollectionImage {
@@ -69,6 +69,8 @@ export function deleteCollection(id: string): Promise<void> {
   return apiFetch<void>(`/admin/collections/${encodeURIComponent(id)}`, { method: "DELETE" });
 }
 
-export function fetchHomepageCollections(): Promise<{ collections: AdminCollection[] }> {
-  return apiFetch<{ collections: AdminCollection[] }>("/collections/active", { method: "GET" });
+export function fetchHomepageCollections(
+  opts?: PublicReadOptions
+): Promise<{ collections: AdminCollection[] }> {
+  return apiFetch<{ collections: AdminCollection[] }>("/collections/active", { method: "GET", ...opts });
 }

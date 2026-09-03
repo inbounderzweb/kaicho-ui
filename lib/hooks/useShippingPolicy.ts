@@ -10,7 +10,7 @@ import { settingsKeys } from "./query-keys";
 export function useShippingPolicy() {
   const { data } = useQuery({
     queryKey: settingsKeys.public,
-    queryFn: fetchPublicStoreSettings,
+    queryFn: () => fetchPublicStoreSettings(),
     staleTime: 5 * 60_000,
   });
 

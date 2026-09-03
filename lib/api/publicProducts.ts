@@ -1,4 +1,4 @@
-import { apiFetch } from "./client";
+import { apiFetch, type PublicReadOptions } from "./client";
 
 // Separate, deliberately smaller DTO shapes than lib/api/product.ts (the
 // admin CRUD client) — this file talks to the unauthenticated /products,
@@ -129,17 +129,33 @@ export function buildProductQueryString(params: PublicProductListParams): string
   return s ? `?${s}` : "";
 }
 
-export function fetchPublicProducts(params: PublicProductListParams = {}): Promise<PublicProductListResult> {
-  return apiFetch<PublicProductListResult>(`/products${buildProductQueryString(params)}`, { method: "GET" });
+export function fetchPublicProducts(
+  params: PublicProductListParams = {},
+  opts?: PublicReadOptions
+): Promise<PublicProductListResult> {
+  return apiFetch<PublicProductListResult>(`/products${buildProductQueryString(params)}`, {
+    method: "GET",
+    ...opts,
+  });
 }
 
-export function fetchPublicProductBySlug(slug: string): Promise<{ product: PublicProductDetail }> {
-  return apiFetch<{ product: PublicProductDetail }>(`/products/${encodeURIComponent(slug)}`, { method: "GET" });
+export function fetchPublicProductBySlug(
+  slug: string,
+  opts?: PublicReadOptions
+): Promise<{ product: PublicProductDetail }> {
+  return apiFetch<{ product: PublicProductDetail }>(`/products/${encodeURIComponent(slug)}`, {
+    method: "GET",
+    ...opts,
+  });
 }
 
-export function fetchRelatedProducts(slug: string, limit = 8): Promise<{ products: PublicProductListItem[] }> {
+export function fetchRelatedProducts(
+  slug: string,
+  limit = 8,
+  opts?: PublicReadOptions
+): Promise<{ products: PublicProductListItem[] }> {
   return apiFetch<{ products: PublicProductListItem[] }>(
     `/products/${encodeURIComponent(slug)}/related?limit=${limit}`,
-    { method: "GET" }
+    { method: "GET", ...opts }
   );
 }

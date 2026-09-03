@@ -5,7 +5,7 @@ import { publicBrandKeys } from "./query-keys";
 export function usePublicBrands() {
   return useQuery({
     queryKey: publicBrandKeys.list,
-    queryFn: fetchPublicBrands,
+    queryFn: () => fetchPublicBrands(),
     staleTime: 5 * 60_000,
   });
 }
