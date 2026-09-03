@@ -1,11 +1,12 @@
 "use client";
 
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useEditor, EditorContent, type Editor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import { Image } from "@tiptap/extension-image";
 import { TableKit } from "@tiptap/extension-table";
 import { useUploadMedia } from "@/lib/hooks/admin/useUploadMedia";
+import MediaLibraryModal from "./media/MediaLibraryModal";
 
 // Image node extended to carry data-media-id, the marker blog.service.ts uses
 // to attach/detach body images through the Media lifecycle (see blog.media.ts).
@@ -54,6 +55,19 @@ function ToolbarButton({
 
 function Toolbar({ editor }: { editor: Editor }) {
   const uploadMutation = useUploadMedia();
+  const [libraryOpen, setLibraryOpen] = useState(false);
+
+  const insertImage = useCallback(
+    (src: string, mediaId: string, alt: string) => {
+      editor
+        .chain()
+        .focus()
+        .setImage({ src, alt })
+        .updateAttributes("image", { "data-media-id": mediaId })
+        .run();
+    },
+    [editor]
+  );
 
   const addLink = useCallback(() => {
     const prev = editor.getAttributes("link").href as string | undefined;
@@ -66,38 +80,8 @@ function Toolbar({ editor }: { editor: Editor }) {
     editor.chain().focus().extendMarkRange("link").setLink({ href: url }).run();
   }, [editor]);
 
-  const addImage = useCallback(() => {
-    const input = document.createElement("input");
-    input.type = "file";
-    input.accept = "image/jpeg,image/png,image/webp,image/avif";
-    input.onchange = () => {
-      const file = input.files?.[0];
-      if (!file) return;
-      uploadMutation.mutate(
-        { files: [file] },
-        {
-          onSuccess: (result) => {
-            const uploaded = result.data[0];
-            if (!uploaded) {
-              window.alert(result.errors[0]?.message ?? "Upload failed.");
-              return;
-            }
-            const alt = window.prompt("Alt text (describe the image for SEO & screen readers)", "") ?? "";
-            editor
-              .chain()
-              .focus()
-              .setImage({ src: uploaded.mediumUrl ?? uploaded.url, alt })
-              .updateAttributes("image", { "data-media-id": uploaded.mediaId })
-              .run();
-          },
-          onError: () => window.alert("Upload failed. Please try again."),
-        }
-      );
-    };
-    input.click();
-  }, [editor, uploadMutation]);
-
   return (
+    <>
     <div className="flex flex-wrap items-center gap-1 border-b border-admin-border p-2 dark:border-admin-border-dark">
       <ToolbarButton title="Heading 2" active={editor.isActive("heading", { level: 2 })} onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}>H2</ToolbarButton>
       <ToolbarButton title="Heading 3" active={editor.isActive("heading", { level: 3 })} onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}>H3</ToolbarButton>
@@ -115,7 +99,7 @@ function Toolbar({ editor }: { editor: Editor }) {
       <ToolbarButton title="Divider" onClick={() => editor.chain().focus().setHorizontalRule().run()}>―</ToolbarButton>
       <span className="mx-1 h-5 w-px bg-admin-border dark:bg-admin-border-dark" />
       <ToolbarButton title="Link" active={editor.isActive("link")} onClick={addLink}>Link</ToolbarButton>
-      <ToolbarButton title="Image" onClick={addImage} disabled={uploadMutation.isPending}>{uploadMutation.isPending ? "…" : "Image"}</ToolbarButton>
+      <ToolbarButton title="Image" onClick={() => setLibraryOpen(true)} disabled={uploadMutation.isPending}>{uploadMutation.isPending ? "…" : "Image"}</ToolbarButton>
       <ToolbarButton title="Insert table" onClick={() => editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()}>Table</ToolbarButton>
       {editor.isActive("table") && (
         <>
@@ -128,6 +112,22 @@ function Toolbar({ editor }: { editor: Editor }) {
       <ToolbarButton title="Undo" onClick={() => editor.chain().focus().undo().run()} disabled={!editor.can().undo()}>↶</ToolbarButton>
       <ToolbarButton title="Redo" onClick={() => editor.chain().focus().redo().run()} disabled={!editor.can().redo()}>↷</ToolbarButton>
     </div>
+
+    <MediaLibraryModal
+      open={libraryOpen}
+      mode="single"
+      onClose={() => setLibraryOpen(false)}
+      onConfirm={(picks) => {
+        const p = picks[0];
+        if (!p) return;
+        const alt =
+          p.altText ??
+          window.prompt("Alt text (describe the image for SEO & screen readers)", "") ??
+          "";
+        insertImage(p.url, p.mediaId, alt);
+      }}
+    />
+    </>
   );
 }
 

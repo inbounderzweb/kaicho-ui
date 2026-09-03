@@ -4,6 +4,8 @@ import { useRef, useState } from "react";
 import { resolveMediaUrl } from "@/lib/api/client";
 import { useUploadMedia } from "@/lib/hooks/admin/useUploadMedia";
 import { IconUploadCloud, IconTrash, IconStar } from "../ui/icons";
+import MediaLibraryModal from "./media/MediaLibraryModal";
+import MediaSourceMenu from "./media/MediaSourceMenu";
 
 // Product images are NOT stored as binaries or extra URL fields on Product —
 // this picker only ever writes/reads Media records via the existing Media
@@ -33,9 +35,38 @@ export default function ProductGalleryPicker({
   const uploadMutation = useUploadMedia();
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  const [libraryOpen, setLibraryOpen] = useState(false);
+  // When set, the library modal is replacing this single tile instead of adding.
+  const [replaceViaLibrary, setReplaceViaLibrary] = useState<number | null>(null);
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
   const addInputRef = useRef<HTMLInputElement>(null);
   const replaceInputRef = useRef<HTMLInputElement>(null);
   const replaceIndexRef = useRef<number | null>(null);
+
+  const remainingSlots = MAX_IMAGES - value.length;
+
+  const appendFromLibrary = (picks: { mediaId: string; url: string; thumbnailUrl?: string }[]) => {
+    setError(null);
+    const next = picks
+      .filter((p) => !value.some((v) => v.mediaId === p.mediaId))
+      .slice(0, remainingSlots)
+      .map((p) => ({ mediaId: p.mediaId, url: p.url, thumbnailUrl: p.thumbnailUrl }));
+    if (next.length > 0) onChange([...value, ...next]);
+  };
+
+  const replaceFromLibrary = (index: number, pick: { mediaId: string; url: string; thumbnailUrl?: string }) => {
+    const next = [...value];
+    next[index] = { mediaId: pick.mediaId, url: pick.url, thumbnailUrl: pick.thumbnailUrl };
+    onChange(next);
+  };
+
+  const reorder = (from: number, to: number) => {
+    if (from === to || from < 0 || to < 0 || from >= value.length || to >= value.length) return;
+    const next = [...value];
+    const [moved] = next.splice(from, 1);
+    next.splice(to, 0, moved);
+    onChange(next);
+  };
 
   const validateFiles = (files: File[]): { valid: File[]; rejected: string[] } => {
     const valid: File[] = [];
@@ -162,7 +193,18 @@ export default function ProductGalleryPicker({
           {value.map((image, index) => (
             <div
               key={image.mediaId}
-              className="group relative overflow-hidden rounded-xl border border-admin-border dark:border-admin-border-dark"
+              draggable={!isBusy}
+              onDragStart={() => setDragIndex(index)}
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={(e) => {
+                e.preventDefault();
+                if (dragIndex !== null) reorder(dragIndex, index);
+                setDragIndex(null);
+              }}
+              onDragEnd={() => setDragIndex(null)}
+              className={`group relative cursor-grab overflow-hidden rounded-xl border border-admin-border active:cursor-grabbing dark:border-admin-border-dark ${
+                dragIndex === index ? "opacity-40" : ""
+              }`}
             >
               <div className="aspect-square w-full overflow-hidden bg-black/5 dark:bg-white/5">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -215,17 +257,24 @@ export default function ProductGalleryPicker({
                   </button>
                 </div>
                 <div className="flex items-center justify-between gap-1">
-                  <button
-                    type="button"
-                    onClick={() => {
+                  <MediaSourceMenu
+                    disabled={isBusy}
+                    onUploadNew={() => {
                       replaceIndexRef.current = index;
                       replaceInputRef.current?.click();
                     }}
-                    disabled={isBusy}
-                    className="flex-1 rounded bg-white/90 px-1.5 py-0.5 text-[10px] font-semibold text-black disabled:opacity-30"
-                  >
-                    Replace
-                  </button>
+                    onChooseFromLibrary={() => setReplaceViaLibrary(index)}
+                    trigger={({ onClick, disabled }) => (
+                      <button
+                        type="button"
+                        onClick={onClick}
+                        disabled={disabled}
+                        className="flex-1 rounded bg-white/90 px-1.5 py-0.5 text-[10px] font-semibold text-black disabled:opacity-30"
+                      >
+                        Replace
+                      </button>
+                    )}
+                  />
                   <button
                     type="button"
                     onClick={() => removeImage(index)}
@@ -244,16 +293,25 @@ export default function ProductGalleryPicker({
       )}
 
       {value.length < MAX_IMAGES && (
-        <button
-          type="button"
-          onClick={() => addInputRef.current?.click()}
+        <MediaSourceMenu
           disabled={isBusy}
-          className="flex w-full flex-col items-center gap-2 rounded-xl border-2 border-dashed border-admin-border p-6 text-center transition-colors hover:border-admin-primary-dark disabled:opacity-50 dark:border-admin-border-dark dark:hover:border-admin-primary"
-        >
-          <IconUploadCloud className="h-6 w-6 text-black/40 dark:text-white/40" />
-          <span className="text-xs font-semibold">{isBusy ? `Uploading… ${progress}%` : "Add Images"}</span>
-          <span className="text-[11px] text-black/45 dark:text-white/45">JPG, PNG, WebP, or AVIF — select multiple</span>
-        </button>
+          onUploadNew={() => addInputRef.current?.click()}
+          onChooseFromLibrary={() => setLibraryOpen(true)}
+          trigger={({ onClick, disabled }) => (
+            <button
+              type="button"
+              onClick={onClick}
+              disabled={disabled}
+              className="flex w-full flex-col items-center gap-2 rounded-xl border-2 border-dashed border-admin-border p-6 text-center transition-colors hover:border-admin-primary-dark disabled:opacity-50 dark:border-admin-border-dark dark:hover:border-admin-primary"
+            >
+              <IconUploadCloud className="h-6 w-6 text-black/40 dark:text-white/40" />
+              <span className="text-xs font-semibold">{isBusy ? `Uploading… ${progress}%` : "Add Images"}</span>
+              <span className="text-[11px] text-black/45 dark:text-white/45">
+                JPG, PNG, WebP, or AVIF — select multiple, or drag tiles to reorder
+              </span>
+            </button>
+          )}
+        />
       )}
 
       {isBusy && value.length > 0 && (
@@ -293,6 +351,25 @@ export default function ProductGalleryPicker({
           const file = e.target.files?.[0];
           if (file) handleReplaceFile(file);
           e.target.value = "";
+        }}
+      />
+
+      {/* Add from library (multi-select, capped at the remaining slots). */}
+      <MediaLibraryModal
+        open={libraryOpen}
+        mode="multiple"
+        maxSelection={remainingSlots}
+        onClose={() => setLibraryOpen(false)}
+        onConfirm={(picks) => appendFromLibrary(picks)}
+      />
+
+      {/* Replace one tile from the library. */}
+      <MediaLibraryModal
+        open={replaceViaLibrary !== null}
+        mode="single"
+        onClose={() => setReplaceViaLibrary(null)}
+        onConfirm={(picks) => {
+          if (replaceViaLibrary !== null && picks[0]) replaceFromLibrary(replaceViaLibrary, picks[0]);
         }}
       />
     </div>

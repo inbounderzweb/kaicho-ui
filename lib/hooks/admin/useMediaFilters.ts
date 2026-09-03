@@ -9,6 +9,8 @@ export interface MediaFiltersState {
   search: string;
   status: NonNullable<MediaQueryParams["status"]>;
   mediaType: NonNullable<MediaQueryParams["mediaType"]>;
+  minWidth?: number;
+  minHeight?: number;
   sort: NonNullable<MediaQueryParams["sort"]>;
   order: NonNullable<MediaQueryParams["order"]>;
 }
@@ -28,6 +30,8 @@ export function useMediaFilters(): MediaFiltersState & { update: (patch: Patch, 
     search: searchParams.get("search") ?? "",
     status: (searchParams.get("status") as MediaFiltersState["status"]) ?? "all",
     mediaType: (searchParams.get("mediaType") as MediaFiltersState["mediaType"]) ?? "all",
+    minWidth: Number(searchParams.get("minWidth")) || undefined,
+    minHeight: Number(searchParams.get("minHeight")) || undefined,
     sort: (searchParams.get("sort") as MediaFiltersState["sort"]) ?? "createdAt",
     order: (searchParams.get("order") as MediaFiltersState["order"]) ?? "desc",
   };

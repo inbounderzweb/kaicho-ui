@@ -23,7 +23,16 @@ export interface AdminMedia {
   status: MediaStatus;
   entityType: string | null;
   entityId: string | null;
+  /** How many entities currently reference this asset (spec §10). */
+  usageCount: number;
   createdAt: string;
+}
+
+export interface MediaUsageInfo {
+  entityType: string;
+  entityId: string;
+  field: string;
+  label: string;
 }
 
 export interface UploadedMedia {
@@ -38,6 +47,9 @@ export interface UploadedMedia {
   height?: number;
   pageCount?: number;
   status: MediaStatus;
+  /** True when the upload matched an existing asset by content hash and no
+   *  new file was stored — the caller got back the pre-existing asset. */
+  deduped?: boolean;
 }
 
 export interface UploadMediaError {
@@ -54,6 +66,11 @@ export interface MediaQueryParams extends PageParams {
   search?: string;
   status?: "all" | MediaStatus;
   mediaType?: "all" | MediaKind;
+  mimeType?: string;
+  minWidth?: number;
+  maxWidth?: number;
+  minHeight?: number;
+  maxHeight?: number;
   sort?: "createdAt" | "size" | "originalName";
   order?: "asc" | "desc";
 }
@@ -72,6 +89,11 @@ export function fetchMediaList({
   search,
   status,
   mediaType,
+  mimeType,
+  minWidth,
+  maxWidth,
+  minHeight,
+  maxHeight,
   sort,
   order,
   ...pageParams
@@ -80,9 +102,21 @@ export function fetchMediaList({
   if (search) qs += `&search=${encodeURIComponent(search)}`;
   if (status && status !== "all") qs += `&status=${status}`;
   if (mediaType && mediaType !== "all") qs += `&mediaType=${mediaType}`;
+  if (mimeType) qs += `&mimeType=${encodeURIComponent(mimeType)}`;
+  if (minWidth) qs += `&minWidth=${minWidth}`;
+  if (maxWidth) qs += `&maxWidth=${maxWidth}`;
+  if (minHeight) qs += `&minHeight=${minHeight}`;
+  if (maxHeight) qs += `&maxHeight=${maxHeight}`;
   if (sort) qs += `&sort=${sort}`;
   if (order) qs += `&order=${order}`;
   return apiFetch<Paginated<AdminMedia>>(`/admin/media${qs}`, { method: "GET" });
+}
+
+export function fetchMediaUsages(id: string): Promise<{ usages: MediaUsageInfo[] }> {
+  return apiFetch<{ usages: MediaUsageInfo[] }>(
+    `/admin/media/${encodeURIComponent(id)}/usages`,
+    { method: "GET" }
+  );
 }
 
 export function fetchMediaDetail(id: string): Promise<{ media: AdminMedia }> {

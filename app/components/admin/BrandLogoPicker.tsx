@@ -4,6 +4,8 @@ import { useRef, useState } from "react";
 import { resolveMediaUrl } from "@/lib/api/client";
 import { useUploadMedia } from "@/lib/hooks/admin/useUploadMedia";
 import { IconUploadCloud, IconClose } from "../ui/icons";
+import MediaLibraryModal from "./media/MediaLibraryModal";
+import MediaSourceMenu from "./media/MediaSourceMenu";
 
 // Mirrors CategoryImagePicker.tsx's behavior exactly (same Media upload
 // flow, same size/type limits) — kept as its own component rather than a
@@ -29,6 +31,7 @@ export default function BrandLogoPicker({
   const uploadMutation = useUploadMedia();
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  const [libraryOpen, setLibraryOpen] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const handleFile = (file: File) => {
@@ -75,14 +78,21 @@ export default function BrandLogoPicker({
             <img src={resolveMediaUrl(previewUrl)} alt="Brand logo" className="h-full w-full object-cover" />
           </div>
           <div className="flex flex-col gap-2">
-            <button
-              type="button"
-              onClick={() => inputRef.current?.click()}
+            <MediaSourceMenu
               disabled={uploadMutation.isPending}
-              className="rounded-full border border-admin-border px-3 py-1.5 text-xs font-semibold hover:bg-admin-primary/20 disabled:opacity-50 dark:border-admin-border-dark dark:hover:bg-admin-primary/10"
-            >
-              Replace
-            </button>
+              onUploadNew={() => inputRef.current?.click()}
+              onChooseFromLibrary={() => setLibraryOpen(true)}
+              trigger={({ onClick, disabled }) => (
+                <button
+                  type="button"
+                  onClick={onClick}
+                  disabled={disabled}
+                  className="rounded-full border border-admin-border px-3 py-1.5 text-xs font-semibold hover:bg-admin-primary/20 disabled:opacity-50 dark:border-admin-border-dark dark:hover:bg-admin-primary/10"
+                >
+                  Replace
+                </button>
+              )}
+            />
             <button
               type="button"
               onClick={() => onChange(null)}
@@ -95,18 +105,25 @@ export default function BrandLogoPicker({
           </div>
         </div>
       ) : (
-        <button
-          type="button"
-          onClick={() => inputRef.current?.click()}
+        <MediaSourceMenu
           disabled={uploadMutation.isPending}
-          className="flex w-full flex-col items-center gap-2 rounded-xl border-2 border-dashed border-admin-border p-6 text-center transition-colors hover:border-admin-primary-dark disabled:opacity-50 dark:border-admin-border-dark dark:hover:border-admin-primary"
-        >
-          <IconUploadCloud className="h-6 w-6 text-black/40 dark:text-white/40" />
-          <span className="text-xs font-semibold">
-            {uploadMutation.isPending ? `Uploading… ${progress}%` : "Upload Logo"}
-          </span>
-          <span className="text-[11px] text-black/45 dark:text-white/45">JPG, PNG, WebP, or AVIF</span>
-        </button>
+          onUploadNew={() => inputRef.current?.click()}
+          onChooseFromLibrary={() => setLibraryOpen(true)}
+          trigger={({ onClick, disabled }) => (
+            <button
+              type="button"
+              onClick={onClick}
+              disabled={disabled}
+              className="flex w-full flex-col items-center gap-2 rounded-xl border-2 border-dashed border-admin-border p-6 text-center transition-colors hover:border-admin-primary-dark disabled:opacity-50 dark:border-admin-border-dark dark:hover:border-admin-primary"
+            >
+              <IconUploadCloud className="h-6 w-6 text-black/40 dark:text-white/40" />
+              <span className="text-xs font-semibold">
+                {uploadMutation.isPending ? `Uploading… ${progress}%` : "Upload Logo"}
+              </span>
+              <span className="text-[11px] text-black/45 dark:text-white/45">JPG, PNG, WebP, or AVIF</span>
+            </button>
+          )}
+        />
       )}
 
       {uploadMutation.isPending && previewUrl && (
@@ -136,6 +153,16 @@ export default function BrandLogoPicker({
           const file = e.target.files?.[0];
           if (file) handleFile(file);
           e.target.value = "";
+        }}
+      />
+
+      <MediaLibraryModal
+        open={libraryOpen}
+        mode="single"
+        onClose={() => setLibraryOpen(false)}
+        onConfirm={(picks) => {
+          const p = picks[0];
+          if (p) onChange({ mediaId: p.mediaId, url: p.url, thumbnailUrl: p.thumbnailUrl });
         }}
       />
     </div>

@@ -7,9 +7,13 @@ import { IconUploadCloud, IconClose } from "../ui/icons";
 import MediaLibraryModal from "./media/MediaLibraryModal";
 import MediaSourceMenu from "./media/MediaSourceMenu";
 
+// Mirrors CategoryImagePicker / BrandLogoPicker exactly — same upload flow,
+// same limits, same "Upload New | Choose from Library" chooser. Collections
+// previously had an `imageMediaId` form field with no control wired to it;
+// this fills that gap without changing the surrounding form.
 const ACCEPTED_MIME_TYPES = ["image/jpeg", "image/png", "image/webp", "image/avif"];
 const MAX_IMAGE_MB = 1.5;
-const RECOMMENDED_DIMENSIONS = "800 × 800px";
+const RECOMMENDED_DIMENSIONS = "1200 × 800px";
 
 export interface PickedImage {
   mediaId: string;
@@ -17,7 +21,7 @@ export interface PickedImage {
   thumbnailUrl?: string;
 }
 
-export default function CategoryImagePicker({
+export default function CollectionImagePicker({
   value,
   onChange,
 }: {
@@ -62,16 +66,16 @@ export default function CategoryImagePicker({
 
   return (
     <div>
-      <p className="mb-1.5 text-xs font-semibold text-black/60 dark:text-white/60">Category Image</p>
+      <p className="mb-1.5 text-xs font-semibold text-black/60 dark:text-white/60">Collection Image</p>
       <p className="mb-2 text-[11px] text-black/45 dark:text-white/45">
-        Recommended size: <span className="font-semibold">{RECOMMENDED_DIMENSIONS}</span> (square) — max {MAX_IMAGE_MB}MB
+        Recommended size: <span className="font-semibold">{RECOMMENDED_DIMENSIONS}</span> — max {MAX_IMAGE_MB}MB
       </p>
 
       {previewUrl ? (
         <div className="flex items-center gap-4">
           <div className="h-24 w-24 shrink-0 overflow-hidden rounded-xl border border-admin-border dark:border-admin-border-dark">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={resolveMediaUrl(previewUrl)} alt="Category" className="h-full w-full object-cover" />
+            <img src={resolveMediaUrl(previewUrl)} alt="Collection" className="h-full w-full object-cover" />
           </div>
           <div className="flex flex-col gap-2">
             <MediaSourceMenu

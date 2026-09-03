@@ -14,6 +14,7 @@ import { useProductList } from "@/lib/hooks/admin/useProductList";
 import { collectionFormSchema, type CollectionFormValues } from "@/lib/validation/collection.schema";
 import { ApiError } from "@/lib/api/ApiError";
 import ConfirmDialog from "./ConfirmDialog";
+import CollectionImagePicker, { type PickedImage } from "./CollectionImagePicker";
 import { IconChevronLeft, IconSearch } from "../ui/icons";
 
 type SelectedProduct = { productId: string; name: string; sku: string; price: number };
@@ -30,20 +31,36 @@ export default function CollectionDetailClient({ id }: { id?: string }) {
   const [products, setProducts] = useState<SelectedProduct[]>([]);
   const [search, setSearch] = useState("");
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [image, setImage] = useState<PickedImage | null>(null);
 
   const { data: productData } = useProductList({ search: search || undefined, pageSize: 8, status: "ACTIVE" });
 
-  const { register, handleSubmit, reset, formState: { errors } } = useForm<CollectionFormValues>({
+  const { register, handleSubmit, reset, setValue, formState: { errors } } = useForm<CollectionFormValues>({
     resolver: zodResolver(collectionFormSchema),
     defaultValues: { name: "", slug: "", description: "", imageMediaId: "", isActive: true, sortOrder: 0 },
   });
+
+  const applyImage = (next: PickedImage | null) => {
+    setImage(next);
+    setValue("imageMediaId", next?.mediaId ?? "", { shouldDirty: true });
+  };
 
   useEffect(() => {
     if (!data?.collection) return;
     const c = data.collection;
     reset({ name: c.name, slug: c.slug, description: c.description ?? "", imageMediaId: c.image?.mediaId ?? "", isActive: c.isActive, sortOrder: c.sortOrder });
     const id = setTimeout(() => {
-      setProducts((c.products ?? []).map((p) => ({ productId: p.productId, name: p.name, sku: p.sku, price: p.pricing.sellingPrice })));
+      setImage(c.image ? { mediaId: c.image.mediaId, url: c.image.url, thumbnailUrl: c.image.thumbnailUrl } : null);
+      setProducts(
+        (c.products ?? []).map((p) => ({
+          productId: p.productId,
+          name: p.name,
+          // The collection detail DTO reuses the public list item shape, which
+          // doesn't carry SKU — tolerate its absence rather than assert it.
+          sku: (p as { sku?: string }).sku ?? "",
+          price: p.pricing.sellingPrice,
+        }))
+      );
     }, 0);
     return () => clearTimeout(id);
   }, [data, reset]);
@@ -103,6 +120,8 @@ export default function CollectionDetailClient({ id }: { id?: string }) {
               <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-black/50 dark:text-white/50">Description</label>
               <textarea {...register("description")} rows={4} className="w-full rounded-xl border border-admin-border bg-admin-surface px-3 py-2 text-sm dark:border-admin-border-dark dark:bg-admin-surface-dark" />
             </div>
+            <input type="hidden" {...register("imageMediaId")} />
+            <CollectionImagePicker value={image} onChange={applyImage} />
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div>
                 <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-black/50 dark:text-white/50">Sort Order</label>
