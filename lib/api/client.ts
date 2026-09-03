@@ -14,41 +14,38 @@ const RAW_API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:4
 // anti-abuse interstitial HTML in place of the API response.
 const API_BASE_URL = IS_BROWSER ? "/api" : RAW_API_BASE;
 
-// The backend's origin, without the /api suffix — for resolving the
-// root-relative asset URLs it returns (e.g. "/uploads/media/..."). Always
-// derived from the absolute value, never the relative browser one.
-const API_ORIGIN = RAW_API_BASE.replace(/\/api\/?$/, "");
-
-// Backend-served media (/uploads/media/...). On the server, an absolute URL
-// (the next/image optimizer fetches it). In the browser, empty — so
-// resolveMediaUrl yields a root-relative "/uploads/media/..." that the same
-// next.config.ts rewrite proxies to the backend. Trailing slash trimmed so
-// joining with a root-relative path never doubles the slash.
-const RAW_MEDIA_BASE = (process.env.NEXT_PUBLIC_MEDIA_BASE_URL || API_ORIGIN).replace(/\/$/, "");
-const MEDIA_BASE_URL = IS_BROWSER ? "" : RAW_MEDIA_BASE;
-
+// Backend-served media (/uploads/media/...) is ALWAYS addressed with a
+// root-relative path — on the server and in the browser alike. next.config.ts's
+// `beforeFiles` rewrite proxies "/uploads/media/*" to the backend for every
+// caller: the browser (kept same-origin — no CORS, no mixed content, no
+// dev-tunnel interstitial) and the server-side next/image optimizer, which
+// resolves the relative path against the app's own origin and then hits that
+// same rewrite.
+//
+// This MUST return one identical value on the server and in the browser:
+// next/image bakes the resolved src into the SSR-ed src/srcSet, so any
+// server/client difference here surfaces as a React hydration mismatch on
+// every product card, gallery and cart image. (For absolute OG-image /
+// JSON-LD URLs, callers wrap the result in absoluteUrl() — see lib/seo.)
 export function resolveMediaUrl(url: string): string {
   if (/^https?:\/\//.test(url)) {
-    // Already absolute. But backend media ("/uploads/...") may have been
-    // persisted against a *different* backend origin than the one
-    // configured now — e.g. a cart item added while
-    // NEXT_PUBLIC_MEDIA_BASE_URL was http://localhost:4000, then reopened
-    // after it moved to a dev tunnel. next/image rejects any host not in
-    // next.config.ts's remotePatterns (which track the current env), so a
-    // stale "/uploads/" URL would crash the whole page. Re-point it at
-    // the current MEDIA_BASE_URL. Non-backend absolutes (Shopify CDN,
+    // Already absolute. A backend media URL ("/uploads/...") may have been
+    // persisted against a *different* origin than the one configured now —
+    // e.g. a cart line added while the backend was http://localhost:4000,
+    // then reopened after it moved. Reduce it to its root-relative path so it
+    // flows through the same rewrite. Non-backend absolutes (Shopify CDN,
     // kaicho.in) don't live under "/uploads/" and pass through untouched.
     try {
       const parsed = new URL(url);
       if (parsed.pathname.startsWith("/uploads/")) {
-        return `${MEDIA_BASE_URL}${parsed.pathname}${parsed.search}`;
+        return `${parsed.pathname}${parsed.search}`;
       }
     } catch {
       // Not a parseable URL — leave it as-is.
     }
     return url;
   }
-  return `${MEDIA_BASE_URL}${url}`;
+  return url.startsWith("/") ? url : `/${url}`;
 }
 
 interface ApiResponse<T> {

@@ -39,8 +39,9 @@ export function websiteJsonLd(): JsonLd {
 /**
  * BlogPosting for a blog detail page. Every field is real content from the
  * public blog DTO — no invented ratings or authorship. `image` is a
- * backend-hosted media URL, so it goes through resolveMediaUrl (the API
- * origin), not absoluteUrl (the site domain), same as productJsonLd's images.
+ * backend-hosted media URL: resolveMediaUrl normalises it to a root-relative
+ * "/uploads/..." path, then absoluteUrl makes it a full https://<site>/…
+ * URL (JSON-LD consumers want absolute image URLs), same as productJsonLd.
  */
 export function blogPostingJsonLd(post: {
   title: string;
@@ -57,7 +58,7 @@ export function blogPostingJsonLd(post: {
     headline: post.title,
     description: post.description,
     mainEntityOfPage: { "@type": "WebPage", "@id": absoluteUrl(`/blog/${post.slug}`) },
-    ...(post.imageUrl ? { image: [resolveMediaUrl(post.imageUrl)] } : {}),
+    ...(post.imageUrl ? { image: [absoluteUrl(resolveMediaUrl(post.imageUrl))] } : {}),
     author: { "@type": "Person", name: post.authorName || SITE_NAME },
     publisher: {
       "@type": "Organization",
@@ -108,9 +109,9 @@ export function breadcrumbJsonLd(items: { name: string; path: string }[]): JsonL
  * inventory.inStock rather than being hardcoded, so an out-of-stock
  * product is never misrepresented as available to search engines.
  *
- * `images` are resolved via resolveMediaUrl (the API origin), the same as
- * every other product image in the app, not via absoluteUrl (the site's
- * own domain) — they're backend-hosted media, not site-relative paths.
+ * `images` go through resolveMediaUrl (normalise to a root-relative
+ * "/uploads/..." path, same as every other product image in the app) and
+ * then absoluteUrl, since JSON-LD consumers expect absolute image URLs.
  */
 export function productJsonLd(product: {
   name: string;
@@ -128,7 +129,9 @@ export function productJsonLd(product: {
     name: product.name,
     description: product.description,
     sku: product.sku,
-    ...(product.images.length ? { image: product.images.map((url) => resolveMediaUrl(url)) } : {}),
+    ...(product.images.length
+      ? { image: product.images.map((url) => absoluteUrl(resolveMediaUrl(url))) }
+      : {}),
     brand: {
       "@type": "Brand",
       name: product.brandName || SITE_NAME,

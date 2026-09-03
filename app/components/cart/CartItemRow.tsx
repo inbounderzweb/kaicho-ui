@@ -27,11 +27,10 @@ export default function CartItemRow({
           <Image
             // item.image is stored already-resolved (see cart-data.ts).
             // This defensive re-resolve covers a cart persisted by an
-            // older build (bare "/uploads/media/..." path) *and* one
-            // whose absolute URL points at a stale backend origin — see
-            // resolveMediaUrl, which re-points "/uploads/" URLs at the
-            // currently-configured MEDIA_BASE_URL so next/image doesn't
-            // reject an unlisted host.
+            // older build whose absolute URL points at a stale backend
+            // origin — resolveMediaUrl reduces any "/uploads/" URL back to
+            // a root-relative path, which next.config.ts's rewrite proxies
+            // to the backend.
             src={resolveMediaUrl(item.image)}
             alt={item.imageAlt}
             fill

@@ -67,9 +67,13 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
   const displayName = [user.firstName, user.lastName].filter(Boolean).join(" ") || user.phone;
 
   return (
-    <div className="flex min-h-dvh bg-admin-surface text-black dark:bg-admin-surface-dark dark:text-white">
-      {/* Desktop sidebar */}
-      <aside className="hidden w-64 shrink-0 flex-col border-r border-admin-border bg-admin-card dark:border-admin-border-dark dark:bg-admin-card-dark lg:flex">
+    // Locked to the viewport height so the sidebar and top bar stay fixed in
+    // place and only <main> scrolls — without an explicit height the shell
+    // grows with its content and the whole document scrolls instead, taking
+    // the chrome with it.
+    <div className="flex h-dvh overflow-hidden bg-admin-surface text-black dark:bg-admin-surface-dark dark:text-white">
+      {/* Desktop sidebar — full-height, its own nav list scrolls internally */}
+      <aside className="hidden h-full w-64 shrink-0 flex-col border-r border-admin-border bg-admin-card dark:border-admin-border-dark dark:bg-admin-card-dark lg:flex">
         <div className="flex h-16 items-center border-b border-admin-border px-5 dark:border-admin-border-dark">
           <Link href="/admin" className="font-display text-base font-bold">
             Kaicho Admin
@@ -82,8 +86,8 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
 
       <AdminDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} pathname={pathname ?? "/admin"} />
 
-      <div className="flex min-w-0 flex-1 flex-col">
-        {/* Top bar */}
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+        {/* Top bar — stays put; scrolling happens inside <main> below */}
         <header className="flex h-16 shrink-0 items-center justify-between border-b border-admin-border bg-admin-card px-4 dark:border-admin-border-dark dark:bg-admin-card-dark lg:px-6">
           <div className="flex items-center gap-3">
             <button
@@ -134,7 +138,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
           </div>
         </header>
 
-        <main className="flex-1 overflow-y-auto p-4 lg:p-8">{children}</main>
+        <main className="min-h-0 flex-1 overflow-y-auto p-4 lg:p-8">{children}</main>
       </div>
     </div>
   );
