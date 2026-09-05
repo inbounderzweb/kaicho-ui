@@ -69,7 +69,18 @@ export const useLocationStore = create<LocationStoreState>()(
       markIpFallbackTried: () => set({ ipFallbackTried: true }),
 
       detectCurrent: async () => {
+        // Guard against overlapping taps (e.g. a fast double-tap on mobile
+        // before the button's `disabled` prop has re-rendered) — only one
+        // detection runs at a time.
+        if (get().status === "detecting") return;
         set({ status: "detecting", lastError: null });
+        // Re-read the LIVE browser/OS permission right before asking for a
+        // fix, instead of trusting whatever was persisted from a previous
+        // visit. A user who denied access earlier and then re-enabled it in
+        // browser/device settings must not be stuck reading a stale
+        // "denied" — this is what let a fresh grant go unnoticed until the
+        // next full page load.
+        await get().refreshPermissionState();
         try {
           const resolved = await locationService.detectAndResolve();
           set({ location: resolved, status: "idle", lastError: null });

@@ -16,6 +16,11 @@ import LocationBar from "../location/LocationBar";
 export default function StorefrontChrome({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const isAdminRoute = pathname?.startsWith("/admin");
+  // The delivery-location strip only matters once the customer is actually
+  // buying something — checking serviceability makes sense on cart/checkout
+  // (through payment, which is a step inside /checkout, not its own route),
+  // but showed on every page it just read as clutter under the header.
+  const showLocationBar = pathname === "/cart" || pathname?.startsWith("/checkout");
 
   if (isAdminRoute) {
     // AdminShell (rendered inside {children}) owns its own full-height
@@ -27,7 +32,7 @@ export default function StorefrontChrome({ children }: { children: React.ReactNo
   return (
     <>
       <Header />
-      <LocationBar />
+      {showLocationBar && <LocationBar />}
       <main className="flex-1 pb-16 lg:pb-0">{children}</main>
       <Footer />
       <MobileTabBar />

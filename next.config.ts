@@ -116,8 +116,16 @@ const nextConfig: NextConfig = {
           { key: "X-Content-Type-Options", value: "nosniff" },
           { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
           {
+            // geolocation=(self): the top-level site may call
+            // navigator.geolocation (LocationModal's "Use my current
+            // location"); third-party iframes still cannot. Was
+            // "geolocation=()" — an empty allowlist blocks EVERY context,
+            // including this site itself, at the browser-policy layer,
+            // before the user's own browser/OS permission is ever
+            // consulted. That's what made "Use Current Location" keep
+            // failing no matter what the user allowed in their settings.
             key: "Permissions-Policy",
-            value: "camera=(), microphone=(), geolocation=()",
+            value: "camera=(), microphone=(), geolocation=(self)",
           },
         ],
       },
