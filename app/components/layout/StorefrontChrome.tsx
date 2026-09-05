@@ -5,6 +5,7 @@ import Header from "./Header";
 import Footer from "./Footer";
 import MobileTabBar from "./MobileTabBar";
 import WhatsAppButton from "./WhatsAppButton";
+import LocationBar from "../location/LocationBar";
 
 /**
  * The customer storefront's chrome (nav header, footer, mobile tab bar,
@@ -26,6 +27,7 @@ export default function StorefrontChrome({ children }: { children: React.ReactNo
   return (
     <>
       <Header />
+      <LocationBar />
       <main className="flex-1 pb-16 lg:pb-0">{children}</main>
       <Footer />
       <MobileTabBar />

@@ -5,9 +5,10 @@ import Link from "next/link";
 import { useEffect, useRef } from "react";
 import Button from "../ui/Button";
 import { NAV_LINKS } from "./nav-links";
-import { IconClose, IconMail, IconPhone, IconUser } from "../ui/icons";
+import { IconClose, IconMail, IconMapPin, IconPhone, IconUser } from "../ui/icons";
 import { useCurrentUser } from "@/lib/hooks/useCurrentUser";
 import { getAccountHref } from "@/lib/auth/getAccountHref";
+import { useLocation } from "@/lib/location/useLocation";
 
 export default function MobileMenu({
   open,
@@ -19,6 +20,7 @@ export default function MobileMenu({
   const panelRef = useRef<HTMLDivElement>(null);
   const { data: user } = useCurrentUser();
   const accountHref = getAccountHref(user);
+  const { label: locationLabelText, isResolved: hasLocation, openSelector } = useLocation();
 
   useEffect(() => {
     if (!open) return;
@@ -93,6 +95,20 @@ export default function MobileMenu({
         </nav>
 
         <div className="space-y-3 border-t border-border px-5 py-6">
+          <button
+            type="button"
+            onClick={() => {
+              onClose();
+              openSelector();
+            }}
+            className="flex w-full items-center gap-3 text-left text-sm text-ink-muted"
+          >
+            <IconMapPin className="h-4 w-4 shrink-0 text-brand" />
+            <span className="min-w-0 flex-1 truncate">
+              {hasLocation ? locationLabelText : "Set your delivery area"}
+            </span>
+            <span className="shrink-0 font-semibold text-brand">Change</span>
+          </button>
           <Link
             href={accountHref}
             onClick={onClose}

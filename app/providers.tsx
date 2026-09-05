@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useCartStore } from "@/lib/store/cart.store";
+import { useLocationStore } from "@/lib/store/location.store";
 
 export default function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(
@@ -24,6 +25,11 @@ export default function Providers({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     useCartStore.persist.rehydrate();
+    // Same skipHydration pattern as the cart. Once the persisted location is
+    // loaded, sync the (non-prompting) browser permission state so the
+    // location bar knows whether it's allowed to offer "detect".
+    useLocationStore.persist.rehydrate();
+    useLocationStore.getState().refreshPermissionState();
   }, []);
 
   return (
