@@ -4,7 +4,7 @@ const IS_BROWSER = typeof window !== "undefined";
 
 // The real, absolute backend URL — used for server-side (SSR / route-handler)
 // fetches, which have no origin to resolve a relative path against.
-const RAW_API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:4000/api";
+const RAW_API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? "https://kaicho-be.onrender.com/api";
 
 // In the browser we deliberately call the frontend's OWN origin ("/api/…")
 // and let a next.config.ts rewrite proxy it to the backend. This keeps every
@@ -106,12 +106,17 @@ export async function apiFetch<T>(
     throw new ApiError(body?.message ?? "Something went wrong. Please try again.", res.status, body?.details);
   }
 
-  // A 2xx whose body isn't the JSON envelope means something other than our
-  // API answered (a proxy error page, a tunnel interstitial, an HTML 200).
-  // Surface it instead of silently resolving with `undefined`.
-  if (parseFailed && res.status !== 204) {
-    throw new ApiError("The server returned an unexpected response. Please try again.", res.status);
+  // A 2xx whose body isn't the JSON envelope (a proxy error page, a tunnel
+  // interstitial, an HTML 200) — or whose envelope is missing "data" — means
+  // the caller never got the shape it expects. Surface it as a rejection
+  // instead of silently resolving with `undefined`, which every call site
+  // then destructures assuming a defined shape (see BlogSection.tsx).
+  if (res.status !== 204 && body?.data === undefined) {
+    throw new ApiError(
+      parseFailed ? "The server returned an unexpected response. Please try again." : (body?.message ?? "The server returned an unexpected response. Please try again."),
+      res.status
+    );
   }
 
-  return (body?.data as T) ?? (undefined as T);
+  return body?.data as T;
 }

@@ -76,6 +76,14 @@ const nextConfig: NextConfig = {
         hostname: "cdn.shopify.com",
       },
       {
+        // Media served straight from Cloudinary's CDN when
+        // STORAGE_PROVIDER=cloudinary (see kaicho-be's CloudinaryStorageProvider.getUrl) —
+        // same "non-backend absolute, pass through untouched" bucket as
+        // Shopify/kaicho.in above, just missing its own entry until now.
+        protocol: "https",
+        hostname: "res.cloudinary.com",
+      },
+      {
         protocol: apiOrigin.protocol === "https:" ? "https" : "http",
         hostname: apiOrigin.hostname,
         port: apiOrigin.port || undefined,
