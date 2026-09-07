@@ -7,7 +7,12 @@ export function useLogout() {
 
   return useMutation({
     mutationFn: logout,
-    onSuccess: () => {
+    // Logout is best-effort from the client's point of view: whether the
+    // request succeeded, failed, or timed out, the local session should be
+    // treated as gone. The backend still invalidates it server-side; a
+    // network hiccup on the way back must not strand the user in a
+    // "logged in" UI. onSettled runs on both success and error.
+    onSettled: () => {
       queryClient.setQueryData(authKeys.me, null);
     },
   });

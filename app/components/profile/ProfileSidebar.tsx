@@ -30,8 +30,10 @@ export default function ProfileSidebar({
   const logout = useLogout();
 
   const handleLogout = () => {
+    // Redirect regardless of the request outcome — useLogout clears the
+    // cached session in onSettled either way.
     logout.mutate(undefined, {
-      onSuccess: () => router.push("/login"),
+      onSettled: () => router.push("/login"),
     });
   };
 
@@ -68,11 +70,6 @@ export default function ProfileSidebar({
         <IconLogout className="h-5 w-5" />
         {logout.isPending ? "Logging out…" : "Log out"}
       </button>
-      {logout.isError && (
-        <p className="px-4 text-xs font-semibold text-sale">
-          Couldn&apos;t log out. Please try again.
-        </p>
-      )}
     </nav>
   );
 }

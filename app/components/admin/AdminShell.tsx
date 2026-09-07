@@ -61,7 +61,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
   }
 
   const handleLogout = () => {
-    logout.mutate(undefined, { onSuccess: () => router.push("/login") });
+    logout.mutate(undefined, { onSettled: () => router.push("/login") });
   };
 
   const displayName =
