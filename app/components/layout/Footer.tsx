@@ -24,7 +24,7 @@ const PAYMENT_METHODS = ["UPI", "Visa", "Mastercard", "RuPay", "COD"];
 
 export default function Footer() {
   return (
-    <footer id="contact" className="mt-8">
+    <footer id="contact" className="">
       <div className="bg-brand-soft">
         <Container className="grid grid-cols-1 gap-12 py-16 sm:grid-cols-2 lg:grid-cols-4">
           <div>

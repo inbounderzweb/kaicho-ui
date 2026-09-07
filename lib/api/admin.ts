@@ -80,6 +80,12 @@ export interface AdminUser {
 }
 
 export interface AdminUserAddress {
+  receiverName?: string | null;
+  receiverPhone?: string | null;
+  houseNo?: string | null;
+  building?: string | null;
+  area?: string | null;
+  landmark?: string | null;
   id?: string;
   label: string | null;
   line1: string;

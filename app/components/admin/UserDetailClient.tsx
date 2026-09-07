@@ -252,7 +252,7 @@ export default function UserDetailClient({ id }: { id: string }) {
           <dl className="mt-5 grid grid-cols-1 gap-4 border-t border-admin-border pt-5 text-sm dark:border-admin-border-dark sm:grid-cols-2 lg:grid-cols-3">
             <div>
               <dt className="text-xs font-semibold uppercase tracking-wider text-black/50 dark:text-white/50">Phone</dt>
-              <dd className="mt-0.5 tabular-nums">{user.countryCode} {user.phone.replace(`${user.countryCode} `, "")}</dd>
+              <dd className="mt-0.5 tabular-nums">{user.phone || "—"}</dd>
             </div>
             <div>
               <dt className="text-xs font-semibold uppercase tracking-wider text-black/50 dark:text-white/50">Email</dt>
@@ -292,9 +292,17 @@ export default function UserDetailClient({ id }: { id: string }) {
                       </span>
                     )}
                   </div>
+                  {(a.receiverName || a.receiverPhone) && (
+                    <p className="mt-0.5 font-semibold text-black/75 dark:text-white/75">
+                      {a.receiverName}
+                      {a.receiverName && a.receiverPhone ? " · " : ""}
+                      {a.receiverPhone}
+                    </p>
+                  )}
                   <p className="mt-0.5 text-black/65 dark:text-white/65">
-                    {a.line1}
-                    {a.line2 ? `, ${a.line2}` : ""}, {a.city}, {a.state} {a.pincode}
+                    {[a.houseNo, a.building].filter(Boolean).join(", ") || a.line1}
+                    {a.area || a.line2 ? `, ${a.area || a.line2}` : ""}
+                    {a.landmark ? `, near ${a.landmark}` : ""}, {a.city}, {a.state} {a.pincode}
                   </p>
                 </div>
               </div>

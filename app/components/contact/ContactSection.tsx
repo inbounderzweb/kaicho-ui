@@ -133,7 +133,7 @@ export default function ContactSection() {
 
           <div className="rounded-3xl border border-border bg-white p-6 shadow-card sm:p-8">
             {submitted ? (
-              <div className="flex min-h-[320px] flex-col items-center justify-center text-center">
+              <div className="flex min-h-80 flex-col items-center justify-center text-center">
                 <span className="flex h-14 w-14 items-center justify-center rounded-full bg-brand text-white">
                   <IconCheck className="h-7 w-7" />
                 </span>
@@ -170,7 +170,7 @@ export default function ContactSection() {
                     className={fieldClasses(!!errors.email)}
                   />
                 </Field>
-                <Field label="Phone (Optional)" error={errors.phone} className="sm:col-span-2">
+                <Field label="Phone" error={errors.phone} className="sm:col-span-2">
                   <input
                     value={form.phone}
                     onChange={update("phone")}

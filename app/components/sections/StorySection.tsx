@@ -33,7 +33,7 @@ export default function StorySection() {
   return (
     <section
       id="story"
-      className="relative overflow-hidden bg-[#f6f5ef] py-24 md:py-12 sm:py-32"
+      className="relative overflow-hidden py-24 md:py-12 sm:py-32"
     >
       <Container>
         {/* Header */}
@@ -48,9 +48,9 @@ export default function StorySection() {
             </div>
           </div>
 
-          <span className="hidden text-xs font-semibold tracking-[0.2em] text-ink-muted sm:block">
+          {/* <span className="hidden text-xs font-semibold tracking-[0.2em] text-ink-muted sm:block">
             01 / 03
-          </span>
+          </span> */}
         </div>
 
         {/* Main editorial layout */}

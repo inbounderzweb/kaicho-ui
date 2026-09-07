@@ -81,7 +81,12 @@ export default function ProfilePageClient() {
             My Account
           </h1>
           <p className="mt-0.5 truncate text-sm text-ink-muted">
-            {displayName} · {user.countryCode} {user.phone}
+            {displayName}
+            {user.phone
+              ? ` · ${user.countryCode} ${user.phone}`
+              : user.email
+                ? ` · ${user.email}`
+                : ""}
           </p>
         </div>
       </div>

@@ -1,23 +1,28 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Button from "../ui/Button";
-import { IconGoogle } from "../ui/icons";
+import GoogleSignInButton, { GOOGLE_SIGN_IN_ENABLED } from "./GoogleSignInButton";
 import { useAuthStore } from "@/lib/store/auth.store";
 import { useSendOtp } from "@/lib/hooks/useSendOtp";
+import { useGoogleLogin } from "@/lib/hooks/useGoogleLogin";
 import { phoneFormSchema, type PhoneFormValues } from "@/lib/validation/auth.schema";
 import { ApiError } from "@/lib/api/ApiError";
+import type { AuthUser } from "@/lib/api/auth";
 
-export default function PhoneStepForm() {
+export default function PhoneStepForm({
+  onAuthenticated,
+}: {
+  /** Called when Google sign-in completes — same signature the OTP step uses. */
+  onAuthenticated: (user: AuthUser, requiresName: boolean) => void;
+}) {
   const setPhone = useAuthStore((s) => s.setPhone);
   const setStep = useAuthStore((s) => s.setStep);
   const startResendCooldown = useAuthStore((s) => s.startResendCooldown);
   const sendOtp = useSendOtp();
-
-  const [googleLoading, setGoogleLoading] = useState(false);
+  const googleLogin = useGoogleLogin();
 
   const {
     register,
@@ -38,11 +43,17 @@ export default function PhoneStepForm() {
     });
   };
 
-  const handleGoogleLogin = async () => {
-    setGoogleLoading(true);
-    await new Promise((r) => setTimeout(r, 1200));
-    setGoogleLoading(false);
+  const handleGoogleCredential = (credential: string) => {
+    googleLogin.mutate(credential, {
+      onSuccess: (data) => onAuthenticated(data.user, data.requiresName),
+    });
   };
+
+  const googleStatus = googleLogin.isPending
+    ? "Signing you in…"
+    : googleLogin.error instanceof ApiError
+      ? googleLogin.error.message
+      : undefined;
 
   const errorMessage =
     errors.mobile?.message ??
@@ -98,25 +109,23 @@ export default function PhoneStepForm() {
         )}
       </Button>
 
-      <div className="flex items-center gap-3">
-        <span className="h-px flex-1 bg-border" />
-        <span className="text-xs font-semibold uppercase tracking-wider text-ink-faint">Or</span>
-        <span className="h-px flex-1 bg-border" />
-      </div>
+      {GOOGLE_SIGN_IN_ENABLED && (
+        <>
+          <div className="flex items-center gap-3">
+            <span className="h-px flex-1 bg-border" />
+            <span className="text-xs font-semibold uppercase tracking-wider text-ink-faint">
+              Or
+            </span>
+            <span className="h-px flex-1 bg-border" />
+          </div>
 
-      <button
-        type="button"
-        onClick={handleGoogleLogin}
-        disabled={googleLoading}
-        className="flex w-full items-center justify-center gap-2.5 rounded-2xl border border-border bg-white py-3.5 text-sm font-semibold text-ink transition-colors hover:bg-cream disabled:opacity-50"
-      >
-        {googleLoading ? (
-          <span className="h-4 w-4 animate-spin rounded-full border-2 border-ink/20 border-t-ink/60" />
-        ) : (
-          <IconGoogle className="h-4 w-4" />
-        )}
-        {googleLoading ? "Signing in…" : "Continue with Google"}
-      </button>
+          <GoogleSignInButton
+            onCredential={handleGoogleCredential}
+            disabled={googleLogin.isPending}
+            statusText={googleStatus}
+          />
+        </>
+      )}
 
       <p className="text-center text-[11px] font-medium leading-relaxed text-ink-faint">
         By continuing, you agree to our{" "}

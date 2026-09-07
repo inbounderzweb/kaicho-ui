@@ -6,8 +6,27 @@ import { z } from "zod";
 // storefront's en-IN/INR assumptions everywhere else.
 export const addressFormSchema = z.object({
   label: z.string().trim().max(40, "Label is too long").optional().or(z.literal("")),
-  line1: z.string().trim().min(1, "Address line 1 is required").max(200, "Address line 1 is too long"),
-  line2: z.string().trim().max(200, "Address line 2 is too long").optional().or(z.literal("")),
+  receiverName: z
+    .string()
+    .trim()
+    .min(2, "Receiver name is required")
+    .max(80, "Receiver name is too long"),
+  receiverPhone: z
+    .string()
+    .trim()
+    .regex(/^[6-9]\d{9}$/, "Enter a valid 10-digit mobile number"),
+  houseNo: z
+    .string()
+    .trim()
+    .min(1, "House / flat number is required")
+    .max(60, "House / flat number is too long"),
+  building: z.string().trim().max(80, "Building / block is too long").optional().or(z.literal("")),
+  area: z
+    .string()
+    .trim()
+    .min(3, "Street / area is required")
+    .max(120, "Street / area is too long"),
+  landmark: z.string().trim().max(120, "Landmark is too long").optional().or(z.literal("")),
   city: z.string().trim().min(1, "City is required").max(80, "City is too long"),
   state: z.string().trim().min(1, "State is required").max(80, "State is too long"),
   pincode: z

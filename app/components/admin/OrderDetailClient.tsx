@@ -250,13 +250,31 @@ export default function OrderDetailClient({ id }: { id: string }) {
             {order.shippingAddress.label && (
               <p className="text-sm font-semibold">{order.shippingAddress.label}</p>
             )}
-            <div className="text-sm text-black/60 dark:text-white/60">
-              <p>{order.shippingAddress.line1}</p>
-              {order.shippingAddress.line2 && <p>{order.shippingAddress.line2}</p>}
-              <p>
-                {order.shippingAddress.city}, {order.shippingAddress.state} {order.shippingAddress.pincode}
-              </p>
-            </div>
+            {(() => {
+              const a = order.shippingAddress;
+              const structured = Boolean(a.houseNo || a.area);
+              const street = structured
+                ? [a.houseNo, a.building].filter(Boolean).join(", ")
+                : a.line1;
+              const area = structured ? a.area : a.line2;
+              return (
+                <div className="text-sm text-black/60 dark:text-white/60">
+                  {(a.receiverName || a.receiverPhone) && (
+                    <p className="font-semibold text-black dark:text-white">
+                      {a.receiverName}
+                      {a.receiverName && a.receiverPhone ? " · " : ""}
+                      {a.receiverPhone}
+                    </p>
+                  )}
+                  {street && <p>{street}</p>}
+                  {area && <p>{area}</p>}
+                  {a.landmark && <p>Landmark: {a.landmark}</p>}
+                  <p>
+                    {a.city}, {a.state} {a.pincode}
+                  </p>
+                </div>
+              );
+            })()}
           </section>
 
           {/* Status update */}

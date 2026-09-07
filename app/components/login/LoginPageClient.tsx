@@ -191,7 +191,7 @@ export default function LoginPageClient() {
 
           <div className="rounded-3xl border border-border bg-white p-6 shadow-card sm:p-8">
             {step === "phone" ? (
-              <PhoneStepForm />
+              <PhoneStepForm onAuthenticated={handleOtpVerified} />
             ) : step === "otp" ? (
               <OtpStepForm onVerified={handleOtpVerified} />
             ) : (

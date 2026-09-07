@@ -130,11 +130,19 @@ export interface OrderPricing {
 
 export interface OrderAddress {
   label?: string;
-  line1: string;
-  line2?: string;
+  receiverName?: string;
+  receiverPhone?: string;
+  houseNo?: string;
+  building?: string;
+  area?: string;
+  landmark?: string;
   city: string;
   state: string;
   pincode: string;
+  /** Legacy one-liners — always present on the wire; the only address
+   *  fields on orders placed before the structured shape existed. */
+  line1?: string;
+  line2?: string;
 }
 
 export interface OrderStatusHistoryEntry {

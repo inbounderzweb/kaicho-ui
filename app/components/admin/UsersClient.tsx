@@ -260,7 +260,7 @@ export default function UsersClient() {
                           {u.name}
                         </Link>
                       </td>
-                      <td className="px-5 py-3 tabular-nums text-black/70 dark:text-white/70">{u.phone}</td>
+                      <td className="px-5 py-3 tabular-nums text-black/70 dark:text-white/70">{u.phone || "—"}</td>
                       <td className="px-5 py-3 text-black/70 dark:text-white/70">{u.email ?? "—"}</td>
                       <td className="px-5 py-3 capitalize text-black/70 dark:text-white/70">{u.role}</td>
                       <td className="px-5 py-3">
@@ -293,7 +293,7 @@ export default function UsersClient() {
                     </Link>
                     <StatusBadge status={u.status} />
                   </div>
-                  <p className="text-xs tabular-nums text-black/60 dark:text-white/60">{u.phone}</p>
+                  <p className="text-xs tabular-nums text-black/60 dark:text-white/60">{u.phone || "—"}</p>
                   {u.email && <p className="text-xs text-black/60 dark:text-white/60">{u.email}</p>}
                   <p className="text-xs capitalize text-black/60 dark:text-white/60">{u.role}</p>
                   <p className="text-xs text-black/50 dark:text-white/50">

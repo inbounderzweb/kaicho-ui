@@ -9,18 +9,31 @@ import { apiFetch } from "./client";
 export interface Address {
   id: string;
   label?: string;
-  line1: string;
-  line2?: string;
+  receiverName?: string;
+  receiverPhone?: string;
+  houseNo?: string;
+  building?: string;
+  area?: string;
+  landmark?: string;
   city: string;
   state: string;
   pincode: string;
+  /** Server-derived from the structured fields, read-only. Present on every
+   *  response; the only address fields on orders placed before the
+   *  structured shape existed. */
+  line1?: string;
+  line2?: string;
   isDefault?: boolean;
 }
 
 export interface AddressInput {
   label?: string;
-  line1: string;
-  line2?: string;
+  receiverName: string;
+  receiverPhone: string;
+  houseNo: string;
+  building?: string;
+  area: string;
+  landmark?: string;
   city: string;
   state: string;
   pincode: string;
@@ -37,7 +50,13 @@ export interface AddressInput {
 interface AddressDto {
   addressId: string;
   label?: string;
-  line1: string;
+  receiverName?: string;
+  receiverPhone?: string;
+  houseNo?: string;
+  building?: string;
+  area?: string;
+  landmark?: string;
+  line1?: string;
   line2?: string;
   city: string;
   state: string;

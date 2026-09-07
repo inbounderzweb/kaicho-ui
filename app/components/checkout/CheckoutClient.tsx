@@ -8,6 +8,7 @@ import Button from "../ui/Button";
 import AddressSelector from "./AddressSelector";
 import OrderSummary from "./OrderSummary";
 import PaymentMethodSelector from "./PaymentMethodSelector";
+import PhoneRequiredGate from "./PhoneRequiredGate";
 import { useRequireAuth } from "@/lib/auth/useRequireAuth";
 import { useCartStore } from "@/lib/store/cart.store";
 import { useCheckoutPreview } from "@/lib/hooks/useCheckoutPreview";
@@ -202,7 +203,7 @@ export default function CheckoutClient() {
       prefill: {
         name: [user?.firstName, user?.lastName].filter(Boolean).join(" ") || undefined,
         email: user?.email,
-        contact: user ? `${user.countryCode}${user.phone}` : undefined,
+        contact: user?.phone ? `${user.countryCode}${user.phone}` : undefined,
       },
       theme: { color: "#00a861" },
       handler: (response) => {
@@ -265,6 +266,21 @@ export default function CheckoutClient() {
     return (
       <section className="mx-auto flex max-w-[1280px] items-center justify-center px-5 py-24 sm:px-6 lg:px-8">
         <div className="h-8 w-8 animate-spin rounded-full border-2 border-brand/30 border-t-brand" />
+      </section>
+    );
+  }
+
+  // A mobile number is mandatory to check out (delivery contact). Google
+  // sign-in accounts have none until they add one here. The backend enforces
+  // the same rule — this is the matching UX.
+  if (!user.phone) {
+    return (
+      <section className="mx-auto max-w-[1280px] px-5 py-8 sm:px-6 sm:py-10 lg:px-8">
+        <Breadcrumbs items={BREADCRUMBS} className="mb-4" />
+        <h1 className="font-display text-2xl font-extrabold tracking-tight text-brand sm:text-3xl">
+          Checkout
+        </h1>
+        <PhoneRequiredGate />
       </section>
     );
   }

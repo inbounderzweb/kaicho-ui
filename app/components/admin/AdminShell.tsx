@@ -64,7 +64,11 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
     logout.mutate(undefined, { onSuccess: () => router.push("/login") });
   };
 
-  const displayName = [user.firstName, user.lastName].filter(Boolean).join(" ") || user.phone;
+  const displayName =
+    [user.firstName, user.lastName].filter(Boolean).join(" ") ||
+    user.phone ||
+    user.email ||
+    "Account";
 
   return (
     // Locked to the viewport height so the sidebar and top bar stay fixed in
