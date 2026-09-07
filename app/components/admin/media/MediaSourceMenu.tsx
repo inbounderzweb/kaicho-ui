@@ -12,12 +12,17 @@ export default function MediaSourceMenu({
   trigger,
   disabled = false,
   align = "start",
+  className,
   onUploadNew,
   onChooseFromLibrary,
 }: {
   trigger: (props: { onClick: () => void; disabled: boolean }) => ReactNode;
   disabled?: boolean;
   align?: "start" | "end";
+  /** Layout override for the positioning wrapper. Defaults to "inline-block"
+   *  (its historical value); pass e.g. "block w-full" to let the trigger fill
+   *  a flex row. */
+  className?: string;
   onUploadNew: () => void;
   onChooseFromLibrary: () => void;
 }) {
@@ -46,7 +51,7 @@ export default function MediaSourceMenu({
   };
 
   return (
-    <div ref={ref} className="relative inline-block">
+    <div ref={ref} className={`relative ${className ?? "inline-block"}`}>
       {trigger({ onClick: () => !disabled && setOpen((v) => !v), disabled })}
       {open && (
         <div

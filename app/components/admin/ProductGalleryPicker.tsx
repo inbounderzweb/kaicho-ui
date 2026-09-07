@@ -223,16 +223,26 @@ export default function ProductGalleryPicker({
               )}
 
               <div className="absolute inset-x-0 bottom-0 flex flex-col gap-1 bg-black/55 p-1.5 opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100">
-                <div className="flex items-center justify-between gap-1">
+                <div className="flex items-center gap-1">
                   <button
                     type="button"
                     onClick={() => moveImage(index, -1)}
                     disabled={isBusy || index === 0}
                     title="Move earlier"
                     aria-label="Move earlier"
-                    className="rounded bg-white/90 px-1.5 py-0.5 text-[11px] font-bold text-black disabled:opacity-30"
+                    className="shrink-0 rounded bg-white/90 px-1.5 py-1 text-[11px] font-bold leading-none text-black disabled:opacity-30"
                   >
                     ◀
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => moveImage(index, 1)}
+                    disabled={isBusy || index === value.length - 1}
+                    title="Move later"
+                    aria-label="Move later"
+                    className="shrink-0 rounded bg-white/90 px-1.5 py-1 text-[11px] font-bold leading-none text-black disabled:opacity-30"
+                  >
+                    ▶
                   </button>
                   {index !== 0 && (
                     <button
@@ -240,52 +250,42 @@ export default function ProductGalleryPicker({
                       onClick={() => setPrimary(index)}
                       disabled={isBusy}
                       title="Set as primary"
-                      className="flex-1 rounded bg-white/90 px-1.5 py-0.5 text-[10px] font-semibold text-black disabled:opacity-30"
+                      aria-label="Set as primary"
+                      className="shrink-0 inline-flex items-center rounded bg-white/90 px-1.5 py-1 text-black disabled:opacity-30"
                     >
-                      Set Primary
+                      <IconStar className="h-3 w-3" />
                     </button>
                   )}
-                  <button
-                    type="button"
-                    onClick={() => moveImage(index, 1)}
-                    disabled={isBusy || index === value.length - 1}
-                    title="Move later"
-                    aria-label="Move later"
-                    className="rounded bg-white/90 px-1.5 py-0.5 text-[11px] font-bold text-black disabled:opacity-30"
-                  >
-                    ▶
-                  </button>
-                </div>
-                <div className="flex items-center justify-between gap-1">
-                  <MediaSourceMenu
-                    disabled={isBusy}
-                    onUploadNew={() => {
-                      replaceIndexRef.current = index;
-                      replaceInputRef.current?.click();
-                    }}
-                    onChooseFromLibrary={() => setReplaceViaLibrary(index)}
-                    trigger={({ onClick, disabled }) => (
-                      <button
-                        type="button"
-                        onClick={onClick}
-                        disabled={disabled}
-                        className="flex-1 rounded bg-white/90 px-1.5 py-0.5 text-[10px] font-semibold text-black disabled:opacity-30"
-                      >
-                        Replace
-                      </button>
-                    )}
-                  />
                   <button
                     type="button"
                     onClick={() => removeImage(index)}
                     disabled={isBusy}
                     title="Remove"
                     aria-label="Remove image"
-                    className="inline-flex items-center rounded bg-white/90 px-1.5 py-0.5 text-black disabled:opacity-30"
+                    className="ml-auto shrink-0 inline-flex items-center rounded bg-white/90 px-1.5 py-1 text-black disabled:opacity-30"
                   >
                     <IconTrash className="h-3 w-3" />
                   </button>
                 </div>
+                <MediaSourceMenu
+                  className="block w-full"
+                  disabled={isBusy}
+                  onUploadNew={() => {
+                    replaceIndexRef.current = index;
+                    replaceInputRef.current?.click();
+                  }}
+                  onChooseFromLibrary={() => setReplaceViaLibrary(index)}
+                  trigger={({ onClick, disabled }) => (
+                    <button
+                      type="button"
+                      onClick={onClick}
+                      disabled={disabled}
+                      className="w-full whitespace-nowrap rounded bg-white/90 px-1.5 py-1 text-[10px] font-semibold text-black disabled:opacity-30"
+                    >
+                      Replace
+                    </button>
+                  )}
+                />
               </div>
             </div>
           ))}
