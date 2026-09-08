@@ -10,7 +10,7 @@ import { useSendOtp } from "@/lib/hooks/useSendOtp";
 import { useVerifyOtp } from "@/lib/hooks/useVerifyOtp";
 import { otpFormSchema, type OtpFormValues } from "@/lib/validation/auth.schema";
 import { ApiError } from "@/lib/api/ApiError";
-import type { AuthUser } from "@/lib/api/auth";
+import { otpRetryAfterSeconds, type AuthUser } from "@/lib/api/auth";
 
 export default function OtpStepForm({
   onVerified,
@@ -109,17 +109,35 @@ export default function OtpStepForm({
 
   const handleResend = () => {
     sendOtp.mutate(phone, {
-      onSuccess: () => startResendCooldown(45),
+      onSuccess: (data) => startResendCooldown(data.resendAfter),
+      onError: (error) => {
+        // Raced the cooldown — restart the countdown from the server's
+        // remaining time so it ticks down live.
+        const wait = otpRetryAfterSeconds(error);
+        if (wait != null) startResendCooldown(wait);
+      },
     });
     setDigits(["", "", "", ""]);
     setValue("otp", "");
     otpRefs.current[0]?.focus();
   };
 
+  // The resend-cooldown 429 is represented by the live "Resend OTP in 00:xx"
+  // line below, so it's kept out of the error text — otherwise the user sees
+  // a frozen "Please wait 28s" next to a ticking timer.
+  const sendOtpErrorMessage =
+    sendOtp.error instanceof ApiError && otpRetryAfterSeconds(sendOtp.error) == null
+      ? sendOtp.error.message
+      : undefined;
+
   const errorMessage =
     fieldState.error?.message ??
     (verifyOtp.error instanceof ApiError ? verifyOtp.error.message : undefined) ??
-    (sendOtp.error instanceof ApiError ? sendOtp.error.message : undefined);
+    sendOtpErrorMessage;
+
+  const countdownLabel = `${Math.floor(secondsLeft / 60)
+    .toString()
+    .padStart(2, "0")}:${(secondsLeft % 60).toString().padStart(2, "0")}`;
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-5" noValidate>
@@ -183,23 +201,31 @@ export default function OtpStepForm({
         Change mobile number
       </button>
 
-      <p className="text-center text-[11px] text-ink-faint">
-        {secondsLeft > 0 ? (
-          <>Resend OTP in 00:{secondsLeft.toString().padStart(2, "0")}</>
-        ) : (
-          <>
-            Didn&apos;t receive it?{" "}
-            <button
-              type="button"
-              disabled={sendOtp.isPending}
-              className="font-semibold text-forest hover:text-brand-dark disabled:opacity-50"
-              onClick={handleResend}
-            >
-              Resend OTP
-            </button>
-          </>
-        )}
-      </p>
+      {secondsLeft > 0 ? (
+        <div className="flex items-center justify-center gap-2">
+          <span className="text-xs font-semibold uppercase tracking-wider text-ink-muted">
+            Resend OTP in
+          </span>
+          <span
+            aria-live="polite"
+            className="inline-flex min-w-15 items-center justify-center rounded-lg bg-forest/10 px-2.5 py-1 font-mono text-base font-bold tabular-nums text-forest"
+          >
+            {countdownLabel}
+          </span>
+        </div>
+      ) : (
+        <p className="text-center text-xs text-ink-muted">
+          Didn&apos;t receive it?{" "}
+          <button
+            type="button"
+            disabled={sendOtp.isPending}
+            className="font-semibold text-forest hover:text-brand-dark disabled:opacity-50"
+            onClick={handleResend}
+          >
+            Resend OTP
+          </button>
+        </p>
+      )}
     </form>
   );
 }

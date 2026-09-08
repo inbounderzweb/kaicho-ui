@@ -20,11 +20,33 @@ export interface AuthUser {
   lastLoginAt?: string;
 }
 
-export function sendOtp(phone: string): Promise<void> {
-  return apiFetch<void>("/auth/send-otp", {
+export interface SendOtpResult {
+  sent: boolean;
+  /** Seconds the user must wait before a resend is allowed — drives the
+   *  login screen's "Resend OTP in 00:xx" countdown. */
+  resendAfter: number;
+}
+
+export function sendOtp(phone: string): Promise<SendOtpResult> {
+  return apiFetch<SendOtpResult>("/auth/send-otp", {
     method: "POST",
     body: JSON.stringify({ phone }),
   });
+}
+
+/**
+ * Seconds still to wait before another OTP can be requested, pulled from a
+ * 429 rejection. Prefers the structured `retryAfter` detail; falls back to
+ * the integer in the message ("Please wait 28s before requesting another
+ * OTP"). Returns null when `error` isn't an OTP cooldown rejection — e.g. a
+ * plain "too many requests" throttle with no seconds in it.
+ */
+export function otpRetryAfterSeconds(error: unknown): number | null {
+  if (!(error instanceof ApiError) || error.status !== 429) return null;
+  const detail = (error.details as { retryAfter?: unknown } | undefined)?.retryAfter;
+  if (typeof detail === "number" && detail > 0) return Math.ceil(detail);
+  const match = /(\d+)\s*s\b/.exec(error.message);
+  return match ? Number(match[1]) : null;
 }
 
 export function verifyOtp(

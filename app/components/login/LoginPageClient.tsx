@@ -38,8 +38,12 @@ export default function LoginPageClient() {
 
   const [success, setSuccess] = useState(false);
   const setStep = useAuthStore((s) => s.setStep);
+  const resetAuthFlow = useAuthStore((s) => s.reset);
 
   const handleVerified = (user: AuthUser) => {
+    // Auth is done — clear the persisted phone/step/cooldown so a later
+    // /login visit starts clean instead of on a stale OTP screen.
+    resetAuthFlow();
     if (safeRedirectPath) {
       // An explicit ?redirect= (e.g. bounced here from a protected page)
       // wins over role-based routing — validated by getSafeRedirectPath to

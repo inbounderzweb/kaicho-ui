@@ -257,6 +257,16 @@ export default function OrderDetailClient({ orderNumber }: { orderNumber: string
                 <span>Subtotal</span>
                 <span className="font-semibold text-ink">Rs. {order.pricing.subtotal.toFixed(2)}</span>
               </div>
+              {order.coupon && (Number(order.pricing.discountTotal) > 0 || order.coupon.freeDelivery) && (
+                <div className="flex justify-between text-brand">
+                  <span>Coupon ({order.coupon.code})</span>
+                  <span className="font-semibold">
+                    {order.coupon.freeDelivery && !Number(order.pricing.discountTotal)
+                      ? "Free delivery"
+                      : `− Rs. ${Number(order.pricing.discountTotal).toFixed(2)}`}
+                  </span>
+                </div>
+              )}
               <div className="flex justify-between text-ink-muted">
                 <span>Shipping</span>
                 <span className={`font-semibold ${order.pricing.shippingFee === 0 ? "text-brand" : "text-ink"}`}>

@@ -6,6 +6,7 @@ import type { ProductQueryParams } from "../api/product";
 import type { PublicProductListParams } from "../api/publicProducts";
 import type { CategoryProductsParams } from "../api/publicCategories";
 import type { AdminBlogQueryParams } from "../api/blog";
+import type { CouponQueryParams } from "../api/coupon";
 import type { PublicBlogListParams } from "../api/blogPublic";
 import type { AdminInquiryQueryParams } from "../api/inquiry";
 
@@ -37,6 +38,13 @@ export const brandKeys = {
   list: (params: BrandQueryParams) => ["admin", "brands", "list", params] as const,
   options: ["admin", "brands", "options"] as const,
   detail: (id: string) => ["admin", "brands", "detail", id] as const,
+};
+
+export const couponKeys = {
+  list: (params: CouponQueryParams) => ["admin", "coupons", "list", params] as const,
+  detail: (id: string) => ["admin", "coupons", "detail", id] as const,
+  usages: (id: string, page: number, pageSize: number) =>
+    ["admin", "coupons", "usages", id, page, pageSize] as const,
 };
 
 export const productKeys = {

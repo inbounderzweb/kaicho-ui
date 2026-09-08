@@ -6,6 +6,7 @@ import {
   IconTruck,
   IconImages,
   IconTag,
+  IconTicket,
   IconStar,
   IconFileText,
   IconMessageCircle,
@@ -47,6 +48,7 @@ export const ADMIN_NAV_ITEMS: AdminNavItem[] = [
     ],
   },
   { href: "/admin/orders", label: "Orders", Icon: IconTruck },
+  { href: "/admin/coupons", label: "Coupons", Icon: IconTicket },
   {
     label: "Inquiries",
     Icon: IconMessageCircle,

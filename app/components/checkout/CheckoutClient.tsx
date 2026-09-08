@@ -9,6 +9,7 @@ import AddressSelector from "./AddressSelector";
 import OrderSummary from "./OrderSummary";
 import PaymentMethodSelector from "./PaymentMethodSelector";
 import PhoneRequiredGate from "./PhoneRequiredGate";
+import CouponField from "./CouponField";
 import { useRequireAuth } from "@/lib/auth/useRequireAuth";
 import { useCartStore } from "@/lib/store/cart.store";
 import { useCheckoutPreview } from "@/lib/hooks/useCheckoutPreview";
@@ -62,6 +63,11 @@ export default function CheckoutClient() {
 
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("RAZORPAY");
+  // The coupon code the customer has applied. The server re-prices the cart
+  // with it on every preview and returns `couponError` (never throws) when it
+  // can't be used; it's revalidated again — authoritatively — at order
+  // creation.
+  const [couponCode, setCouponCode] = useState<string | null>(null);
   const [flowError, setFlowError] = useState<string | null>(null);
   const [pendingOrderNumber, setPendingOrderNumber] = useState<string | null>(null);
   const [isPaying, setIsPaying] = useState(false);
@@ -102,12 +108,17 @@ export default function CheckoutClient() {
   const linesKey = useMemo(() => JSON.stringify(lines), [lines]);
 
   const { mutate: runPreview } = previewMutation;
+  const rerunPreview = useCallback(
+    () => runPreview({ items: lines, couponCode: couponCode ?? undefined }),
+    [runPreview, lines, couponCode]
+  );
   useEffect(() => {
     if (!cartHydrated || !isAuthorized || lines.length === 0) return;
-    runPreview(lines);
-    // `lines` is re-derived every render; linesKey is the real dependency.
+    runPreview({ items: lines, couponCode: couponCode ?? undefined });
+    // `lines` is re-derived every render; linesKey + couponCode are the real
+    // dependencies.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [linesKey, cartHydrated, isAuthorized, runPreview]);
+  }, [linesKey, couponCode, cartHydrated, isAuthorized, runPreview]);
 
   const preview = previewMutation.data ?? null;
   const hasBlockingIssue = Boolean(
@@ -145,10 +156,21 @@ export default function CheckoutClient() {
     let result;
     try {
       result = await createOrderMutation.mutateAsync({
-        input: { items: lines, addressId: effectiveAddressId, paymentMethod },
+        input: {
+          items: lines,
+          addressId: effectiveAddressId,
+          paymentMethod,
+          couponCode: couponCode ?? undefined,
+        },
         idempotencyKey: getIdempotencyKey(),
       });
     } catch (err) {
+      // The coupon was revalidated server-side and rejected (expired / limit
+      // reached since preview). Drop it so the next attempt prices cleanly.
+      if (err instanceof ApiError && err.status === 409 && /coupon/i.test(err.message)) {
+        setCouponCode(null);
+        idempotencyKeyRef.current = null;
+      }
       setFlowError(errorMessageOf(err, "Couldn't place your order. Please try again."));
       return;
     }
@@ -326,6 +348,15 @@ export default function CheckoutClient() {
           </div>
 
           <div className="space-y-4 lg:col-span-1">
+            <CouponField
+              appliedCode={couponCode}
+              coupon={preview?.coupon ?? null}
+              couponError={preview?.couponError ?? null}
+              isBusy={previewMutation.isPending}
+              onApply={setCouponCode}
+              onRemove={() => setCouponCode(null)}
+            />
+
             {previewFailed ? (
               <section className="rounded-2xl border border-border bg-white p-5 text-center sm:p-6">
                 <p className="text-sm font-semibold text-ink">Couldn&apos;t price your order.</p>
@@ -334,7 +365,7 @@ export default function CheckoutClient() {
                 </p>
                 <button
                   type="button"
-                  onClick={() => runPreview(lines)}
+                  onClick={() => rerunPreview()}
                   className="mt-4 rounded-full bg-brand px-5 py-2 text-sm font-semibold text-white transition-colors hover:bg-brand-dark"
                 >
                   Try again

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useCartStore } from "@/lib/store/cart.store";
 import { useLocationStore } from "@/lib/store/location.store";
+import { useAuthStore } from "@/lib/store/auth.store";
 
 export default function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(
@@ -30,6 +31,9 @@ export default function Providers({ children }: { children: React.ReactNode }) {
     // location bar knows whether it's allowed to offer "detect".
     useLocationStore.persist.rehydrate();
     useLocationStore.getState().refreshPermissionState();
+    // Restores an in-progress OTP resend cooldown (and the OTP screen it
+    // belongs to) after a tab close/reopen — see auth.store.ts's merge().
+    useAuthStore.persist.rehydrate();
   }, []);
 
   return (

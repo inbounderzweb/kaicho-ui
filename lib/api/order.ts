@@ -123,9 +123,21 @@ export interface OrderItem {
 
 export interface OrderPricing {
   subtotal: number;
+  /** Coupon discount applied to the subtotal, in rupees. Absent (→ 0) on
+   *  orders placed before coupons existed. */
+  discountTotal?: number;
   shippingFee: number;
   taxTotal: number;
   grandTotal: number;
+}
+
+/** Frozen snapshot of the coupon applied to this order — null when none.
+ *  Never re-derive historical pricing from the live coupon. */
+export interface OrderCoupon {
+  code: string;
+  discountType: "PERCENTAGE" | "FIXED" | "FREE_DELIVERY";
+  discountAmount: number;
+  freeDelivery: boolean;
 }
 
 export interface OrderAddress {
@@ -167,6 +179,8 @@ export interface Order {
   statusHistory: OrderStatusHistoryEntry[];
   /** Courier / tracking record — null until an admin creates a shipment. */
   shipment: OrderShipment | null;
+  /** Applied coupon snapshot — null when the order used no coupon. */
+  coupon?: OrderCoupon | null;
   cancelReason?: string;
   createdAt: string;
   updatedAt: string;

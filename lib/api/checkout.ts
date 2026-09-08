@@ -32,20 +32,37 @@ export interface CheckoutPreviewItem {
 
 export interface CheckoutPreviewPricing {
   subtotal: number;
+  /** Coupon discount on the subtotal, in rupees. 0 when no coupon or a
+   *  free-delivery coupon (whose benefit is a zeroed shippingFee). */
+  discountTotal: number;
   shippingFee: number;
   taxTotal: number;
   grandTotal: number;
 }
 
+export interface CheckoutPreviewCoupon {
+  code: string;
+  name: string;
+  discountType: "PERCENTAGE" | "FIXED" | "FREE_DELIVERY";
+  discountAmount: number;
+  freeDelivery: boolean;
+}
+
 export interface CheckoutPreviewResult {
   items: CheckoutPreviewItem[];
   pricing: CheckoutPreviewPricing;
+  /** The applied coupon, or null when none was sent / it was rejected. */
+  coupon: CheckoutPreviewCoupon | null;
+  /** Why a sent coupon couldn't be applied — the cart is still priced
+   *  without it so the page can render. */
+  couponError: string | null;
 }
 
 export interface PlaceOrderInput {
   items: CheckoutLineInput[];
   addressId: string;
   paymentMethod: PaymentMethod;
+  couponCode?: string;
 }
 
 /** Razorpay's own order handle, echoed back so Checkout.js can be opened
@@ -61,10 +78,13 @@ export interface PlaceOrderResult {
   razorpayOrder?: RazorpayOrderHandle;
 }
 
-export function previewCheckout(items: CheckoutLineInput[]): Promise<CheckoutPreviewResult> {
+export function previewCheckout(
+  items: CheckoutLineInput[],
+  couponCode?: string
+): Promise<CheckoutPreviewResult> {
   return apiFetch<CheckoutPreviewResult>("/checkout/preview", {
     method: "POST",
-    body: JSON.stringify({ items }),
+    body: JSON.stringify(couponCode ? { items, couponCode } : { items }),
   });
 }
 

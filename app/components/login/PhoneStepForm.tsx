@@ -10,7 +10,7 @@ import { useSendOtp } from "@/lib/hooks/useSendOtp";
 import { useGoogleLogin } from "@/lib/hooks/useGoogleLogin";
 import { phoneFormSchema, type PhoneFormValues } from "@/lib/validation/auth.schema";
 import { ApiError } from "@/lib/api/ApiError";
-import type { AuthUser } from "@/lib/api/auth";
+import { otpRetryAfterSeconds, type AuthUser } from "@/lib/api/auth";
 
 export default function PhoneStepForm({
   onAuthenticated,
@@ -35,9 +35,19 @@ export default function PhoneStepForm({
 
   const onSubmit = (values: PhoneFormValues) => {
     sendOtp.mutate(values.mobile, {
-      onSuccess: () => {
+      onSuccess: (data) => {
         setPhone(values.mobile);
-        startResendCooldown(45);
+        startResendCooldown(data.resendAfter);
+        setStep("otp");
+      },
+      onError: (error) => {
+        // Already inside the resend cooldown — an OTP is still live for this
+        // number. Go to the code step with a running countdown instead of
+        // leaving the user on a frozen "Please wait 28s" message.
+        const wait = otpRetryAfterSeconds(error);
+        if (wait == null) return;
+        setPhone(values.mobile);
+        startResendCooldown(wait);
         setStep("otp");
       },
     });

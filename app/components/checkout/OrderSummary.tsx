@@ -27,7 +27,8 @@ export default function OrderSummary({
     );
   }
 
-  const { items, pricing } = preview;
+  const { items, pricing, coupon } = preview;
+  const showCouponLine = Boolean(coupon && (pricing.discountTotal > 0 || coupon.freeDelivery));
 
   return (
     <section className="rounded-2xl border border-border bg-white p-5 sm:p-6">
@@ -87,6 +88,16 @@ export default function OrderSummary({
           <span>Subtotal</span>
           <span className="font-semibold text-ink">Rs. {pricing.subtotal.toFixed(2)}</span>
         </div>
+        {showCouponLine && coupon && (
+          <div className="flex justify-between text-brand">
+            <span>Coupon ({coupon.code})</span>
+            <span className="font-semibold">
+              {coupon.freeDelivery && pricing.discountTotal === 0
+                ? "Free delivery"
+                : `− Rs. ${pricing.discountTotal.toFixed(2)}`}
+            </span>
+          </div>
+        )}
         <div className="flex justify-between text-ink-muted">
           <span>Shipping</span>
           <span className={`font-semibold ${pricing.shippingFee === 0 ? "text-brand" : "text-ink"}`}>
