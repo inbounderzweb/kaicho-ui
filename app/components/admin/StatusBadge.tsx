@@ -13,6 +13,8 @@ const STATUS_STYLES: Record<string, string> = {
   Inactive: "bg-red-500/15 text-red-700 dark:text-red-400",
 
   Processing: "bg-sky-500/15 text-sky-700 dark:text-sky-400",
+
+  Archived: "bg-slate-500/15 text-slate-600 dark:text-slate-400",
 };
 
 export default function StatusBadge({ status }: { status: string }) {

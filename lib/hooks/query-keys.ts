@@ -7,6 +7,8 @@ import type { PublicProductListParams } from "../api/publicProducts";
 import type { CategoryProductsParams } from "../api/publicCategories";
 import type { AdminBlogQueryParams } from "../api/blog";
 import type { CouponQueryParams } from "../api/coupon";
+import type { InstagramPostQueryParams } from "../api/instagramPost";
+import type { YouTubeVideoQueryParams } from "../api/youtubeVideo";
 import type { PublicBlogListParams } from "../api/blogPublic";
 import type { AdminInquiryQueryParams } from "../api/inquiry";
 
@@ -45,6 +47,16 @@ export const couponKeys = {
   detail: (id: string) => ["admin", "coupons", "detail", id] as const,
   usages: (id: string, page: number, pageSize: number) =>
     ["admin", "coupons", "usages", id, page, pageSize] as const,
+};
+
+export const instagramPostKeys = {
+  list: (params: InstagramPostQueryParams) => ["admin", "instagram-posts", "list", params] as const,
+  detail: (id: string) => ["admin", "instagram-posts", "detail", id] as const,
+};
+
+export const youtubeVideoKeys = {
+  list: (params: YouTubeVideoQueryParams) => ["admin", "youtube-videos", "list", params] as const,
+  detail: (id: string) => ["admin", "youtube-videos", "detail", id] as const,
 };
 
 export const productKeys = {
