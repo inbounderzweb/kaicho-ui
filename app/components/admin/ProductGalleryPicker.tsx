@@ -281,49 +281,53 @@ export default function ProductGalleryPicker({
               )}
 
               <div className="absolute inset-x-0 bottom-0 flex flex-col gap-1 bg-black/55 p-1.5 opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100">
-                <div className="flex items-center gap-1">
-                  <button
-                    type="button"
-                    onClick={() => moveImage(index, -1)}
-                    disabled={isBusy || index === 0}
-                    title="Move earlier"
-                    aria-label="Move earlier"
-                    className="shrink-0 rounded bg-white/90 px-1.5 py-1 text-[11px] font-bold leading-none text-black disabled:opacity-30"
-                  >
-                    ◀
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => moveImage(index, 1)}
-                    disabled={isBusy || index === value.length - 1}
-                    title="Move later"
-                    aria-label="Move later"
-                    className="shrink-0 rounded bg-white/90 px-1.5 py-1 text-[11px] font-bold leading-none text-black disabled:opacity-30"
-                  >
-                    ▶
-                  </button>
-                  {index !== 0 && (
+                <div className="flex flex-wrap items-center justify-between gap-1">
+                  <div className="flex items-center gap-1">
                     <button
                       type="button"
-                      onClick={() => setPrimary(index)}
+                      onClick={() => moveImage(index, -1)}
+                      disabled={isBusy || index === 0}
+                      title="Move earlier"
+                      aria-label="Move earlier"
+                      className="shrink-0 rounded bg-white/90 px-1.5 py-1 text-[11px] font-bold leading-none text-black disabled:opacity-30"
+                    >
+                      ◀
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => moveImage(index, 1)}
+                      disabled={isBusy || index === value.length - 1}
+                      title="Move later"
+                      aria-label="Move later"
+                      className="shrink-0 rounded bg-white/90 px-1.5 py-1 text-[11px] font-bold leading-none text-black disabled:opacity-30"
+                    >
+                      ▶
+                    </button>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    {index !== 0 && (
+                      <button
+                        type="button"
+                        onClick={() => setPrimary(index)}
+                        disabled={isBusy}
+                        title="Set as primary"
+                        aria-label="Set as primary"
+                        className="shrink-0 inline-flex items-center rounded bg-white/90 px-1.5 py-1 text-black disabled:opacity-30"
+                      >
+                        <IconStar className="h-3 w-3" />
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => removeImage(index)}
                       disabled={isBusy}
-                      title="Set as primary"
-                      aria-label="Set as primary"
+                      title="Remove"
+                      aria-label="Remove image"
                       className="shrink-0 inline-flex items-center rounded bg-white/90 px-1.5 py-1 text-black disabled:opacity-30"
                     >
-                      <IconStar className="h-3 w-3" />
+                      <IconTrash className="h-3 w-3" />
                     </button>
-                  )}
-                  <button
-                    type="button"
-                    onClick={() => removeImage(index)}
-                    disabled={isBusy}
-                    title="Remove"
-                    aria-label="Remove image"
-                    className="ml-auto shrink-0 inline-flex items-center rounded bg-white/90 px-1.5 py-1 text-black disabled:opacity-30"
-                  >
-                    <IconTrash className="h-3 w-3" />
-                  </button>
+                  </div>
                 </div>
                 <MediaSourceMenu
                   className="block w-full"
