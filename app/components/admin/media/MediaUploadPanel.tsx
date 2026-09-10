@@ -2,8 +2,10 @@
 
 import { useRef, useState } from "react";
 import { useUploadMedia } from "@/lib/hooks/admin/useUploadMedia";
+import { useUploadPhase } from "@/lib/hooks/admin/useUploadPhase";
 import type { UploadedMedia } from "@/lib/api/media";
 import { IconUploadCloud, IconClose } from "../../ui/icons";
+import UploadProgress from "./UploadProgress";
 
 // The shared "Upload New" surface — drag/drop + a validated queue + a progress
 // bar. Extracted verbatim from the old MediaLibraryClient so the /admin/media
@@ -53,9 +55,9 @@ export default function MediaUploadPanel({
   onUploaded: (items: UploadedMedia[]) => void;
 }) {
   const uploadMutation = useUploadMedia();
+  const upload = useUploadPhase();
   const [queue, setQueue] = useState<QueuedFile[]>([]);
   const [isDragging, setIsDragging] = useState(false);
-  const [progress, setProgress] = useState(0);
   const [note, setNote] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -87,23 +89,27 @@ export default function MediaUploadPanel({
 
   const clearQueue = () => {
     setQueue([]);
-    setProgress(0);
+    upload.reset();
     setNote(null);
   };
 
   const submit = () => {
+    if (upload.isBusy) return; // guard against a double upload
     const toUpload = queue.filter((q) => q.status === "queued").map((q) => q.file);
     if (toUpload.length === 0) return;
-    setProgress(0);
+    upload.start();
     uploadMutation.mutate(
-      { files: toUpload, onProgress: setProgress },
+      { files: toUpload, onProgress: upload.handleProgress },
       {
         onSuccess: (result) => {
           if (result.data.length > 0) onUploaded(result.data);
           if (result.errors.length === 0) {
-            clearQueue();
+            upload.succeed();
+            setQueue([]);
+            setNote(null);
             return;
           }
+          // Partial: keep only the rejected rows, tagged with their reason.
           setQueue((prev) =>
             prev
               .filter((q) => q.status === "queued")
@@ -112,7 +118,13 @@ export default function MediaUploadPanel({
                 return failure ? [{ ...q, status: "error" as const, error: failure.message }] : [];
               })
           );
+          if (result.data.length > 0) {
+            upload.succeed();
+          } else {
+            upload.failWith("Some files couldn't be uploaded — see the details below.");
+          }
         },
+        onError: () => upload.failWith("Network error during upload. Please try again."),
       }
     );
   };
@@ -198,23 +210,22 @@ export default function MediaUploadPanel({
             ))}
           </div>
 
-          {uploadMutation.isPending && (
-            <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-black/10 dark:bg-white/10">
-              <div
-                className="h-full bg-admin-primary-dark transition-all dark:bg-admin-primary"
-                style={{ width: `${progress}%` }}
-              />
-            </div>
-          )}
+          <UploadProgress
+            phase={upload.phase}
+            percent={upload.percent}
+            error={upload.error}
+            onRetry={submit}
+            className="mt-3"
+          />
 
           <div className="mt-3 flex items-center gap-3">
             <button
               type="button"
               onClick={submit}
-              disabled={queuedCount === 0 || uploadMutation.isPending}
+              disabled={queuedCount === 0 || upload.isBusy}
               className="rounded-full bg-admin-primary-dark px-4 py-2 text-xs font-semibold text-white disabled:opacity-50 dark:bg-admin-primary dark:text-black"
             >
-              {uploadMutation.isPending ? `Uploading… ${progress}%` : `Upload ${queuedCount} file(s)`}
+              {upload.isBusy ? "Uploading…" : `Upload ${queuedCount} file(s)`}
             </button>
             <button
               type="button"

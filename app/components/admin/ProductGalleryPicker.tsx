@@ -1,11 +1,13 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { resolveMediaUrl } from "@/lib/api/client";
 import { useUploadMedia } from "@/lib/hooks/admin/useUploadMedia";
+import { useUploadPhase } from "@/lib/hooks/admin/useUploadPhase";
 import { IconUploadCloud, IconTrash, IconStar } from "../ui/icons";
 import MediaLibraryModal from "./media/MediaLibraryModal";
 import MediaSourceMenu from "./media/MediaSourceMenu";
+import UploadProgress from "./media/UploadProgress";
 
 // Product images are NOT stored as binaries or extra URL fields on Product —
 // this picker only ever writes/reads Media records via the existing Media
@@ -25,16 +27,38 @@ export interface PickedGalleryImage {
   thumbnailUrl?: string;
 }
 
+function dedupeById(images: PickedGalleryImage[]): PickedGalleryImage[] {
+  const seen = new Set<string>();
+  return images.filter((img) => {
+    if (seen.has(img.mediaId)) return false;
+    seen.add(img.mediaId);
+    return true;
+  });
+}
+
 export default function ProductGalleryPicker({
-  value,
+  value: rawValue,
   onChange,
 }: {
   value: PickedGalleryImage[];
   onChange: (images: PickedGalleryImage[]) => void;
 }) {
   const uploadMutation = useUploadMedia();
-  const [progress, setProgress] = useState(0);
-  const [error, setError] = useState<string | null>(null);
+  const upload = useUploadPhase();
+
+  // The same Media asset can legitimately arrive twice — an upload that
+  // content-hash-dedupes to an image already in the gallery, or older product
+  // data saved before this guard existed. Two entries with the same mediaId
+  // would collide on the React key (and on the backend's index-based ordering),
+  // so the picker always works off a de-duplicated view and repairs the
+  // parent's state once when it sees a dupe come in.
+  const value = useMemo(() => dedupeById(rawValue), [rawValue]);
+  useEffect(() => {
+    if (value.length !== rawValue.length) onChange(value);
+  }, [value, rawValue, onChange]);
+  // Non-fatal notes ("2 files skipped — 20 image limit reached") shown in
+  // amber alongside a successful upload; hard failures go through upload.error.
+  const [notice, setNotice] = useState<string | null>(null);
   const [libraryOpen, setLibraryOpen] = useState(false);
   // When set, the library modal is replacing this single tile instead of adding.
   const [replaceViaLibrary, setReplaceViaLibrary] = useState<number | null>(null);
@@ -42,11 +66,13 @@ export default function ProductGalleryPicker({
   const addInputRef = useRef<HTMLInputElement>(null);
   const replaceInputRef = useRef<HTMLInputElement>(null);
   const replaceIndexRef = useRef<number | null>(null);
+  // Re-runs the last attempted upload when the admin hits "Retry".
+  const retryRef = useRef<(() => void) | null>(null);
 
   const remainingSlots = MAX_IMAGES - value.length;
 
   const appendFromLibrary = (picks: { mediaId: string; url: string; thumbnailUrl?: string }[]) => {
-    setError(null);
+    setNotice(null);
     const next = picks
       .filter((p) => !value.some((v) => v.mediaId === p.mediaId))
       .slice(0, remainingSlots)
@@ -54,10 +80,17 @@ export default function ProductGalleryPicker({
     if (next.length > 0) onChange([...value, ...next]);
   };
 
-  const replaceFromLibrary = (index: number, pick: { mediaId: string; url: string; thumbnailUrl?: string }) => {
-    const next = [...value];
-    next[index] = { mediaId: pick.mediaId, url: pick.url, thumbnailUrl: pick.thumbnailUrl };
+  // Swap the asset at `index`, then drop any other slot already holding it so
+  // the replacement can't introduce a duplicate mediaId.
+  const replaceAt = (index: number, image: PickedGalleryImage) => {
+    const next = value
+      .map((img, i) => (i === index ? image : img))
+      .filter((img, i) => i === index || img.mediaId !== image.mediaId);
     onChange(next);
+  };
+
+  const replaceFromLibrary = (index: number, pick: { mediaId: string; url: string; thumbnailUrl?: string }) => {
+    replaceAt(index, { mediaId: pick.mediaId, url: pick.url, thumbnailUrl: pick.thumbnailUrl });
   };
 
   const reorder = (from: number, to: number) => {
@@ -86,44 +119,60 @@ export default function ProductGalleryPicker({
   };
 
   const handleAddFiles = (files: File[]) => {
-    setError(null);
+    if (upload.isBusy) return; // guard against a double upload
+    setNotice(null);
     if (files.length === 0) return;
 
-    const remainingSlots = MAX_IMAGES - value.length;
-    if (remainingSlots <= 0) {
-      setError(`You can add up to ${MAX_IMAGES} images per product.`);
+    const slots = MAX_IMAGES - value.length;
+    if (slots <= 0) {
+      upload.failWith(`You can add up to ${MAX_IMAGES} images per product.`);
       return;
     }
 
-    const { valid, rejected } = validateFiles(files.slice(0, remainingSlots));
-    const droppedForLimit = files.length > remainingSlots ? files.length - remainingSlots : 0;
+    const { valid, rejected } = validateFiles(files.slice(0, slots));
+    const droppedForLimit = files.length > slots ? files.length - slots : 0;
 
     if (valid.length === 0) {
-      setError(rejected[0] ?? "No valid images selected.");
+      upload.failWith(rejected[0] ?? "No valid images selected.");
       return;
     }
 
-    setProgress(0);
+    retryRef.current = () => handleAddFiles(files);
+    upload.start();
     uploadMutation.mutate(
-      { files: valid, onProgress: setProgress },
+      { files: valid, onProgress: upload.handleProgress },
       {
         onSuccess: (result) => {
-          const uploaded = result.data.map((item) => ({
-            mediaId: item.mediaId,
-            url: item.url,
-            thumbnailUrl: item.thumbnailUrl,
-          }));
+          // A file can content-hash-dedupe on the backend to an asset already
+          // in the gallery (or twice within one batch) — keep only the ones
+          // that are genuinely new so no mediaId lands in the list twice.
+          const seen = new Set(value.map((v) => v.mediaId));
+          const uploaded: PickedGalleryImage[] = [];
+          for (const item of result.data) {
+            if (seen.has(item.mediaId)) continue;
+            seen.add(item.mediaId);
+            uploaded.push({ mediaId: item.mediaId, url: item.url, thumbnailUrl: item.thumbnailUrl });
+          }
+          const duplicateCount = result.data.length - uploaded.length;
           if (uploaded.length > 0) {
             onChange([...value, ...uploaded]);
           }
           const messages = [
             ...rejected,
             ...result.errors.map((e) => `${e.originalName}: ${e.message}`),
+            ...(duplicateCount > 0 ? [`${duplicateCount} image(s) already in the gallery were skipped.`] : []),
             ...(droppedForLimit > 0 ? [`${droppedForLimit} file(s) skipped — ${MAX_IMAGES} image limit reached.`] : []),
           ];
-          if (messages.length > 0) setError(messages.join("; "));
+          // "Nothing new, but nothing failed either" (all duplicates) is a soft
+          // outcome, not an error.
+          if (uploaded.length > 0 || (duplicateCount > 0 && result.errors.length === 0)) {
+            upload.succeed();
+            setNotice(messages.length > 0 ? messages.join("; ") : null);
+          } else {
+            upload.failWith(messages[0] ?? "Upload failed. Please try again.");
+          }
         },
-        onError: () => setError("Upload failed. Please try again."),
+        onError: () => upload.failWith("Upload failed. Please try again."),
       }
     );
   };
@@ -131,31 +180,40 @@ export default function ProductGalleryPicker({
   const handleReplaceFile = (file: File) => {
     const index = replaceIndexRef.current;
     if (index === null) return;
-    setError(null);
+    if (upload.isBusy) return; // guard against a double upload
+    setNotice(null);
 
     const { valid, rejected } = validateFiles([file]);
     if (valid.length === 0) {
-      setError(rejected[0] ?? "Unsupported file.");
+      upload.failWith(rejected[0] ?? "Unsupported file.");
       return;
     }
 
-    setProgress(0);
+    retryRef.current = () => {
+      replaceIndexRef.current = index;
+      handleReplaceFile(file);
+    };
+    upload.start();
     uploadMutation.mutate(
-      { files: valid, onProgress: setProgress },
+      { files: valid, onProgress: upload.handleProgress },
       {
         onSuccess: (result) => {
           const uploaded = result.data[0];
           if (!uploaded) {
-            setError(result.errors[0]?.message ?? "Upload failed. Please try again.");
+            upload.failWith(result.errors[0]?.message ?? "Upload failed. Please try again.");
             return;
           }
-          const next = [...value];
-          next[index] = { mediaId: uploaded.mediaId, url: uploaded.url, thumbnailUrl: uploaded.thumbnailUrl };
-          onChange(next);
+          upload.succeed();
+          replaceAt(index, { mediaId: uploaded.mediaId, url: uploaded.url, thumbnailUrl: uploaded.thumbnailUrl });
         },
-        onError: () => setError("Upload failed. Please try again."),
+        onError: () => upload.failWith("Upload failed. Please try again."),
       }
     );
+  };
+
+  const handleRetry = () => {
+    if (retryRef.current) retryRef.current();
+    else addInputRef.current?.click();
   };
 
   const moveImage = (index: number, direction: -1 | 1) => {
@@ -178,7 +236,7 @@ export default function ProductGalleryPicker({
     onChange(value.filter((_, i) => i !== index));
   };
 
-  const isBusy = uploadMutation.isPending;
+  const isBusy = upload.isBusy;
 
   return (
     <div>
@@ -305,7 +363,7 @@ export default function ProductGalleryPicker({
               className="flex w-full flex-col items-center gap-2 rounded-xl border-2 border-dashed border-admin-border p-6 text-center transition-colors hover:border-admin-primary-dark disabled:opacity-50 dark:border-admin-border-dark dark:hover:border-admin-primary"
             >
               <IconUploadCloud className="h-6 w-6 text-black/40 dark:text-white/40" />
-              <span className="text-xs font-semibold">{isBusy ? `Uploading… ${progress}%` : "Add Images"}</span>
+              <span className="text-xs font-semibold">{isBusy ? "Uploading…" : "Add Images"}</span>
               <span className="text-[11px] text-black/45 dark:text-white/45">
                 JPG, PNG, WebP, or AVIF — select multiple, or drag tiles to reorder
               </span>
@@ -314,17 +372,15 @@ export default function ProductGalleryPicker({
         />
       )}
 
-      {isBusy && value.length > 0 && (
-        <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-black/10 dark:bg-white/10">
-          <div
-            className="h-full bg-admin-primary-dark transition-all dark:bg-admin-primary"
-            style={{ width: `${progress}%` }}
-          />
-        </div>
-      )}
+      <UploadProgress
+        phase={upload.phase}
+        percent={upload.percent}
+        error={upload.error}
+        onRetry={handleRetry}
+      />
 
-      {error && <p className="mt-2 text-xs font-semibold text-red-600 dark:text-red-400">{error}</p>}
-      {value.length === 0 && !error && (
+      {notice && <p className="mt-2 text-xs font-semibold text-amber-600 dark:text-amber-400">{notice}</p>}
+      {value.length === 0 && !notice && upload.phase !== "error" && (
         <p className="mt-2 text-xs font-semibold text-amber-600 dark:text-amber-400">
           At least one primary image is required before this product can be published.
         </p>

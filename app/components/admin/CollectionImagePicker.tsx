@@ -3,9 +3,11 @@
 import { useRef, useState } from "react";
 import { resolveMediaUrl } from "@/lib/api/client";
 import { useUploadMedia } from "@/lib/hooks/admin/useUploadMedia";
+import { useUploadPhase } from "@/lib/hooks/admin/useUploadPhase";
 import { IconUploadCloud, IconClose } from "../ui/icons";
 import MediaLibraryModal from "./media/MediaLibraryModal";
 import MediaSourceMenu from "./media/MediaSourceMenu";
+import UploadProgress from "./media/UploadProgress";
 
 // Mirrors CategoryImagePicker / BrandLogoPicker exactly — same upload flow,
 // same limits, same "Upload New | Choose from Library" chooser. Collections
@@ -29,37 +31,51 @@ export default function CollectionImagePicker({
   onChange: (image: PickedImage | null) => void;
 }) {
   const uploadMutation = useUploadMedia();
-  const [progress, setProgress] = useState(0);
-  const [error, setError] = useState<string | null>(null);
+  const upload = useUploadPhase();
   const [libraryOpen, setLibraryOpen] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  // The last accepted file, so "Retry" after a network failure re-sends it
+  // instead of forcing the admin to locate it again.
+  const lastFileRef = useRef<File | null>(null);
 
   const handleFile = (file: File) => {
-    setError(null);
+    if (upload.isBusy) return; // guard against a double upload
     if (!ACCEPTED_MIME_TYPES.includes(file.type)) {
-      setError("Unsupported file type — use JPG, PNG, WebP, or AVIF.");
+      lastFileRef.current = null;
+      upload.failWith("Unsupported file type — use JPG, PNG, WebP, or AVIF.");
       return;
     }
     if (file.size > MAX_IMAGE_MB * 1024 * 1024) {
-      setError(`Image exceeds the ${MAX_IMAGE_MB}MB limit — try resizing it to around ${RECOMMENDED_DIMENSIONS} first.`);
+      lastFileRef.current = null;
+      upload.failWith(
+        `Image exceeds the ${MAX_IMAGE_MB}MB limit — try resizing it to around ${RECOMMENDED_DIMENSIONS} first.`
+      );
       return;
     }
 
-    setProgress(0);
+    lastFileRef.current = file;
+    upload.start();
     uploadMutation.mutate(
-      { files: [file], onProgress: setProgress },
+      { files: [file], onProgress: upload.handleProgress },
       {
         onSuccess: (result) => {
           const uploaded = result.data[0];
           if (!uploaded) {
-            setError(result.errors[0]?.message ?? "Upload failed. Please try again.");
+            upload.failWith(result.errors[0]?.message ?? "Upload failed. Please try again.");
             return;
           }
+          upload.succeed();
           onChange({ mediaId: uploaded.mediaId, url: uploaded.url, thumbnailUrl: uploaded.thumbnailUrl });
         },
-        onError: () => setError("Upload failed. Please try again."),
+        onError: () => upload.failWith("Upload failed. Please try again."),
       }
     );
+  };
+
+  const handleRetry = () => {
+    const file = lastFileRef.current;
+    if (file) handleFile(file);
+    else inputRef.current?.click();
   };
 
   const previewUrl = value?.thumbnailUrl ?? value?.url;
@@ -79,7 +95,7 @@ export default function CollectionImagePicker({
           </div>
           <div className="flex flex-col gap-2">
             <MediaSourceMenu
-              disabled={uploadMutation.isPending}
+              disabled={upload.isBusy}
               onUploadNew={() => inputRef.current?.click()}
               onChooseFromLibrary={() => setLibraryOpen(true)}
               trigger={({ onClick, disabled }) => (
@@ -96,7 +112,7 @@ export default function CollectionImagePicker({
             <button
               type="button"
               onClick={() => onChange(null)}
-              disabled={uploadMutation.isPending}
+              disabled={upload.isBusy}
               className="inline-flex items-center gap-1 text-xs font-semibold text-black/55 hover:text-red-600 disabled:opacity-50 dark:text-white/55"
             >
               <IconClose className="h-3.5 w-3.5" />
@@ -106,7 +122,7 @@ export default function CollectionImagePicker({
         </div>
       ) : (
         <MediaSourceMenu
-          disabled={uploadMutation.isPending}
+          disabled={upload.isBusy}
           onUploadNew={() => inputRef.current?.click()}
           onChooseFromLibrary={() => setLibraryOpen(true)}
           trigger={({ onClick, disabled }) => (
@@ -117,32 +133,19 @@ export default function CollectionImagePicker({
               className="flex w-full flex-col items-center gap-2 rounded-xl border-2 border-dashed border-admin-border p-6 text-center transition-colors hover:border-admin-primary-dark disabled:opacity-50 dark:border-admin-border-dark dark:hover:border-admin-primary"
             >
               <IconUploadCloud className="h-6 w-6 text-black/40 dark:text-white/40" />
-              <span className="text-xs font-semibold">
-                {uploadMutation.isPending ? `Uploading… ${progress}%` : "Upload Image"}
-              </span>
+              <span className="text-xs font-semibold">{upload.isBusy ? "Uploading…" : "Upload Image"}</span>
               <span className="text-[11px] text-black/45 dark:text-white/45">JPG, PNG, WebP, or AVIF</span>
             </button>
           )}
         />
       )}
 
-      {uploadMutation.isPending && previewUrl && (
-        <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-black/10 dark:bg-white/10">
-          <div
-            className="h-full bg-admin-primary-dark transition-all dark:bg-admin-primary"
-            style={{ width: `${progress}%` }}
-          />
-        </div>
-      )}
-
-      {error && (
-        <p className="mt-2 text-xs font-semibold text-red-600 dark:text-red-400">
-          {error}{" "}
-          <button type="button" onClick={() => inputRef.current?.click()} className="underline">
-            Retry
-          </button>
-        </p>
-      )}
+      <UploadProgress
+        phase={upload.phase}
+        percent={upload.percent}
+        error={upload.error}
+        onRetry={handleRetry}
+      />
 
       <input
         ref={inputRef}
