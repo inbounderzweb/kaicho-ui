@@ -67,6 +67,9 @@ export default function CollectionDetailClient({ id }: { id?: string }) {
 
   const selectedIds = useMemo(() => new Set(products.map((p) => p.productId)), [products]);
 
+  const isSaving = updateMutation.isPending || updateProductsMutation.isPending || createMutation.isPending;
+  const saveError = updateMutation.error ?? updateProductsMutation.error ?? createMutation.error;
+
   const onSubmit = (values: CollectionFormValues) => {
     const payload = {
       name: values.name,
@@ -126,6 +129,7 @@ export default function CollectionDetailClient({ id }: { id?: string }) {
               <div>
                 <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-black/50 dark:text-white/50">Sort Order</label>
                 <input type="number" min={0} {...register("sortOrder", { valueAsNumber: true })} className="w-full rounded-xl border border-admin-border bg-admin-surface px-3 py-2 text-sm dark:border-admin-border-dark dark:bg-admin-surface-dark" />
+                {errors.sortOrder && <p className="mt-1 text-xs text-red-600 dark:text-red-400">{errors.sortOrder.message}</p>}
               </div>
               <label className="flex items-center gap-2 text-sm font-semibold">
                 <input type="checkbox" {...register("isActive")} className="h-4 w-4 rounded" />
@@ -158,7 +162,21 @@ export default function CollectionDetailClient({ id }: { id?: string }) {
                 </div>
               ))}
             </div>
-            <button type="submit" className="w-full rounded-full bg-admin-primary px-5 py-2.5 text-sm font-semibold text-black">{isEdit ? "Save changes" : "Create Collection"}</button>
+            {Object.keys(errors).length > 0 && (
+              <p className="text-xs text-red-600 dark:text-red-400">
+                Please fix: {Object.values(errors).map((e) => e?.message).filter(Boolean).join(", ")}
+              </p>
+            )}
+            {saveError && (
+              <p className="text-xs text-red-600 dark:text-red-400">{saveError instanceof ApiError ? saveError.message : "Something went wrong. Please try again."}</p>
+            )}
+            <button
+              type="submit"
+              disabled={isSaving}
+              className="w-full rounded-full bg-admin-primary px-5 py-2.5 text-sm font-semibold text-black transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {isSaving ? "Saving…" : isEdit ? "Save changes" : "Create Collection"}
+            </button>
             {isEdit && (
               <button type="button" onClick={() => setDeleteOpen(true)} className="w-full rounded-full border border-red-500/30 px-5 py-2.5 text-sm font-semibold text-red-600">Delete Collection</button>
             )}
