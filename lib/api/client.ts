@@ -14,6 +14,15 @@ const RAW_API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? "https://kaicho-be.
 // anti-abuse interstitial HTML in place of the API response.
 const API_BASE_URL = IS_BROWSER ? "/api" : RAW_API_BASE;
 
+// The backend's own origin (no "/api" suffix, no rewrite in front of it) —
+// needed for anything that can't go through the same-origin proxy above,
+// namely the admin Socket.IO connection (a WebSocket upgrade doesn't follow
+// next.config.ts's HTTP rewrite). NEXT_PUBLIC_MEDIA_BASE_URL already denotes
+// "the backend's own origin" for image URLs (see .env.example); reused here
+// rather than adding a third env var for the same value.
+export const BACKEND_ORIGIN =
+  process.env.NEXT_PUBLIC_MEDIA_BASE_URL ?? RAW_API_BASE.replace(/\/api\/?$/, "");
+
 // Backend-served media (/uploads/media/...) is ALWAYS addressed with a
 // root-relative path — on the server and in the browser alike. next.config.ts's
 // `beforeFiles` rewrite proxies "/uploads/media/*" to the backend for every
