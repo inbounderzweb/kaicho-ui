@@ -9,6 +9,7 @@ import { useAdminTheme } from "@/lib/hooks/admin/useAdminTheme";
 import { IconMenu, IconLogout, IconEye, IconSun, IconMoon } from "../ui/icons";
 import AdminNavLinks from "./AdminNavLinks";
 import AdminDrawer from "./AdminDrawer";
+import AdminOrderNotifications from "./AdminOrderNotifications";
 
 /**
  * Shell for every /admin/** page: gates the whole section behind a single
@@ -109,6 +110,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
             <span className="hidden text-sm font-medium text-black/70 dark:text-white/70 sm:inline">
               {displayName}
             </span>
+            <AdminOrderNotifications enabled={authState === "authenticated"} />
             <button
               type="button"
               onClick={toggleTheme}
