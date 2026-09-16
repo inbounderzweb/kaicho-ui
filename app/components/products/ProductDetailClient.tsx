@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Breadcrumbs from "../ui/Breadcrumbs";
 import ProductGallery from "./ProductGallery";
 import ProductPrice from "./ProductPrice";
@@ -14,6 +14,8 @@ import { useToggleWishlist } from "@/lib/hooks/useToggleWishlist";
 import { useRelatedProducts } from "@/lib/hooks/useRelatedProducts";
 import { useCartStore } from "@/lib/store/cart.store";
 import { resolveMediaUrl } from "@/lib/api/client";
+import { trackEvent } from "@/lib/analytics/events";
+import { toEcommerceItem } from "@/lib/analytics/ecommerce";
 import type { PublicProductDetail } from "@/lib/api/publicProducts";
 
 const PAYMENT_METHODS = ["UPI", "Visa", "Mastercard", "RuPay", "COD"];
@@ -32,6 +34,23 @@ export default function ProductDetailClient({ product }: { product: PublicProduc
   const inWishlist = Boolean(wishlist?.items.some((i) => i.productId === product.productId));
   const primaryImage = product.images[0];
   const outOfStock = !product.inventory.inStock;
+
+  useEffect(() => {
+    trackEvent("view_item", {
+      currency: "INR",
+      value: product.pricing.sellingPrice,
+      items: [
+        toEcommerceItem({
+          id: product.productId,
+          name: product.name,
+          price: product.pricing.sellingPrice,
+          category: product.category?.name,
+        }),
+      ],
+    });
+    // Fire once per product viewed, not on every re-render (e.g. quantity change).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [product.productId]);
 
   function handleAddToCart() {
     if (outOfStock) return;

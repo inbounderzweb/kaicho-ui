@@ -17,6 +17,7 @@ import {
 } from "../ui/icons";
 import { useAuthStore } from "@/lib/store/auth.store";
 import { getSafeRedirectPath } from "@/lib/utils/safeRedirect";
+import { trackEvent } from "@/lib/analytics/events";
 import type { AuthUser } from "@/lib/api/auth";
 
 const TRUST_BADGES = [
@@ -60,9 +61,16 @@ export default function LoginPageClient() {
 
   const handleOtpVerified = (user: AuthUser, requiresName: boolean) => {
     if (requiresName) {
+      // Not a completed sign-up yet — that fires once NameStepForm submits.
       setStep("name");
       return;
     }
+    trackEvent("login", { method: "otp" });
+    handleVerified(user);
+  };
+
+  const handleNameCompleted = (user: AuthUser) => {
+    trackEvent("sign_up", { method: "otp" });
     handleVerified(user);
   };
 
@@ -199,7 +207,7 @@ export default function LoginPageClient() {
             ) : step === "otp" ? (
               <OtpStepForm onVerified={handleOtpVerified} />
             ) : (
-              <NameStepForm onCompleted={handleVerified} />
+              <NameStepForm onCompleted={handleNameCompleted} />
             )}
           </div>
 
