@@ -447,19 +447,6 @@ const COMMON_CARRIERS = [
 // Mirrors kaicho-be's TRACKING_NUMBER_RE — the server re-validates.
 const TRACKING_NUMBER_RE = /^[A-Za-z0-9-]{4,40}$/;
 
-function isHttpUrl(value: string): boolean {
-  try {
-    const url = new URL(value);
-    return url.protocol === "http:" || url.protocol === "https:";
-  } catch {
-    return false;
-  }
-}
-
-function toDateInput(iso: string | null): string {
-  return iso ? iso.slice(0, 10) : "";
-}
-
 function ShipmentRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex justify-between gap-3">
@@ -498,10 +485,6 @@ function ShipmentSection({ id, order }: { id: string; order: AdminOrderDetail })
   const [form, setForm] = useState(() => ({
     carrier: shipment?.carrier ?? "",
     trackingNumber: shipment?.trackingNumber ?? "",
-    shipmentId: shipment?.shipmentId ?? "",
-    trackingUrl: shipment?.trackingUrl ?? "",
-    shippedAt: toDateInput(shipment?.shippedAt ?? null),
-    estimatedDeliveryAt: toDateInput(shipment?.estimatedDeliveryAt ?? null),
     status: (shipment?.status ?? "SHIPPED") as ShipmentStatus,
   }));
   const [quickStatus, setQuickStatus] = useState<ShipmentStatus | "">("");
@@ -512,11 +495,11 @@ function ShipmentSection({ id, order }: { id: string; order: AdminOrderDetail })
 
   const trackingValid = TRACKING_NUMBER_RE.test(form.trackingNumber.trim());
   const carrierValid = form.carrier.trim().length >= 2;
-  const urlValid = form.trackingUrl.trim() === "" || isHttpUrl(form.trackingUrl.trim());
-  const datesValid =
-    !form.shippedAt || !form.estimatedDeliveryAt || form.estimatedDeliveryAt >= form.shippedAt;
-  const formValid = trackingValid && carrierValid && urlValid && datesValid;
+  const formValid = trackingValid && carrierValid;
 
+  // Shipping date isn't hand-entered: the server stamps `shippedAt` with "now"
+  // the moment the shipment is created or its status moves into a shipped-like
+  // state (see shipment.service.ts), so we never send it from here.
   const submit = () => {
     if (!formValid) return;
     const payload: SaveShipmentInput = {
@@ -524,10 +507,6 @@ function ShipmentSection({ id, order }: { id: string; order: AdminOrderDetail })
       trackingNumber: form.trackingNumber.trim(),
       status: form.status,
     };
-    if (form.shipmentId.trim()) payload.shipmentId = form.shipmentId.trim();
-    if (form.trackingUrl.trim()) payload.trackingUrl = form.trackingUrl.trim();
-    if (form.shippedAt) payload.shippedAt = form.shippedAt;
-    if (form.estimatedDeliveryAt) payload.estimatedDeliveryAt = form.estimatedDeliveryAt;
     saveMutation.mutate(payload, { onSuccess: () => setEditing(false) });
   };
 
@@ -551,6 +530,7 @@ function ShipmentSection({ id, order }: { id: string; order: AdminOrderDetail })
           <dl className="space-y-1.5 text-sm">
             <ShipmentRow label="Courier" value={shipment.carrier} />
             <ShipmentRow label="AWB / Tracking" value={shipment.trackingNumber} />
+            <ShipmentRow label="Shipped" value={formatDateTime(shipment.shippedAt ?? order.createdAt)} />
             {shipment.shipmentId && <ShipmentRow label="Shipment ID" value={shipment.shipmentId} />}
             {shipment.estimatedDeliveryAt && (
               <ShipmentRow label="Expected" value={formatDateTime(shipment.estimatedDeliveryAt)} />
@@ -639,43 +619,6 @@ function ShipmentSection({ id, order }: { id: string; order: AdminOrderDetail })
             <input
               value={form.trackingNumber}
               onChange={(e) => set("trackingNumber", e.target.value)}
-              className={inputClass}
-            />
-          </ShipmentField>
-          <ShipmentField label="Shipment ID">
-            <input
-              value={form.shipmentId}
-              onChange={(e) => set("shipmentId", e.target.value)}
-              className={inputClass}
-            />
-          </ShipmentField>
-          <div className="grid grid-cols-2 gap-2">
-            <ShipmentField label="Shipping date">
-              <input
-                type="date"
-                value={form.shippedAt}
-                onChange={(e) => set("shippedAt", e.target.value)}
-                className={inputClass}
-              />
-            </ShipmentField>
-            <ShipmentField label="Expected delivery" error={!datesValid ? "Before shipping date" : undefined}>
-              <input
-                type="date"
-                value={form.estimatedDeliveryAt}
-                onChange={(e) => set("estimatedDeliveryAt", e.target.value)}
-                className={inputClass}
-              />
-            </ShipmentField>
-          </div>
-          <ShipmentField
-            label="Tracking URL"
-            error={!urlValid ? "Must start with http:// or https://" : undefined}
-          >
-            <input
-              type="url"
-              value={form.trackingUrl}
-              onChange={(e) => set("trackingUrl", e.target.value)}
-              placeholder="https://…"
               className={inputClass}
             />
           </ShipmentField>

@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import Container from "../ui/Container";
 import SearchBox from "./SearchBox";
 import ProductSort from "./ProductSort";
@@ -8,6 +9,8 @@ import ProductGrid from "./ProductGrid";
 import Pagination from "./Pagination";
 import { useCatalogFilters } from "@/lib/hooks/useCatalogFilters";
 import { useProducts } from "@/lib/hooks/useProducts";
+import { trackEvent } from "@/lib/analytics/events";
+import { toEcommerceItem } from "@/lib/analytics/ecommerce";
 
 // The /products listing page: search + filter + sort + server-side
 // pagination, all driven by the URL (useCatalogFilters) so the page is
@@ -31,6 +34,21 @@ export default function ProductsPageClient() {
   const pageSize = data?.pageSize ?? 24;
   const rangeStart = total === 0 ? 0 : (filters.page - 1) * pageSize + 1;
   const rangeEnd = Math.min(filters.page * pageSize, total);
+
+  useEffect(() => {
+    if (!data || data.items.length === 0) return;
+    trackEvent("view_item_list", {
+      item_list_name: "All Products",
+      items: data.items.map((p) =>
+        toEcommerceItem({
+          id: p.productId,
+          name: p.name,
+          price: p.pricing.sellingPrice,
+          category: p.category?.name,
+        })
+      ),
+    });
+  }, [data]);
 
   return (
     <Container className="py-8 sm:py-10">

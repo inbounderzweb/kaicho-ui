@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import Breadcrumbs from "../ui/Breadcrumbs";
@@ -21,7 +21,28 @@ import {
   type OrderStatus,
   type ShipmentStatus,
 } from "@/lib/api/order";
+import { trackEvent } from "@/lib/analytics/events";
+import { toEcommerceItem } from "@/lib/analytics/ecommerce";
 import { IconPackage, IconTruck } from "../ui/icons";
+
+// GA4 has no separate "thank you" page here — checkout redirects straight to
+// this permanent order page, and the customer can come back to it any time.
+// A localStorage flag is the standard workaround: fire `purchase` once per
+// order, on the first render where it's no longer PENDING_PAYMENT, and never
+// again for that order number even across tabs/sessions.
+function markPurchaseTracked(orderNumber: string): boolean {
+  try {
+    const key = `kaicho-purchase-tracked:${orderNumber}`;
+    if (localStorage.getItem(key)) return false;
+    localStorage.setItem(key, "1");
+    return true;
+  } catch {
+    // Storage blocked (private mode, cleared site data): can't dedupe, so
+    // don't fire — a missed conversion is safer than silently double- or
+    // triple-counting revenue on every reload.
+    return false;
+  }
+}
 
 function formatDateTime(value: string): string {
   const date = new Date(value);
@@ -54,6 +75,19 @@ export default function OrderDetailClient({ orderNumber }: { orderNumber: string
 
   const [cancelOpen, setCancelOpen] = useState(false);
   const [cancelError, setCancelError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!order || order.status === "PENDING_PAYMENT") return;
+    if (!markPurchaseTracked(order.orderNumber)) return;
+    trackEvent("purchase", {
+      transaction_id: order.orderNumber,
+      currency: "INR",
+      value: order.pricing.grandTotal,
+      items: order.items.map((item) =>
+        toEcommerceItem({ id: item.productId, name: item.name, price: item.unitPrice, quantity: item.quantity })
+      ),
+    });
+  }, [order]);
 
   const breadcrumbs = [
     { label: "Home", href: "/" },

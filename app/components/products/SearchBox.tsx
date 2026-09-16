@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useDebouncedValue } from "@/lib/hooks/useDebouncedValue";
+import { trackEvent } from "@/lib/analytics/events";
 import { IconSearch, IconClose } from "../ui/icons";
 
 // Debounced (300ms) so filter/URL updates and the resulting query-key
@@ -34,7 +35,9 @@ export default function SearchBox({
   const debounced = useDebouncedValue(local, 300);
 
   useEffect(() => {
-    if (debounced !== value) onChange(debounced);
+    if (debounced === value) return;
+    onChange(debounced);
+    if (debounced.trim()) trackEvent("search", { search_term: debounced.trim() });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [debounced]);
 

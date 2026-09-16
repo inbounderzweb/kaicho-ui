@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import Container from "../ui/Container";
 import SearchBox from "./SearchBox";
 import ProductSort from "./ProductSort";
@@ -8,6 +9,8 @@ import ProductGrid from "./ProductGrid";
 import Pagination from "./Pagination";
 import { useCatalogFilters } from "@/lib/hooks/useCatalogFilters";
 import { useCategoryProducts } from "@/lib/hooks/useCategoryProducts";
+import { trackEvent } from "@/lib/analytics/events";
+import { toEcommerceItem } from "@/lib/analytics/ecommerce";
 
 // The /category/:slug product grid — same search/filter/sort/pagination UX
 // as ProductsPageClient, minus the category filter itself (already pinned
@@ -31,6 +34,23 @@ export default function CategoryPageClient({ slug }: { slug: string }) {
   const pageSize = data?.pageSize ?? 24;
   const rangeStart = total === 0 ? 0 : (filters.page - 1) * pageSize + 1;
   const rangeEnd = Math.min(filters.page * pageSize, total);
+
+  useEffect(() => {
+    if (!data || data.items.length === 0) return;
+    // The route only carries the slug — the category's display name rides
+    // along on each item instead, so this doesn't need its own fetch.
+    trackEvent("view_item_list", {
+      item_list_name: data.items[0]?.category?.name ?? slug,
+      items: data.items.map((p) =>
+        toEcommerceItem({
+          id: p.productId,
+          name: p.name,
+          price: p.pricing.sellingPrice,
+          category: p.category?.name,
+        })
+      ),
+    });
+  }, [data, slug]);
 
   return (
     <Container className="py-8 sm:py-10">

@@ -20,6 +20,8 @@ import { loadRazorpayScript } from "@/lib/payments/loadRazorpayScript";
 import { ApiError } from "@/lib/api/ApiError";
 import type { CheckoutLineInput } from "@/lib/api/checkout";
 import type { PaymentMethod } from "@/lib/api/order";
+import { trackEvent } from "@/lib/analytics/events";
+import { toEcommerceItem } from "@/lib/analytics/ecommerce";
 import { IconCart } from "../ui/icons";
 
 const BREADCRUMBS = [
@@ -120,6 +122,23 @@ export default function CheckoutClient() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [linesKey, couponCode, cartHydrated, isAuthorized, runPreview]);
 
+  // begin_checkout: once per checkout visit, the moment the cart has been
+  // priced — mirrors "the customer is looking at a checkout they can act
+  // on", not just "the page mounted" (which could still be loading/empty).
+  const firedBeginCheckout = useRef(false);
+  useEffect(() => {
+    if (firedBeginCheckout.current || !previewMutation.data) return;
+    firedBeginCheckout.current = true;
+    const data = previewMutation.data;
+    trackEvent("begin_checkout", {
+      currency: "INR",
+      value: data.pricing.grandTotal,
+      items: data.items.map((item) =>
+        toEcommerceItem({ id: item.productId, name: item.name, price: item.unitPrice, quantity: item.quantity })
+      ),
+    });
+  }, [previewMutation.data]);
+
   const preview = previewMutation.data ?? null;
   const hasBlockingIssue = Boolean(
     preview?.items.some((item) => item.unavailable || item.insufficientStock)
@@ -128,6 +147,35 @@ export default function CheckoutClient() {
   const fallbackAddressId = addresses?.find((address) => address.isDefault)?.id ?? addresses?.[0]?.id ?? null;
   const effectiveAddressId = selectedAddressId ?? fallbackAddressId;
   const isAddressReady = Boolean(effectiveAddressId);
+
+  // add_shipping_info: once per distinct address the checkout actually
+  // settles on (default auto-pick or an explicit AddressSelector choice) —
+  // guarded so switching back to an already-fired address doesn't refire.
+  const firedShippingForAddress = useRef<string | null>(null);
+  useEffect(() => {
+    if (!effectiveAddressId || !preview || firedShippingForAddress.current === effectiveAddressId) return;
+    firedShippingForAddress.current = effectiveAddressId;
+    trackEvent("add_shipping_info", {
+      currency: "INR",
+      value: preview.pricing.grandTotal,
+      items: preview.items.map((item) =>
+        toEcommerceItem({ id: item.productId, name: item.name, price: item.unitPrice, quantity: item.quantity })
+      ),
+    });
+  }, [effectiveAddressId, preview]);
+
+  const handlePaymentMethodChange = (method: PaymentMethod) => {
+    setPaymentMethod(method);
+    if (preview) {
+      trackEvent("add_payment_info", {
+        currency: "INR",
+        value: preview.pricing.grandTotal,
+        items: preview.items.map((item) =>
+          toEcommerceItem({ id: item.productId, name: item.name, price: item.unitPrice, quantity: item.quantity })
+        ),
+      });
+    }
+  };
   const disabledReason = !cartHydrated
     ? "Loading your cart..."
     : isCartEmpty
@@ -342,7 +390,7 @@ export default function CheckoutClient() {
             <AddressSelector selectedId={effectiveAddressId} onSelect={setSelectedAddressId} />
             <PaymentMethodSelector
               value={paymentMethod}
-              onChange={setPaymentMethod}
+              onChange={handlePaymentMethodChange}
               disabled={createOrderMutation.isPending || isPaying}
             />
           </div>
