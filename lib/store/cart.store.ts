@@ -1,6 +1,8 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { INITIAL_CART, type CartItem } from "@/app/components/cart/cart-data";
+import { trackEvent } from "@/lib/analytics/events";
+import { toEcommerceItem } from "@/lib/analytics/ecommerce";
 
 interface CartStoreState {
   items: CartItem[];
@@ -17,7 +19,7 @@ export const useCartStore = create<CartStoreState>()(
   persist(
     (set, get) => ({
       items: INITIAL_CART,
-      addItem: (item) =>
+      addItem: (item) => {
         set((state) => {
           const existing = state.items.find((i) => i.productId === item.productId);
           if (existing) {
@@ -38,9 +40,42 @@ export const useCartStore = create<CartStoreState>()(
             };
           }
           return { items: [...state.items, item] };
-        }),
-      removeItem: (productId) =>
-        set((state) => ({ items: state.items.filter((i) => i.productId !== productId) })),
+        });
+        // Tracks the quantity/value of THIS add action, not the resulting
+        // cart total — the standard GA4 add_to_cart convention, and every
+        // "Add to cart" button in the app (detail page, product card)
+        // routes through here, so this is the one place it needs to fire.
+        trackEvent("add_to_cart", {
+          currency: "INR",
+          value: item.price * item.quantity,
+          items: [
+            toEcommerceItem({
+              id: item.productId,
+              name: item.name,
+              price: item.price,
+              quantity: item.quantity,
+            }),
+          ],
+        });
+      },
+      removeItem: (productId) => {
+        const removed = get().items.find((i) => i.productId === productId);
+        set((state) => ({ items: state.items.filter((i) => i.productId !== productId) }));
+        if (removed) {
+          trackEvent("remove_from_cart", {
+            currency: "INR",
+            value: removed.price * removed.quantity,
+            items: [
+              toEcommerceItem({
+                id: removed.productId,
+                name: removed.name,
+                price: removed.price,
+                quantity: removed.quantity,
+              }),
+            ],
+          });
+        }
+      },
       updateQuantity: (productId, quantity) =>
         set((state) => {
           if (quantity < 1) return state;

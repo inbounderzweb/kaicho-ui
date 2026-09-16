@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Sora, Urbanist } from "next/font/google";
 import Providers from "./providers";
 import GoogleTagManager from "./components/analytics/GoogleTagManager";
+import PageViewTracker from "./components/analytics/PageViewTracker";
 import JsonLd from "./components/seo/JsonLd";
 import StorefrontChrome from "./components/layout/StorefrontChrome";
 import {
@@ -83,6 +84,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <body className="flex min-h-full flex-col bg-white text-ink">
         <Providers>
           <GoogleTagManager />
+          <PageViewTracker />
           <JsonLd data={organizationJsonLd()} />
           <JsonLd data={websiteJsonLd()} />
           <StorefrontChrome>{children}</StorefrontChrome>

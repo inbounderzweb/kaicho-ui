@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Button from "../ui/Button";
@@ -9,6 +9,8 @@ import ShippingProgress from "./ShippingProgress";
 import { useShippingPolicy } from "@/lib/hooks/useShippingPolicy";
 import { useCartStore } from "@/lib/store/cart.store";
 import { useAuthGate } from "@/lib/auth/useAuthGate";
+import { trackEvent } from "@/lib/analytics/events";
+import { toEcommerceItem } from "@/lib/analytics/ecommerce";
 import { IconArrowRight, IconCart, IconChevronRight } from "../ui/icons";
 
 export default function CartPageClient() {
@@ -36,6 +38,22 @@ export default function CartPageClient() {
   const handleRemove = (productId: string) => {
     removeItem(productId);
   };
+
+  // Fires once per visit, the first time the (persisted, async-hydrating)
+  // cart is known to be non-empty — not on every quantity/remove change,
+  // which would misreport those as repeated "cart views".
+  const firedViewCart = useRef(false);
+  useEffect(() => {
+    if (firedViewCart.current || items.length === 0) return;
+    firedViewCart.current = true;
+    trackEvent("view_cart", {
+      currency: "INR",
+      value: subtotal,
+      items: items.map((item) =>
+        toEcommerceItem({ id: item.productId, name: item.name, price: item.price, quantity: item.quantity })
+      ),
+    });
+  }, [items, subtotal]);
 
   return (
     <section className="mx-auto max-w-[1280px] px-5 py-8 sm:px-6 sm:py-10 lg:px-8">
