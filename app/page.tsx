@@ -5,6 +5,7 @@ import Hero from "./components/sections/Hero";
 import HowItWorks from "./components/sections/HowItWorks";
 import StoryCover from "./components/sections/StoryCover";
 import StorySection from "./components/sections/StorySection";
+import PromiseSection from "./components/sections/PromiseSection";
 import Testimonials from "./components/sections/Testimonials";
 import UseCaseGrid from "./components/sections/UseCaseGrid";
 
@@ -22,6 +23,7 @@ export default function Home() {
       {/* <ProductSection /> */}
       <CategoryShowcase />
       <StorySection />
+      <PromiseSection />
       <StoryCover />
       <HowItWorks />
       <UseCaseGrid />

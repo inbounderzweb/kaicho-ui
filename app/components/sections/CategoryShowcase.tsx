@@ -21,7 +21,7 @@ export default async function CategoryShowcase() {
             <span className="text-xs font-bold uppercase tracking-[0.3em] text-terracotta">Full Menu</span>
             <h2 className="mt-3 font-display text-3xl font-bold text-black sm:text-4xl">Shop by Collection</h2>
           </div>
-          <p className="max-w-sm text-sm leading-relaxed text-black/50">Homepage collections are managed from the admin dashboard and rendered dynamically.</p>
+          {/* <p className="max-w-sm text-sm leading-relaxed text-black/50">Homepage collections are managed from the admin dashboard and rendered dynamically.</p> */}
         </div>
         <div className="mt-14 flex flex-col gap-16 sm:mt-16">
           {collections.length ? collections.map((collection) => (

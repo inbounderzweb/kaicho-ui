@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { FiAward, FiEye, FiGlobe, FiHeart, FiSun, FiTarget, FiUsers } from "react-icons/fi";
 import Button from "../ui/Button";
 import Container from "../ui/Container";
 import {
@@ -26,6 +27,60 @@ const VALUES = [
     label: "Japanese Retort",
     description: "Sealed for freshness",
     Icon: IconPackage,
+  },
+];
+
+const PURPOSES = [
+  {
+    title: "Mission",
+    Icon: FiTarget,
+    background: "bg-[#e4f1dc]",
+    accent: "bg-brand",
+    decoration: "text-brand/15",
+    description:
+      "At Kaicho Foods, our mission is to create food experiences that are rooted in health, culture and care. We are committed to making healthy eating convenient and enjoyable by combining traditional wisdom with modern food technology. Every product we bring to the market is designed to nurture well-being, support health, and maintain authentic taste — making it easier for individuals and families to choose healthy every day.",
+  },
+  {
+    title: "Vision",
+    Icon: FiEye,
+    background: "bg-[#f7f2e3]",
+    accent: "bg-[#b99a59]",
+    decoration: "text-[#8b9565]/20",
+    description:
+      "To become a comprehensive food company that redefines healthy eating by offering a wide range of products and experiences — from packaged foods to cafes, restaurants, and cloud kitchens — all under one trusted brand, without ever compromising on health or taste.",
+  },
+];
+
+const CORE_VALUES = [
+  {
+    title: "Transparency",
+    Icon: IconLeaf,
+    description: "We believe in being open and honest about our ingredients, processes, and practices, so our customers can always trust what they consume.",
+  },
+  {
+    title: "Quality",
+    Icon: FiAward,
+    description: "From sourcing to packaging, we maintain the highest standards to ensure every product meets our commitment of excellence.",
+  },
+  {
+    title: "Health-First",
+    Icon: FiHeart,
+    description: "Our focus is on creating products that genuinely support a healthier lifestyle without compromising on flavor.",
+  },
+  {
+    title: "Innovation",
+    Icon: FiSun,
+    description: "We embrace modern food technology and creative ideas to make healthy eating simple, convenient and enjoyable.",
+  },
+  {
+    title: "Sustainability",
+    Icon: FiGlobe,
+    description: "We are committed to practices that respect our environment and community, ensuring a better tomorrow for generations to come.",
+  },
+  {
+    title: "Care",
+    Icon: FiUsers,
+    description: "The spirit of Kaicho — ‘Did you eat?’ — reflects our care in every product, reminding us that food is love, warmth and connection.",
   },
 ];
 
@@ -183,7 +238,7 @@ export default function StorySection() {
                 group
                 flex items-center gap-5
                 px-2 py-7
-                sm:px-7
+                sm:px-3 lg:gap-5
                 lg:px-10
               "
             >
@@ -220,6 +275,65 @@ export default function StorySection() {
             </div>
           ))}
         </div>
+        <div className="mt-12 grid gap-6 lg:grid-cols-2">
+          {PURPOSES.map(({ title, Icon, background, accent, decoration, description }) => (
+            <article
+              key={title}
+              aria-labelledby={`our-${title.toLowerCase()}`}
+              className={`relative isolate overflow-hidden rounded-2xl p-7 sm:p-10 ${background}`}
+            >
+              <div
+                aria-hidden="true"
+                className={`pointer-events-none absolute -bottom-12 -left-10 -z-10 ${decoration}`}
+              >
+                <IconLeaf className="h-56 w-56 -rotate-12" />
+                <IconLeaf className="absolute bottom-4 left-16 h-40 w-40 rotate-35" />
+              </div>
+              <div className="grid gap-6 sm:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)] sm:gap-8 lg:grid-cols-1 xl:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]">
+                <div>
+                  <div className={`flex h-20 w-20 items-center justify-center rounded-full text-white ${accent}`}>
+                    <Icon aria-hidden="true" className="h-10 w-10" strokeWidth={1.5} />
+                  </div>
+                  <h3
+                    id={`our-${title.toLowerCase()}`}
+                    className="mt-5 font-display text-3xl font-semibold leading-tight tracking-tight text-ink sm:text-4xl"
+                  >
+                    <span className="block text-2xl">Our</span>
+                    {title}
+                  </h3>
+                </div>
+                <p className="text-base leading-7 text-ink-muted">
+                  {description}
+                </p>
+              </div>
+            </article>
+          ))}
+        </div>
+        <section aria-labelledby="our-values" className="mt-16 sm:mt-20">
+          <div className="text-center">
+            <div className="flex items-center justify-center gap-3">
+              <span aria-hidden="true" className="h-px w-8 bg-brand" />
+              <span className="text-xs font-bold uppercase tracking-[0.25em] text-brand">
+                What drives us
+              </span>
+            </div>
+            <h2 id="our-values" className="mt-3 font-display text-3xl font-semibold tracking-tight text-ink sm:text-4xl">
+              Our Values
+            </h2>
+            <p className="mt-3 text-sm leading-6 text-ink-muted sm:text-base">
+              The principles that guide everything we do
+            </p>
+          </div>
+          <ul className="mt-8 grid grid-cols-1 gap-4 min-[400px]:grid-cols-2 md:grid-cols-3 xl:grid-cols-6 sm:mt-10">
+            {CORE_VALUES.map(({ title, Icon, description }) => (
+              <li key={title} className="min-w-0 rounded-2xl bg-[#f4f8f1] px-5 py-7 text-center">
+                <Icon aria-hidden="true" className="mx-auto h-11 w-11 text-brand" />
+                <h3 className="mt-5 text-base font-semibold text-brand">{title}</h3>
+                <p className="mt-3 text-sm leading-6 text-ink-muted">{description}</p>
+              </li>
+            ))}
+          </ul>
+        </section>
       </Container>
     </section>
   );
