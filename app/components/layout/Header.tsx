@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import Button from "../ui/Button";
 import MobileMenu from "./MobileMenu";
+import ProductSearch from "./ProductSearch";
 import { NAV_LINKS, isNavLinkActive } from "./nav-links";
 import { useCartStore } from "@/lib/store/cart.store";
 import { useCurrentUser } from "@/lib/hooks/useCurrentUser";
@@ -16,6 +17,7 @@ import { IconCart, IconHeart, IconMenu, IconSearch, IconUser } from "../ui/icons
 export default function Header() {
   const pathname = usePathname();
   const [scrolled, setScrolled] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const cartCount = useCartStore((s) => s.getTotalItems());
   const { data: user } = useCurrentUser();
@@ -37,9 +39,9 @@ export default function Header() {
           scrolled ? "shadow-[0_1px_0_0_rgba(0,0,0,0.06)]" : ""
         }`}
       >
-        {/* Mobile top bar: hamburger + search — logo — cart */}
-        <div className="mx-auto flex h-16 w-full max-w-[1280px] items-center justify-between px-5 sm:px-6 lg:hidden">
-          <div className="flex items-center gap-1">
+        {/* Mobile top bar: hamburger — logo — search + cart */}
+        <div className="mx-auto grid h-16 w-full max-w-[1280px] grid-cols-[1fr_auto_1fr] items-center px-4 sm:px-6 lg:hidden">
+          <div className="flex items-center justify-self-start gap-0.5">
             <button
               type="button"
               aria-label="Open menu"
@@ -48,13 +50,7 @@ export default function Header() {
             >
               <IconMenu className="h-6 w-6" />
             </button>
-            <button
-              type="button"
-              aria-label="Search"
-              className="inline-flex h-10 w-10 items-center justify-center rounded-full text-ink hover:bg-brand-soft hover:text-brand"
-            >
-              <IconSearch className="h-5 w-5" />
-            </button>
+
           </div>
 
           <Link href="/" className="flex items-center" aria-label="Kaicho Foods home">
@@ -68,16 +64,27 @@ export default function Header() {
             />
           </Link>
 
-          <Link
-            href="/cart"
-            aria-label={`Cart, ${cartCount} items`}
-            className="relative inline-flex h-10 w-10 items-center justify-center rounded-full text-ink hover:bg-brand-soft hover:text-brand"
-          >
-            <IconCart className="h-5 w-5" />
-            <span className="absolute right-1 top-1 flex h-4 w-4 items-center justify-center rounded-full bg-brand text-[10px] font-bold text-white">
-              {cartCount}
-            </span>
-          </Link>
+          <div className="flex items-center justify-self-end gap-0.5">
+            <button
+              type="button"
+              aria-label="Search"
+              aria-haspopup="dialog"
+              onClick={() => setSearchOpen(true)}
+              className="inline-flex h-10 w-10 items-center justify-center rounded-full text-ink hover:bg-brand-soft hover:text-brand"
+            >
+              <IconSearch className="h-5 w-5" />
+            </button>
+            <Link
+              href="/cart"
+              aria-label={`Cart, ${cartCount} items`}
+              className="relative inline-flex h-10 w-10 items-center justify-center rounded-full text-ink hover:bg-brand-soft hover:text-brand"
+            >
+              <IconCart className="h-5 w-5" />
+              <span className="absolute right-1 top-1 flex h-4 w-4 items-center justify-center rounded-full bg-brand text-[10px] font-bold text-white">
+                {cartCount}
+              </span>
+            </Link>
+          </div>
         </div>
 
         {/* Desktop bar */}
@@ -111,6 +118,8 @@ export default function Header() {
             <button
               type="button"
               aria-label="Search"
+              aria-haspopup="dialog"
+              onClick={() => setSearchOpen(true)}
               className="inline-flex h-10 w-10 items-center justify-center rounded-full text-ink transition-colors hover:bg-brand-soft hover:text-brand"
             >
               <IconSearch className="h-5 w-5" />
@@ -150,6 +159,7 @@ export default function Header() {
         </div>
       </header>
 
+      {searchOpen && <ProductSearch onClose={() => setSearchOpen(false)} />}
       <MobileMenu open={menuOpen} onClose={() => setMenuOpen(false)} />
     </>
   );
