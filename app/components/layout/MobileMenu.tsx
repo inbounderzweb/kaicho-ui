@@ -2,9 +2,10 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useEffect, useRef } from "react";
 import Button from "../ui/Button";
-import { NAV_LINKS } from "./nav-links";
+import { NAV_LINKS, isNavLinkActive } from "./nav-links";
 import { IconClose, IconMail, IconMapPin, IconPhone, IconUser } from "../ui/icons";
 import { useCurrentUser } from "@/lib/hooks/useCurrentUser";
 import { getAccountHref } from "@/lib/auth/getAccountHref";
@@ -17,6 +18,7 @@ export default function MobileMenu({
   open: boolean;
   onClose: () => void;
 }) {
+  const pathname = usePathname();
   const panelRef = useRef<HTMLDivElement>(null);
   const { data: user } = useCurrentUser();
   const accountHref = getAccountHref(user);
@@ -81,13 +83,14 @@ export default function MobileMenu({
           </button>
         </div>
 
-        <nav className="flex flex-1 flex-col gap-1 overflow-y-auto px-5 py-6">
+        <nav aria-label="Mobile navigation" className="flex flex-1 flex-col gap-1 overflow-y-auto px-5 py-6">
           {NAV_LINKS.map((link) => (
             <a
               key={link.href}
               href={link.href}
               onClick={onClose}
-              className="rounded-xl px-3 py-3.5 text-lg font-semibold text-ink transition-colors hover:bg-brand-soft hover:text-brand"
+              aria-current={isNavLinkActive(pathname, link.href) ? "page" : undefined}
+              className={`rounded-xl border-l-4 px-3 py-3.5 text-lg font-semibold transition-colors hover:bg-brand-soft hover:text-brand ${isNavLinkActive(pathname, link.href) ? "border-brand bg-brand-soft text-brand-dark" : "border-transparent text-ink"}`}
             >
               {link.label}
             </a>

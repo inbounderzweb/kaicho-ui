@@ -2,10 +2,11 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import Button from "../ui/Button";
 import MobileMenu from "./MobileMenu";
-import { NAV_LINKS } from "./nav-links";
+import { NAV_LINKS, isNavLinkActive } from "./nav-links";
 import { useCartStore } from "@/lib/store/cart.store";
 import { useCurrentUser } from "@/lib/hooks/useCurrentUser";
 import { useWishlist } from "@/lib/hooks/useWishlist";
@@ -13,6 +14,7 @@ import { getAccountHref } from "@/lib/auth/getAccountHref";
 import { IconCart, IconHeart, IconMenu, IconSearch, IconUser } from "../ui/icons";
 
 export default function Header() {
+  const pathname = usePathname();
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const cartCount = useCartStore((s) => s.getTotalItems());
@@ -91,15 +93,16 @@ export default function Header() {
             />
           </Link>
 
-          <nav className="flex items-center gap-8">
+          <nav aria-label="Main navigation" className="flex items-center gap-5 xl:gap-8">
             {NAV_LINKS.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
-                className="group relative py-2 text-[15px] font-semibold text-ink transition-colors hover:text-brand"
+                aria-current={isNavLinkActive(pathname, link.href) ? "page" : undefined}
+                className={`group relative py-2 text-[15px] font-semibold transition-colors hover:text-brand ${isNavLinkActive(pathname, link.href) ? "text-brand-dark" : "text-ink"}`}
               >
                 {link.label}
-                <span className="absolute inset-x-0 -bottom-0.5 h-0.5 origin-left scale-x-0 rounded-full bg-brand transition-transform duration-200 group-hover:scale-x-100" />
+                <span aria-hidden="true" className={`absolute inset-x-0 -bottom-0.5 h-0.5 origin-left rounded-full bg-brand transition-transform duration-200 group-hover:scale-x-100 ${isNavLinkActive(pathname, link.href) ? "scale-x-100" : "scale-x-0"}`} />
               </Link>
             ))}
           </nav>

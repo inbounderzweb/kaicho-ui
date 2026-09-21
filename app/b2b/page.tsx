@@ -1,5 +1,5 @@
 import Image from "next/image";
-import Link from "next/link";
+import ProductRangeSlider from "../components/b2b/ProductRangeSlider";
 import { FiArrowRight, FiBox, FiBriefcase, FiCheckCircle, FiClipboard, FiCoffee, FiHeart, FiHome, FiLayers, FiMapPin, FiPackage, FiShield, FiShoppingBag, FiTruck, FiUsers } from "react-icons/fi";
 import Container from "../components/ui/Container";
 import Button from "../components/ui/Button";
@@ -73,9 +73,7 @@ export default function B2BPage() {
 
         <section aria-labelledby="b2b-range" className="grid gap-8 py-8 lg:grid-cols-[0.8fr_1.6fr] lg:items-center">
           <div><p className={eyebrow}>Our Range</p><h2 id="b2b-range" className={heading}>Wholesome Nutrition for <span className="text-brand-dark">Every Need</span></h2><p className="mt-4 leading-7 text-ink-muted">Explore our range of traditional, ready-to-eat products — ideal for bulk orders and institutional supply.</p><Button href="/products" variant="outline" className="mt-5">View All Products <FiArrowRight aria-hidden="true" /></Button></div>
-          <ul className="grid min-w-0 grid-cols-2 gap-3 sm:grid-cols-4">
-            {products.map(product => <li key={product.name} className="min-w-0"><Link href="/products" className="group block h-full overflow-hidden rounded-xl border border-border bg-white shadow-sm"><div className="relative aspect-[3/4] bg-cream"><Image src={product.image} alt={product.name} fill sizes="(min-width: 1024px) 190px, (min-width: 640px) 23vw, 45vw" className="object-contain p-2 transition-transform group-hover:scale-105" /></div><h3 className="p-3 text-center text-xs font-semibold leading-5 sm:text-sm">{product.name}</h3></Link></li>)}
-          </ul>
+          <ProductRangeSlider products={products} />
         </section>
 
         <section aria-labelledby="b2b-benefits" className="grid gap-8 py-10 lg:grid-cols-[0.9fr_1.1fr] lg:gap-12">

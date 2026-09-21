@@ -1,10 +1,13 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { IconCart, IconHeart, IconHome, IconUser } from "../ui/icons";
 import { useCurrentUser } from "@/lib/hooks/useCurrentUser";
 import { getAccountHref } from "@/lib/auth/getAccountHref";
+
+import { isNavLinkActive } from "./nav-links";
 
 const BASE_TABS = [
   { label: "Home", href: "/", Icon: IconHome },
@@ -17,6 +20,7 @@ const BASE_TABS = [
 const REVEAL_AFTER = 60;
 
 export default function MobileTabBar() {
+  const pathname = usePathname();
   const { data: user } = useCurrentUser();
   const [revealed, setRevealed] = useState(false);
 
@@ -48,7 +52,8 @@ export default function MobileTabBar() {
         <Link
           key={label}
           href={href}
-          className="flex flex-1 flex-col items-center gap-1 py-2.5 text-ink-muted transition-colors active:text-brand"
+          aria-current={isNavLinkActive(pathname, href) ? "page" : undefined}
+          className={`flex flex-1 flex-col items-center gap-1 border-t-2 py-2.5 transition-colors active:text-brand ${isNavLinkActive(pathname, href) ? "border-brand bg-brand-soft text-brand-dark" : "border-transparent text-ink-muted"}`}
         >
           <Icon className="h-5 w-5" />
           <span className="text-[11px] font-semibold">{label}</span>
