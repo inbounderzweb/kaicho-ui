@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { io, type Socket } from "socket.io-client";
-import { BACKEND_ORIGIN } from "@/lib/api/client";
+import { ApiError } from "@/lib/api/ApiError";
+import { apiFetch, BACKEND_ORIGIN } from "@/lib/api/client";
 
 export interface AdminOrderNotification {
   id: string;
@@ -150,11 +151,39 @@ export function useAdminOrderNotifications(enabled: boolean) {
   useEffect(() => {
     if (!enabled) return;
 
+    let disposed = false;
+    let retryTimer: ReturnType<typeof setTimeout> | undefined;
     const socket = io(BACKEND_ORIGIN, {
-      withCredentials: true,
+      autoConnect: false,
       transports: ["websocket", "polling"],
     });
     socketRef.current = socket;
+
+    // Get a fresh ticket via the same-origin API for each connection/reconnection.
+    const connect = async () => {
+      if (disposed) return;
+      try {
+        const { token } = await apiFetch<{ token: string }>("/admin/notifications/token", { method: "POST" });
+        if (disposed) return;
+        socket.auth = { token };
+        socket.connect();
+      } catch (error) {
+        if (!disposed && !(error instanceof ApiError && [401, 403].includes(error.status))) {
+          retryTimer = setTimeout(connect, 5000);
+        }
+      }
+    };
+    // Own retries so every reconnect obtains a fresh, short-lived ticket.
+    socket.io.reconnection(false);
+    const retry = () => {
+      if (disposed) return;
+      clearTimeout(retryTimer);
+      retryTimer = setTimeout(connect, 5000);
+    };
+    socket.on("connect_error", retry);
+    socket.on("disconnect", retry);
+    void connect();
+
 
     socket.on("order:new", (payload: Omit<AdminOrderNotification, "id">) => {
       const entry: AdminOrderNotification = { ...payload, id: `${payload.orderId}-${payload.createdAt}` };
@@ -165,6 +194,8 @@ export function useAdminOrderNotifications(enabled: boolean) {
     });
 
     return () => {
+      disposed = true;
+      clearTimeout(retryTimer);
       socket.disconnect();
       socketRef.current = null;
       stopAlert();
