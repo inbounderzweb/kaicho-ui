@@ -13,8 +13,10 @@ export interface AdminOrderNotification {
 }
 
 const MAX_STORED = 20;
+const ALERT_DURATION_MS = 60_000;
+const ALERT_REPEAT_MS = 2400;
 
-// A short two-tone chime built with the Web Audio API rather than a shipped
+// A soft three-note doorbell chime built with the Web Audio API rather than a shipped
 // audio file — no extra asset to host. Reused as a single long-lived context
 // (not a fresh one per notification): a new AudioContext is created
 // "suspended" by spec in several browsers (Safari in particular) even after
@@ -25,6 +27,14 @@ const MAX_STORED = 20;
 // time a notification arrives it's already running and playChime only has
 // to schedule tones on it.
 let sharedCtx: AudioContext | null = null;
+const activeTones = new Set<OscillatorNode>();
+
+function silenceChime(): void {
+  for (const tone of activeTones) {
+    try { tone.stop(); } catch { /* Already stopped. */ }
+  }
+  activeTones.clear();
+}
 
 function getAudioContextCtor(): typeof AudioContext | undefined {
   return window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
@@ -63,18 +73,25 @@ function playChime(): void {
       ctx.resume().catch(() => undefined);
     }
     const now = ctx.currentTime;
-    [880, 1174.66].forEach((freq, i) => {
+    // C5–E5–G5: a gentle rising major chord with a bell-like decay.
+    [523.25, 659.25, 783.99].forEach((freq, i) => {
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
       osc.type = "sine";
       osc.frequency.value = freq;
-      const start = now + i * 0.14;
+      const start = now + i * 0.22;
       gain.gain.setValueAtTime(0, start);
-      gain.gain.linearRampToValueAtTime(0.2, start + 0.02);
-      gain.gain.exponentialRampToValueAtTime(0.001, start + 0.32);
+      gain.gain.linearRampToValueAtTime(0.14, start + 0.015);
+      gain.gain.exponentialRampToValueAtTime(0.001, start + 0.9);
       osc.connect(gain).connect(ctx.destination);
+      activeTones.add(osc);
+      osc.onended = () => {
+        activeTones.delete(osc);
+        osc.disconnect();
+        gain.disconnect();
+      };
       osc.start(start);
-      osc.stop(start + 0.34);
+      osc.stop(start + 0.92);
     });
   } catch {
     // Sound is a nice-to-have — never let it break the notification itself.
@@ -92,6 +109,27 @@ export function useAdminOrderNotifications(enabled: boolean) {
   const [toasts, setToasts] = useState<AdminOrderNotification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const socketRef = useRef<Socket | null>(null);
+  const repeatRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const stopRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const stopAlert = useCallback(() => {
+    if (repeatRef.current !== null) clearInterval(repeatRef.current);
+    if (stopRef.current !== null) clearTimeout(stopRef.current);
+    repeatRef.current = null;
+    stopRef.current = null;
+    silenceChime();
+  }, []);
+
+  const startAlert = useCallback(() => {
+    stopAlert();
+    const deadline = Date.now() + ALERT_DURATION_MS;
+    playChime();
+    repeatRef.current = setInterval(() => {
+      if (Date.now() >= deadline) stopAlert();
+      else playChime();
+    }, ALERT_REPEAT_MS);
+    stopRef.current = setTimeout(stopAlert, ALERT_DURATION_MS);
+  }, [stopAlert]);
 
   // Any click/keydown anywhere in the admin panel counts as the gesture that
   // unlocks the shared AudioContext — cheap and passive (capture phase,
@@ -123,20 +161,24 @@ export function useAdminOrderNotifications(enabled: boolean) {
       setNotifications((prev) => [entry, ...prev].slice(0, MAX_STORED));
       setUnreadCount((prev) => prev + 1);
       setToasts((prev) => [...prev, entry]);
-      playChime();
+      startAlert();
     });
 
     return () => {
       socket.disconnect();
       socketRef.current = null;
+      stopAlert();
     };
-  }, [enabled]);
+  }, [enabled, startAlert, stopAlert]);
 
   const dismissToast = useCallback((id: string) => {
     setToasts((prev) => prev.filter((t) => t.id !== id));
   }, []);
 
-  const markAllRead = useCallback(() => setUnreadCount(0), []);
+  const markAllRead = useCallback(() => {
+    stopAlert();
+    setUnreadCount(0);
+  }, [stopAlert]);
 
   return { notifications, toasts, unreadCount, dismissToast, markAllRead };
 }
