@@ -7,9 +7,24 @@ import type { Order, PaymentMethod } from "./order";
 // the DB server-side. Nothing here ever sends a client-side price; the
 // preview response's numbers are the only ones displayed at checkout.
 
+export interface PackSelectionInput {
+  packId: string;
+  count: number;
+}
+
 export interface CheckoutLineInput {
   productId: string;
   quantity: number;
+  /** Present only for a confirmed pack line (see PackRecommendationModal) — checkout.service.ts re-derives quantity/price from this, never trusts a client price. */
+  packSelection?: PackSelectionInput[];
+}
+
+export interface CheckoutPreviewPackLine {
+  packId: string;
+  packName: string;
+  packQuantity: number;
+  packCount: number;
+  packPrice: number;
 }
 
 export interface CheckoutPreviewItem {
@@ -22,12 +37,16 @@ export interface CheckoutPreviewItem {
   discount: number;
   discountPercentage: number;
   lineTotal: number;
+  selectionType?: "UNIT" | "PACK";
+  packBreakdown?: CheckoutPreviewPackLine[];
   /** Product no longer purchasable (deleted/inactive) — blocks checkout. */
   unavailable?: boolean;
   /** Fewer units in stock than requested — blocks checkout until adjusted. */
   insufficientStock?: boolean;
   /** How many units are actually available, when insufficientStock is set. */
   availableQuantity?: number;
+  /** A stale/no-longer-valid pack selection — same treatment as `unavailable`. */
+  packError?: string;
 }
 
 export interface CheckoutPreviewPricing {

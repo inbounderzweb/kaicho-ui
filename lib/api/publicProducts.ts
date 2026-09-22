@@ -63,6 +63,37 @@ export interface PublicProductSeo {
   ogDescription?: string;
 }
 
+// Display data for the PDP's initial render — active packs only, resolved
+// Product > Category (see kaicho-be's packCombination.service.ts). This is
+// NOT the authority once the customer picks a quantity: /cart/validate-pack
+// (lib/api/pack.ts) re-derives everything server-side at that point.
+export interface PublicProductPackOption {
+  packId: string;
+  name: string;
+  quantity: number;
+  price: number;
+  isDefault: boolean;
+  sortOrder: number;
+  discount: number;
+  discountPercentage: number;
+  availableStock: number;
+}
+
+// A bundle/combo the backend suggests instead of (or alongside) buying this
+// product plain — admin-pinned (MANUAL) or auto-detected from the same
+// inventory-tracking components used for stock deduction (AUTO). Null when
+// there's nothing to suggest, or the admin explicitly opted out (NONE) —
+// see kaicho-be's relatedCombo.service.ts.
+export interface PublicRelatedCombo {
+  comboProductId: string;
+  name: string;
+  slug: string;
+  image: string | null;
+  price: number;
+  mrp: number;
+  discountPercentage: number;
+}
+
 export interface PublicProductDetail {
   productId: string;
   name: string;
@@ -75,6 +106,9 @@ export interface PublicProductDetail {
   images: PublicProductImage[];
   pricing: PublicProductPricing;
   inventory: PublicProductInventory;
+  /** Empty when this product has no pack configuration enabled — behaves exactly as before this feature existed. */
+  packOptions: PublicProductPackOption[];
+  relatedCombo: PublicRelatedCombo | null;
   seo: PublicProductSeo;
 }
 

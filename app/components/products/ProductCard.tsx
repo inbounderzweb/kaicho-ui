@@ -1,13 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useSmartCart } from "@/lib/hooks/useSmartCart";
 import Link from "next/link";
 import Image from "next/image";
 import { resolveMediaUrl } from "@/lib/api/client";
 import { useWishlist } from "@/lib/hooks/useWishlist";
 import { useToggleWishlist } from "@/lib/hooks/useToggleWishlist";
 import { useAuthGate } from "@/lib/auth/useAuthGate";
-import { useCartStore } from "@/lib/store/cart.store";
 import { IconHeart, IconCart } from "../ui/icons";
 import ProductPrice from "./ProductPrice";
 import ProductAvailability from "./ProductAvailability";
@@ -41,8 +40,8 @@ export default function ProductCard({
   const { data: wishlist } = useWishlist();
   const toggleWishlist = useToggleWishlist();
   const { guard } = useAuthGate();
-  const addItem = useCartStore((s) => s.addItem);
-  const [justAdded, setJustAdded] = useState(false);
+  const smartCart = useSmartCart(product.productId);
+  const justAdded = smartCart.added;
 
   const inWishlist = Boolean(wishlist?.items.some((i) => i.productId === product.productId));
   const href = `/products/${product.slug}`;
@@ -67,19 +66,7 @@ export default function ProductCard({
     e.preventDefault();
     e.stopPropagation();
     if (outOfStock) return;
-    addItem({
-      productId: product.productId,
-      slug: product.slug,
-      name: product.name,
-      image: imageUrl ? resolveMediaUrl(imageUrl) : null,
-      imageAlt: product.image?.altText || product.name,
-      price: product.pricing.sellingPrice,
-      mrp: product.pricing.mrp,
-      quantity: 1,
-      maxQuantity: product.inventory.trackInventory ? product.inventory.stockQuantity : undefined,
-    });
-    setJustAdded(true);
-    setTimeout(() => setJustAdded(false), 2000);
+    void smartCart.add(1);
   }
 
   return (
@@ -142,13 +129,15 @@ export default function ProductCard({
         <button
           type="button"
           onClick={handleAddToCart}
-          disabled={outOfStock}
+          disabled={outOfStock || smartCart.busy}
           className="mt-2 inline-flex h-9 w-full items-center justify-center gap-2 rounded-md bg-brand text-[11px] font-bold uppercase tracking-wider text-white transition-colors hover:bg-brand-dark disabled:cursor-not-allowed disabled:opacity-40 sm:h-10 sm:text-xs"
         >
           <IconCart className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-          {outOfStock ? "Out of Stock" : justAdded ? "Added" : "Add to Cart"}
+          {outOfStock ? "Out of Stock" : smartCart.busy ? "Checking…" : justAdded ? "Added" : "Add to Cart"}
         </button>
+        {smartCart.error && <p role="alert" className="text-xs text-red-700">{smartCart.error}</p>}
       </div>
+      {smartCart.modal}
     </div>
   );
 }

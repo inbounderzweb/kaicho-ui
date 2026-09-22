@@ -102,7 +102,18 @@ export default function CheckoutClient() {
   }, [addresses, selectedAddressId]);
 
   const lines: CheckoutLineInput[] = useMemo(
-    () => items.map((item) => ({ productId: item.productId, quantity: item.quantity })),
+    () =>
+      items.map((item) => ({
+        productId: item.productId,
+        quantity: item.quantity,
+        // The server recomputes quantity/price from this and ignores
+        // `quantity` above for a pack line (spec §7/§23) — sent only for a
+        // confirmed pack selection (see PackRecommendationModal).
+        packSelection:
+          item.selectionType === "PACK" && item.packBreakdown?.length
+            ? item.packBreakdown.map((l) => ({ packId: l.packId, count: l.packCount }))
+            : undefined,
+      })),
     [items]
   );
   // Stable identity for "the cart lines actually changed", so editing an

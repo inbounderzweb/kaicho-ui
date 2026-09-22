@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useProductList } from "@/lib/hooks/admin/useProductList";
 import { useProductFilters } from "@/lib/hooks/admin/useProductFilters";
 import { useDeleteProduct } from "@/lib/hooks/admin/useDeleteProduct";
+import { useBulkDeleteProducts } from "@/lib/hooks/admin/useBulkDeleteProducts";
 import { useDuplicateProduct } from "@/lib/hooks/admin/useDuplicateProduct";
 import { useCategoryOptions } from "@/lib/hooks/admin/useCategoryOptions";
 import { useBrandOptions } from "@/lib/hooks/admin/useBrandOptions";
@@ -60,6 +61,7 @@ export default function ProductsClient() {
   });
 
   const deleteMutation = useDeleteProduct();
+  const bulkDeleteMutation = useBulkDeleteProducts();
   const duplicateMutation = useDuplicateProduct();
 
   const [searchInput, setSearchInput] = useState(filters.search);
@@ -79,6 +81,76 @@ export default function ProductsClient() {
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [duplicatingId, setDuplicatingId] = useState<string | null>(null);
   const [duplicateError, setDuplicateError] = useState<string | null>(null);
+
+  // Selection is scoped to the current page — the "select all" checkbox
+  // selects every row currently loaded, not every product matching the
+  // filters across every page (that's a much more destructive action and
+  // would need its own explicit "select all N products" affordance, not a
+  // silent side effect of ticking a checkbox on a paginated table).
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
+  const [bulkDeleteError, setBulkDeleteError] = useState<string | null>(null);
+  const pageIds = data?.items.map((p) => p.productId) ?? [];
+  const allOnPageSelected = pageIds.length > 0 && pageIds.every((id) => selectedIds.has(id));
+  const someOnPageSelected = pageIds.some((id) => selectedIds.has(id));
+
+  // Filters/page changing means the row selection no longer refers to what's
+  // on screen — cleared during render (React's documented "adjusting state
+  // when a prop changes" pattern) rather than in an effect, which would
+  // commit the stale-selection frame first and then re-render a second
+  // time to clear it.
+  const filtersKey = JSON.stringify([
+    filters.page,
+    filters.search,
+    filters.categoryId,
+    filters.brandId,
+    filters.status,
+    filters.isFeatured,
+    filters.minPrice,
+    filters.maxPrice,
+    filters.inStock,
+    filters.sort,
+    filters.order,
+  ]);
+  const [selectionFiltersKey, setSelectionFiltersKey] = useState(filtersKey);
+  if (filtersKey !== selectionFiltersKey) {
+    setSelectionFiltersKey(filtersKey);
+    setSelectedIds(new Set());
+  }
+
+  function toggleSelectAllOnPage() {
+    setSelectedIds(allOnPageSelected ? new Set() : new Set(pageIds));
+  }
+
+  function toggleSelectOne(id: string) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  function confirmBulkDelete() {
+    setBulkDeleteError(null);
+    bulkDeleteMutation.mutate([...selectedIds], {
+      onSuccess: (result) => {
+        setSelectedIds(new Set());
+        if (result.failed.length > 0) {
+          setBulkDeleteError(
+            `${result.succeeded.length} deleted, ${result.failed.length} failed: ${result.failed
+              .map((f) => f.message)
+              .join("; ")}`
+          );
+        } else {
+          setBulkDeleteOpen(false);
+        }
+      },
+      onError: (err) => {
+        setBulkDeleteError(err instanceof ApiError ? err.message : "Something went wrong. Please try again.");
+      },
+    });
+  }
 
   const handleSort = (field: SortField) => {
     if (field === filters.sort) {
@@ -264,6 +336,52 @@ export default function ProductsClient() {
         </p>
       )}
 
+      {!isLoading && !isError && pageIds.length > 0 && (
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-admin-border bg-admin-card px-4 py-3 dark:border-admin-border-dark dark:bg-admin-card-dark">
+          <label className="flex items-center gap-2 text-sm font-semibold sm:hidden">
+            <input
+              type="checkbox"
+              checked={allOnPageSelected}
+              ref={(el) => {
+                if (el) el.indeterminate = someOnPageSelected && !allOnPageSelected;
+              }}
+              onChange={toggleSelectAllOnPage}
+              className="h-4 w-4 rounded"
+            />
+            Select all on this page
+          </label>
+          <p className="hidden text-sm font-semibold sm:block">
+            {selectedIds.size > 0 ? `${selectedIds.size} selected` : "Select rows to take bulk action"}
+          </p>
+          {someOnPageSelected && (
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => setSelectedIds(new Set())}
+                disabled={bulkDeleteMutation.isPending}
+                className="text-xs font-semibold text-black/60 hover:underline disabled:opacity-50 dark:text-white/60"
+              >
+                Clear selection
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setBulkDeleteError(null);
+                  setBulkDeleteOpen(true);
+                }}
+                disabled={bulkDeleteMutation.isPending}
+                className="inline-flex items-center gap-1.5 rounded-full border border-red-500/40 px-4 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-50 disabled:opacity-60 dark:text-red-400 dark:hover:bg-red-950/30"
+              >
+                {bulkDeleteMutation.isPending && (
+                  <span className="h-3 w-3 shrink-0 animate-spin rounded-full border-2 border-red-600/30 border-t-red-600 dark:border-red-400/30 dark:border-t-red-400" />
+                )}
+                {bulkDeleteMutation.isPending ? "Deleting…" : "Delete selected"}
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
       <div className="overflow-hidden rounded-2xl border border-admin-border bg-admin-card dark:border-admin-border-dark dark:bg-admin-card-dark">
         {isLoading ? (
           <div className="space-y-3 p-5">
@@ -306,6 +424,18 @@ export default function ProductsClient() {
               <table className="w-full text-left text-sm">
                 <thead>
                   <tr className="border-b border-admin-border text-xs uppercase tracking-wider text-black/50 dark:border-admin-border-dark dark:text-white/50">
+                    <th className="w-10 px-5 py-3">
+                      <input
+                        type="checkbox"
+                        aria-label="Select all products on this page"
+                        checked={allOnPageSelected}
+                        ref={(el) => {
+                          if (el) el.indeterminate = someOnPageSelected && !allOnPageSelected;
+                        }}
+                        onChange={toggleSelectAllOnPage}
+                        className="h-4 w-4 rounded"
+                      />
+                    </th>
                     <th className="px-5 py-3 font-semibold">Image</th>
                     <SortableHeader label="Product" field="name" activeField={filters.sort} activeOrder={filters.order} onSort={handleSort} />
                     <th className="px-5 py-3 font-semibold">SKU</th>
@@ -321,7 +451,16 @@ export default function ProductsClient() {
                 </thead>
                 <tbody className="divide-y divide-admin-border dark:divide-admin-border-dark">
                   {data.items.map((p) => (
-                    <tr key={p.productId}>
+                    <tr key={p.productId} className={selectedIds.has(p.productId) ? "bg-admin-primary/5" : undefined}>
+                      <td className="px-5 py-3">
+                        <input
+                          type="checkbox"
+                          aria-label={`Select ${p.name}`}
+                          checked={selectedIds.has(p.productId)}
+                          onChange={() => toggleSelectOne(p.productId)}
+                          className="h-4 w-4 rounded"
+                        />
+                      </td>
                       <td className="px-5 py-3">
                         <div className="h-10 w-10 overflow-hidden rounded-lg bg-admin-surface dark:bg-admin-surface-dark">
                           {p.image?.thumbnailUrl && (
@@ -380,8 +519,11 @@ export default function ProductsClient() {
                             type="button"
                             onClick={() => handleDuplicate(p)}
                             disabled={duplicatingId === p.productId}
-                            className="text-xs font-semibold text-black/60 hover:underline disabled:opacity-50 dark:text-white/60"
+                            className="inline-flex items-center gap-1.5 text-xs font-semibold text-black/60 hover:underline disabled:opacity-50 dark:text-white/60"
                           >
+                            {duplicatingId === p.productId && (
+                              <span className="h-3 w-3 shrink-0 animate-spin rounded-full border-2 border-current/30 border-t-current" />
+                            )}
                             {duplicatingId === p.productId ? "Duplicating…" : "Duplicate"}
                           </button>
                           <button
@@ -404,7 +546,14 @@ export default function ProductsClient() {
 
             <div className="divide-y divide-admin-border sm:hidden dark:divide-admin-border-dark">
               {data.items.map((p) => (
-                <div key={p.productId} className="flex gap-3 p-4">
+                <div key={p.productId} className={`flex gap-3 p-4 ${selectedIds.has(p.productId) ? "bg-admin-primary/5" : ""}`}>
+                  <input
+                    type="checkbox"
+                    aria-label={`Select ${p.name}`}
+                    checked={selectedIds.has(p.productId)}
+                    onChange={() => toggleSelectOne(p.productId)}
+                    className="mt-1 h-4 w-4 shrink-0 rounded"
+                  />
                   <div className="h-14 w-14 shrink-0 overflow-hidden rounded-lg bg-admin-surface dark:bg-admin-surface-dark">
                     {p.image?.thumbnailUrl && (
                       // eslint-disable-next-line @next/next/no-img-element
@@ -441,8 +590,11 @@ export default function ProductsClient() {
                         type="button"
                         onClick={() => handleDuplicate(p)}
                         disabled={duplicatingId === p.productId}
-                        className="text-xs font-semibold text-black/60 disabled:opacity-50 dark:text-white/60"
+                        className="inline-flex items-center gap-1.5 text-xs font-semibold text-black/60 disabled:opacity-50 dark:text-white/60"
                       >
+                        {duplicatingId === p.productId && (
+                          <span className="h-3 w-3 shrink-0 animate-spin rounded-full border-2 border-current/30 border-t-current" />
+                        )}
                         {duplicatingId === p.productId ? "Duplicating…" : "Duplicate"}
                       </button>
                       <button
@@ -488,6 +640,23 @@ export default function ProductsClient() {
         onCancel={() => {
           setDeleteTarget(null);
           setDeleteError(null);
+        }}
+      />
+
+      <ConfirmDialog
+        open={bulkDeleteOpen}
+        title={`Delete ${selectedIds.size} product${selectedIds.size === 1 ? "" : "s"}?`}
+        description={
+          bulkDeleteError ??
+          `Are you sure you want to delete ${selectedIds.size} selected product${selectedIds.size === 1 ? "" : "s"}? Products with order history are archived instead of permanently removed.`
+        }
+        confirmLabel="Delete"
+        destructive
+        isConfirming={bulkDeleteMutation.isPending}
+        onConfirm={confirmBulkDelete}
+        onCancel={() => {
+          setBulkDeleteOpen(false);
+          setBulkDeleteError(null);
         }}
       />
     </div>

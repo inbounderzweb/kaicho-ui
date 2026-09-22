@@ -64,6 +64,23 @@ export const productKeys = {
   detail: (id: string) => ["admin", "products", "detail", id] as const,
 };
 
+// Shared by both the product-scoped and category-scoped Pack Configuration
+// admin routes (spec §15/§16 — same schema/service code, different parent).
+export const packConfigKeys = {
+  config: (parent: "products" | "categories", parentId: string) =>
+    ["admin", parent, "pack-config", parentId] as const,
+  list: (parent: "products" | "categories", parentId: string) =>
+    ["admin", parent, "packs", parentId] as const,
+};
+
+export const inventoryTrackingKeys = {
+  detail: (productId: string) => ["admin", "products", "inventory-tracking", productId] as const,
+};
+
+export const relatedComboKeys = {
+  detail: (productId: string) => ["admin", "products", "related-combo", productId] as const,
+};
+
 // Public/customer-facing catalog — deliberately NOT under the "admin"
 // namespace prefix above (different endpoints, different DTOs, cached
 // separately so an admin edit invalidating ["admin", "products", ...]

@@ -14,6 +14,7 @@ import { categoryFormSchema, type CategoryFormValues } from "@/lib/validation/ca
 import { ApiError } from "@/lib/api/ApiError";
 import type { CategoryOption } from "@/lib/api/category";
 import CategoryImagePicker, { type PickedImage } from "./CategoryImagePicker";
+import PackConfigSection from "./products/PackConfigSection";
 import ConfirmDialog from "./ConfirmDialog";
 import { IconChevronLeft } from "../ui/icons";
 
@@ -298,6 +299,12 @@ export default function CategoryDetailClient({ id }: { id?: string }) {
           <div className="rounded-2xl border border-admin-border bg-admin-card p-5 dark:border-admin-border-dark dark:bg-admin-card-dark">
             <CategoryImagePicker value={image} onChange={setImage} />
           </div>
+
+          {/* Category-level Pack Configuration (spec §15/§16) — products in
+              this category can opt in to inheriting it instead of defining
+              their own packs. Needs a real category id, like the
+              product-scoped section. */}
+          {isEdit && id && <PackConfigSection parent="categories" parentId={id} />}
 
           {mutationError && (
             <p className="rounded-xl bg-red-500/10 p-3 text-xs font-semibold text-red-600 dark:text-red-400">

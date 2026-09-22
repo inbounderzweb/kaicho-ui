@@ -6,16 +6,23 @@ import type { CartItem } from "./cart-data";
 
 export default function CartItemRow({
   item,
+  itemKey,
   onQuantityChange,
   onRemove,
 }: {
   item: CartItem;
-  onQuantityChange: (productId: string, quantity: number) => void;
-  onRemove: (productId: string) => void;
+  itemKey: string;
+  onQuantityChange: (itemKey: string, quantity: number) => void;
+  onRemove: (itemKey: string) => void;
 }) {
   const lineTotal = item.price * item.quantity;
   const href = `/products/${item.slug}`;
   const atMax = typeof item.maxQuantity === "number" && item.quantity >= item.maxQuantity;
+  // A pack is a fixed bundle — "quantity +/- 1" is meaningless on it. Pack
+  // rows show the confirmed breakdown as read-only text and only offer
+  // Remove / a link back to the product page to pick a different pack,
+  // rather than an arbitrary unit stepper (spec §13/§14).
+  const isPack = item.selectionType === "PACK" && (item.packBreakdown?.length ?? 0) > 0;
 
   return (
     <div className="flex gap-4 border-b border-border py-5 last:border-b-0 sm:gap-5">
@@ -53,6 +60,11 @@ export default function CartItemRow({
                   {item.name}
                 </h3>
               </Link>
+              {isPack && (
+                <p className="mt-0.5 text-xs font-medium text-ink-muted">
+                  {item.packBreakdown!.map((l) => `${l.packName} × ${l.packCount}`).join(" + ")}
+                </p>
+              )}
             </div>
 
             {/* Mobile-only remove button, next to the name so it doesn't
@@ -60,7 +72,7 @@ export default function CartItemRow({
             <button
               type="button"
               aria-label={`Remove ${item.name}`}
-              onClick={() => onRemove(item.productId)}
+              onClick={() => onRemove(itemKey)}
               className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-ink-faint transition-colors hover:bg-sale/10 hover:text-sale sm:hidden"
             >
               <IconClose className="h-4 w-4" />
@@ -69,7 +81,7 @@ export default function CartItemRow({
           <p className="mt-1 text-sm font-bold text-ink sm:hidden">
             Rs. {item.price.toFixed(2)}
           </p>
-          {atMax && (
+          {atMax && !isPack && (
             <p className="mt-1 text-xs font-semibold text-sale sm:hidden">
               Only {item.maxQuantity} left in stock
             </p>
@@ -81,36 +93,50 @@ export default function CartItemRow({
             Rs. {item.price.toFixed(2)}
           </div>
 
-          <div className="flex flex-col items-center gap-1">
-            <div className="flex items-center rounded-full border border-border">
-              <button
-                type="button"
-                aria-label="Decrease quantity"
-                onClick={() => onQuantityChange(item.productId, item.quantity - 1)}
-                disabled={item.quantity <= 1}
-                className="flex h-8 w-7 items-center justify-center text-ink-muted transition-colors hover:text-brand disabled:opacity-30 sm:w-8"
-              >
-                −
-              </button>
-              <span className="w-5 text-center text-sm font-semibold text-ink sm:w-6">
-                {item.quantity}
+          {isPack ? (
+            <div className="flex flex-col items-center gap-1">
+              <span className="flex h-8 min-w-22 items-center justify-center rounded-full border border-border px-3 text-sm font-semibold text-ink">
+                {item.quantity} units
               </span>
-              <button
-                type="button"
-                aria-label="Increase quantity"
-                onClick={() => onQuantityChange(item.productId, item.quantity + 1)}
-                disabled={atMax}
-                className="flex h-8 w-7 items-center justify-center text-ink-muted transition-colors hover:text-brand disabled:opacity-30 sm:w-8"
+              <Link
+                href={href}
+                className="text-[11px] font-semibold text-brand transition-colors hover:text-brand-dark"
               >
-                +
-              </button>
+                Change pack
+              </Link>
             </div>
-            {atMax && (
-              <p className="hidden text-[11px] font-semibold text-sale sm:block">
-                Only {item.maxQuantity} left
-              </p>
-            )}
-          </div>
+          ) : (
+            <div className="flex flex-col items-center gap-1">
+              <div className="flex items-center rounded-full border border-border">
+                <button
+                  type="button"
+                  aria-label="Decrease quantity"
+                  onClick={() => onQuantityChange(itemKey, item.quantity - 1)}
+                  disabled={item.quantity <= 1}
+                  className="flex h-8 w-7 items-center justify-center text-ink-muted transition-colors hover:text-brand disabled:opacity-30 sm:w-8"
+                >
+                  −
+                </button>
+                <span className="w-5 text-center text-sm font-semibold text-ink sm:w-6">
+                  {item.quantity}
+                </span>
+                <button
+                  type="button"
+                  aria-label="Increase quantity"
+                  onClick={() => onQuantityChange(itemKey, item.quantity + 1)}
+                  disabled={atMax}
+                  className="flex h-8 w-7 items-center justify-center text-ink-muted transition-colors hover:text-brand disabled:opacity-30 sm:w-8"
+                >
+                  +
+                </button>
+              </div>
+              {atMax && (
+                <p className="hidden text-[11px] font-semibold text-sale sm:block">
+                  Only {item.maxQuantity} left
+                </p>
+              )}
+            </div>
+          )}
 
           <div className="w-16 text-right text-sm font-bold text-ink sm:w-20">
             {lineTotal.toFixed(2)} ₹
@@ -120,7 +146,7 @@ export default function CartItemRow({
           <button
             type="button"
             aria-label={`Remove ${item.name}`}
-            onClick={() => onRemove(item.productId)}
+            onClick={() => onRemove(itemKey)}
             className="hidden h-8 w-8 items-center justify-center rounded-full text-ink-faint transition-colors hover:bg-sale/10 hover:text-sale sm:flex"
           >
             <IconClose className="h-4 w-4" />

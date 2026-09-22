@@ -38,34 +38,40 @@ export default function ProfileSidebar({
   };
 
   return (
-    <nav className="flex gap-2 overflow-x-auto pb-1 lg:w-64 lg:shrink-0 lg:flex-col lg:overflow-visible lg:pb-0">
-      {NAV_ITEMS.map(({ id, label, Icon }) => {
-        const isActive = active === id;
-        return (
-          <button
-            key={id}
-            type="button"
-            onClick={() => onSelect(id)}
-            aria-current={isActive ? "page" : undefined}
-            className={`flex shrink-0 items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold transition-colors lg:w-full ${
-              isActive
-                ? "bg-brand-soft text-brand"
-                : "text-ink-muted hover:bg-cream hover:text-ink"
-            }`}
-          >
-            <Icon className="h-5 w-5" />
-            <span className="whitespace-nowrap">{label}</span>
-          </button>
-        );
-      })}
+    <nav className="flex flex-col gap-2 lg:w-64 lg:shrink-0">
+      {/* Only these scroll horizontally on mobile — Log out used to be
+          appended into this same scrolling row with no scroll affordance,
+          so it sat off-screen to the right and looked like it had
+          disappeared. It's now a separate, always-visible row below. */}
+      <div className="flex gap-2 overflow-x-auto pb-1 lg:flex-col lg:overflow-visible lg:gap-2 lg:pb-0">
+        {NAV_ITEMS.map(({ id, label, Icon }) => {
+          const isActive = active === id;
+          return (
+            <button
+              key={id}
+              type="button"
+              onClick={() => onSelect(id)}
+              aria-current={isActive ? "page" : undefined}
+              className={`flex shrink-0 items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold transition-colors lg:w-full ${
+                isActive
+                  ? "bg-brand-soft text-brand"
+                  : "text-ink-muted hover:bg-cream hover:text-ink"
+              }`}
+            >
+              <Icon className="h-5 w-5" />
+              <span className="whitespace-nowrap">{label}</span>
+            </button>
+          );
+        })}
+      </div>
 
-      <div className="hidden h-px bg-border lg:my-2 lg:block" />
+      <div className="h-px bg-border" />
 
       <button
         type="button"
         onClick={handleLogout}
         disabled={logout.isPending}
-        className="flex shrink-0 items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold text-sale transition-colors hover:bg-sale/10 disabled:opacity-50 lg:w-full"
+        className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold text-sale transition-colors hover:bg-sale/10 disabled:opacity-50 lg:w-full"
       >
         <IconLogout className="h-5 w-5" />
         {logout.isPending ? "Logging out…" : "Log out"}

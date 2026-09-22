@@ -23,6 +23,15 @@ export const FLAT_SHIPPING_FEE = DEFAULT_STORE_SETTINGS.flatShippingFee;
 export const CASHBACK_THRESHOLD = 999;
 export const CASHBACK_PERCENT = 3;
 
+/** Display-only pack breakdown snapshot — re-validated/re-priced server-side at checkout, never trusted. */
+export interface CartPackBreakdownLine {
+  packId: string;
+  packName: string;
+  packQuantity: number;
+  packCount: number;
+  packPrice: number;
+}
+
 export interface CartItem {
   productId: string;
   slug: string;
@@ -36,6 +45,27 @@ export interface CartItem {
   quantity: number;
   /** Stock snapshot at add-to-cart time — informational cap on the quantity stepper, re-verified server-side at checkout. */
   maxQuantity?: number;
+  /** Absent (or "UNIT") for every cart line before this feature existed and for a plain quantity selection. */
+  selectionType?: "UNIT" | "PACK";
+  packBreakdown?: CartPackBreakdownLine[];
+}
+
+// A pack line and a plain unit line for the SAME product must be able to
+// coexist in the cart (spec §14: "Individual x2" + "Pack of 5 x1" are two
+// rows, not one merged row) — so cart identity is productId + this
+// signature, not productId alone. Normalize pack counts to their ratio so
+// repeated additions keep a stable identity while different mixes stay separate.
+export function cartLineKey(item: Pick<CartItem, "productId" | "packBreakdown">): string {
+  if (!item.packBreakdown || item.packBreakdown.length === 0) {
+    return `${item.productId}:UNIT`;
+  }
+  const gcd = (a: number, b: number): number => b ? gcd(b, a % b) : a;
+  const divisor = item.packBreakdown.reduce((value, line) => gcd(value, line.packCount), 0) || 1;
+  const signature = [...item.packBreakdown]
+    .sort((a, b) => a.packId.localeCompare(b.packId))
+    .map((l) => `${l.packId}x${l.packCount / divisor}`)
+    .join(",");
+  return `${item.productId}:PACK:${signature}`;
 }
 
 export const INITIAL_CART: CartItem[] = [];

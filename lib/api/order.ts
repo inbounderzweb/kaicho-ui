@@ -107,6 +107,14 @@ export function shipmentProgress(shipment: Pick<OrderShipment, "status" | "histo
   return { stepIndex, state: stepIndex >= 0 ? "in_progress" : "pending" };
 }
 
+export interface OrderItemPackLine {
+  packId: string;
+  packName: string;
+  packQuantity: number;
+  packCount: number;
+  packPrice: number;
+}
+
 export interface OrderItem {
   productId: string;
   name: string;
@@ -119,6 +127,10 @@ export interface OrderItem {
   discount: number;
   discountPercentage: number;
   lineTotal: number;
+  /** Absent (→ "UNIT") on orders placed before pack configuration existed. */
+  selectionType?: "UNIT" | "PACK";
+  /** Frozen snapshot of exactly which packs made up this line — never re-derived from the live pack config. */
+  packBreakdown?: OrderItemPackLine[];
 }
 
 export interface OrderPricing {

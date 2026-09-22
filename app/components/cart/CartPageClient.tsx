@@ -8,6 +8,7 @@ import CartItemRow from "./CartItemRow";
 import ShippingProgress from "./ShippingProgress";
 import { useShippingPolicy } from "@/lib/hooks/useShippingPolicy";
 import { useCartStore } from "@/lib/store/cart.store";
+import { cartLineKey } from "./cart-data";
 import { useAuthGate } from "@/lib/auth/useAuthGate";
 import { trackEvent } from "@/lib/analytics/events";
 import { toEcommerceItem } from "@/lib/analytics/ecommerce";
@@ -30,13 +31,13 @@ export default function CartPageClient() {
     [items]
   );
 
-  const handleQuantityChange = (productId: string, quantity: number) => {
+  const handleQuantityChange = (itemKey: string, quantity: number) => {
     if (quantity < 1) return;
-    updateQuantity(productId, quantity);
+    updateQuantity(itemKey, quantity);
   };
 
-  const handleRemove = (productId: string) => {
-    removeItem(productId);
+  const handleRemove = (itemKey: string) => {
+    removeItem(itemKey);
   };
 
   // Fires once per visit, the first time the (persisted, async-hydrating)
@@ -109,14 +110,18 @@ export default function CartPageClient() {
                 </div>
               </div>
 
-              {items.map((item) => (
-                <CartItemRow
-                  key={item.productId}
-                  item={item}
-                  onQuantityChange={handleQuantityChange}
-                  onRemove={handleRemove}
-                />
-              ))}
+              {items.map((item) => {
+                const itemKey = cartLineKey(item);
+                return (
+                  <CartItemRow
+                    key={itemKey}
+                    itemKey={itemKey}
+                    item={item}
+                    onQuantityChange={handleQuantityChange}
+                    onRemove={handleRemove}
+                  />
+                );
+              })}
             </div>
           </div>
 

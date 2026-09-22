@@ -229,9 +229,15 @@ export default function OrderDetailClient({ orderNumber }: { orderNumber: string
                   <div className="min-w-0 flex-1">
                     <p className="line-clamp-2 text-sm font-semibold text-ink">{item.name}</p>
                     <p className="mt-0.5 text-xs text-ink-muted">SKU {item.sku}</p>
-                    <p className="mt-0.5 text-xs text-ink-muted">
-                      Qty {item.quantity} × Rs. {item.unitPrice.toFixed(2)}
-                    </p>
+                    {item.selectionType === "PACK" && item.packBreakdown?.length ? (
+                      <p className="mt-0.5 text-xs text-ink-muted">
+                        {item.packBreakdown.map((l) => `${l.packName} × ${l.packCount}`).join(" + ")}
+                      </p>
+                    ) : (
+                      <p className="mt-0.5 text-xs text-ink-muted">
+                        Qty {item.quantity} × Rs. {item.unitPrice.toFixed(2)}
+                      </p>
+                    )}
                   </div>
                   <div className="shrink-0 text-right text-sm font-bold text-ink">
                     Rs. {item.lineTotal.toFixed(2)}

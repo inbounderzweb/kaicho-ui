@@ -15,6 +15,9 @@ import { productFormSchema, type ProductFormValues } from "@/lib/validation/prod
 import { PRODUCT_STATUSES, type ProductFormInput } from "@/lib/api/product";
 import { ApiError } from "@/lib/api/ApiError";
 import ProductGalleryPicker, { type PickedGalleryImage } from "./ProductGalleryPicker";
+import PackConfigSection from "./products/PackConfigSection";
+import InventoryTrackingSection from "./products/InventoryTrackingSection";
+import RelatedComboSection from "./products/RelatedComboSection";
 import ConfirmDialog from "./ConfirmDialog";
 import { IconChevronLeft, IconClose } from "../ui/icons";
 
@@ -602,6 +605,19 @@ export default function ProductDetailClient({ id }: { id?: string }) {
               </p>
             )}
           </section>
+
+          {/* Pack / Combo Configuration — a sub-resource of the product,
+              persisted through its own endpoints, so it needs a real
+              productId and only appears once the product has been created. */}
+          {isEdit && id && <PackConfigSection parent="products" parentId={id} categoryId={watch("categoryId")} />}
+
+          {/* Admin-Configured Inventory Tracking — a sibling sub-resource of
+              the product, same "needs a real productId" constraint as Pack
+              Configuration above. */}
+          {isEdit && id && <InventoryTrackingSection productId={id} />}
+
+          {/* Related Combo/Bundle Suggestion — same sub-resource constraint. */}
+          {isEdit && id && <RelatedComboSection productId={id} />}
 
           {/* Publishing */}
           <section className="space-y-4 rounded-2xl border border-admin-border bg-admin-card p-5 dark:border-admin-border-dark dark:bg-admin-card-dark">

@@ -57,20 +57,28 @@ export default function OrderSummary({
 
               <div className="min-w-0 flex-1">
                 <p className="line-clamp-2 text-sm font-semibold text-ink">{item.name}</p>
-                <p className="mt-0.5 text-xs text-ink-muted">
-                  Qty {item.quantity} × Rs. {item.unitPrice.toFixed(2)}
-                  {item.discountPercentage > 0 && (
-                    <span className="ml-1.5 text-ink-faint line-through">Rs. {item.mrp.toFixed(2)}</span>
-                  )}
-                </p>
+                {item.selectionType === "PACK" && item.packBreakdown?.length ? (
+                  <p className="mt-0.5 text-xs text-ink-muted">
+                    {item.packBreakdown.map((l) => `${l.packName} × ${l.packCount}`).join(" + ")}
+                  </p>
+                ) : (
+                  <p className="mt-0.5 text-xs text-ink-muted">
+                    Qty {item.quantity} × Rs. {item.unitPrice.toFixed(2)}
+                    {item.discountPercentage > 0 && (
+                      <span className="ml-1.5 text-ink-faint line-through">Rs. {item.mrp.toFixed(2)}</span>
+                    )}
+                  </p>
+                )}
 
                 {hasProblem && (
                   <p className="mt-1.5 inline-flex rounded-full bg-sale/10 px-2 py-0.5 text-[11px] font-bold text-sale">
-                    {item.unavailable
-                      ? "No longer available"
-                      : typeof item.availableQuantity === "number"
-                        ? `Only ${item.availableQuantity} left in stock`
-                        : "Not enough stock"}
+                    {item.packError
+                      ? item.packError
+                      : item.unavailable
+                        ? "No longer available"
+                        : typeof item.availableQuantity === "number"
+                          ? `Only ${item.availableQuantity} left in stock`
+                          : "Not enough stock"}
                   </p>
                 )}
               </div>

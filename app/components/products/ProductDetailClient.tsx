@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useSmartCart } from "@/lib/hooks/useSmartCart";
 import Breadcrumbs from "../ui/Breadcrumbs";
 import ProductGallery from "./ProductGallery";
 import ProductPrice from "./ProductPrice";
@@ -12,8 +13,6 @@ import { useAuthGate } from "@/lib/auth/useAuthGate";
 import { useWishlist } from "@/lib/hooks/useWishlist";
 import { useToggleWishlist } from "@/lib/hooks/useToggleWishlist";
 import { useRelatedProducts } from "@/lib/hooks/useRelatedProducts";
-import { useCartStore } from "@/lib/store/cart.store";
-import { resolveMediaUrl } from "@/lib/api/client";
 import { trackEvent } from "@/lib/analytics/events";
 import { toEcommerceItem } from "@/lib/analytics/ecommerce";
 import type { PublicProductDetail } from "@/lib/api/publicProducts";
@@ -22,17 +21,16 @@ const PAYMENT_METHODS = ["UPI", "Visa", "Mastercard", "RuPay", "COD"];
 
 export default function ProductDetailClient({ product }: { product: PublicProductDetail }) {
   const [quantity, setQuantity] = useState(1);
-  const [justAdded, setJustAdded] = useState(false);
+  const smartCart = useSmartCart(product.productId);
+  const { added: justAdded, busy: isCheckingPack } = smartCart;
   const { guard } = useAuthGate();
 
   const { data: wishlist } = useWishlist();
   const toggleWishlist = useToggleWishlist();
   const { data: relatedData, isLoading: relatedLoading } = useRelatedProducts(product.slug);
 
-  const addItem = useCartStore((s) => s.addItem);
 
   const inWishlist = Boolean(wishlist?.items.some((i) => i.productId === product.productId));
-  const primaryImage = product.images[0];
   const outOfStock = !product.inventory.inStock;
 
   useEffect(() => {
@@ -52,22 +50,7 @@ export default function ProductDetailClient({ product }: { product: PublicProduc
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [product.productId]);
 
-  function handleAddToCart() {
-    if (outOfStock) return;
-    addItem({
-      productId: product.productId,
-      slug: product.slug,
-      name: product.name,
-      image: primaryImage ? resolveMediaUrl(primaryImage.thumbnailUrl ?? primaryImage.url) : null,
-      imageAlt: primaryImage?.altText || product.name,
-      price: product.pricing.sellingPrice,
-      mrp: product.pricing.mrp,
-      quantity,
-      maxQuantity: product.inventory.trackInventory ? product.inventory.stockQuantity : undefined,
-    });
-    setJustAdded(true);
-    setTimeout(() => setJustAdded(false), 2000);
-  }
+  const handleAddToCart = () => { if (!outOfStock) void smartCart.add(quantity); };
 
   const breadcrumbItems = [
     { label: "Home", href: "/" },
@@ -114,11 +97,17 @@ export default function ProductDetailClient({ product }: { product: PublicProduc
             <button
               type="button"
               onClick={handleAddToCart}
-              disabled={outOfStock}
+              disabled={outOfStock || isCheckingPack}
               className="flex h-11 flex-1 items-center justify-center gap-2 rounded-full bg-brand px-3 text-xs font-bold uppercase tracking-wider text-white transition-colors hover:bg-brand-dark disabled:cursor-not-allowed disabled:opacity-40 sm:text-sm"
             >
               <IconCart className="h-4 w-4 shrink-0" />
-              {outOfStock ? "Out of Stock" : justAdded ? "Added to Cart" : "Add to Cart"}
+              {outOfStock
+                ? "Out of Stock"
+                : isCheckingPack
+                  ? "Checking…"
+                  : justAdded
+                    ? "Added to Cart"
+                    : "Add to Cart"}
             </button>
 
             <button
@@ -169,6 +158,10 @@ export default function ProductDetailClient({ product }: { product: PublicProduc
       </div>
 
       {!relatedLoading && relatedData && <RelatedProducts products={relatedData.products} />}
+
+      {smartCart.error && <p role="alert" className="mt-4 text-sm text-red-700">{smartCart.error}</p>}
+      {smartCart.modal}
+
     </section>
   );
 }

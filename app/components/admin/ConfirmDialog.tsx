@@ -66,10 +66,13 @@ export default function ConfirmDialog({
             type="button"
             onClick={onConfirm}
             disabled={isConfirming}
-            className={`rounded-full px-4 py-2 text-sm font-semibold text-white transition-opacity disabled:opacity-50 ${
+            className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold text-white transition-opacity disabled:opacity-50 ${
               destructive ? "bg-red-600 hover:opacity-90" : "bg-admin-primary-dark hover:opacity-90 dark:bg-admin-primary dark:text-black"
             }`}
           >
+            {isConfirming && (
+              <span className="h-3.5 w-3.5 shrink-0 animate-spin rounded-full border-2 border-current/30 border-t-current" />
+            )}
             {isConfirming ? "Please wait…" : confirmLabel}
           </button>
         </div>
