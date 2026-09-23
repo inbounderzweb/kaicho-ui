@@ -1,13 +1,15 @@
 "use client";
 
 import { useSmartCart } from "@/lib/hooks/useSmartCart";
+import { useCartStore } from "@/lib/store/cart.store";
+import { cartLineKey } from "../cart/cart-data";
 import Link from "next/link";
 import Image from "next/image";
 import { resolveMediaUrl } from "@/lib/api/client";
 import { useWishlist } from "@/lib/hooks/useWishlist";
 import { useToggleWishlist } from "@/lib/hooks/useToggleWishlist";
 import { useAuthGate } from "@/lib/auth/useAuthGate";
-import { IconHeart, IconCart, IconCheck } from "../ui/icons";
+import { IconHeart, IconCart } from "../ui/icons";
 import ProductPrice from "./ProductPrice";
 import ProductAvailability from "./ProductAvailability";
 import type { PublicProductListItem } from "@/lib/api/publicProducts";
@@ -41,7 +43,10 @@ export default function ProductCard({
   const toggleWishlist = useToggleWishlist();
   const { guard } = useAuthGate();
   const smartCart = useSmartCart(product.productId);
-  const justAdded = smartCart.added;
+  const cartLine = useCartStore((state) => state.items.find(
+    (item) => cartLineKey(item) === `${product.productId}:UNIT`
+  ));
+  const quantity = cartLine?.quantity ?? 0;
 
   const inWishlist = Boolean(wishlist?.items.some((i) => i.productId === product.productId));
   const href = `/products/${product.slug}`;
@@ -128,35 +133,51 @@ export default function ProductCard({
         <ProductAvailability inventory={product.inventory} size="sm" className="mt-0.5" />
       </div>
 
-      <div className="mt-3 flex items-center justify-between gap-2">
+      <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
         <ProductPrice pricing={product.pricing} size="sm" />
 
-        <button
+        {quantity > 0 ? (
+          <div className="inline-flex h-11 shrink-0 items-center overflow-hidden rounded-full bg-brand text-white" role="group" aria-label={`Quantity of ${product.name}`}>
+            <button
+              type="button"
+              aria-label={`Remove one ${product.name}`}
+              disabled={smartCart.busy}
+              onClick={() => {
+                if (cartLine) useCartStore.getState().decrementItem({ ...cartLine, quantity: 1 });
+              }}
+              className="h-11 w-10 text-xl transition-colors active:bg-brand-darker disabled:opacity-50"
+            >−</button>
+            <span aria-live="polite" aria-atomic="true" className="min-w-7 text-center text-sm font-bold">{quantity}</span>
+            <button
+              type="button"
+              aria-label={`Add one more ${product.name}`}
+              disabled={outOfStock || smartCart.busy || (product.inventory.trackInventory && quantity >= product.inventory.stockQuantity)}
+              onClick={handleAddToCart}
+              className={`h-11 w-10 text-xl transition-colors active:bg-brand-darker disabled:opacity-50 ${smartCart.busy ? "bg-brand-darker" : ""}`}
+            >{smartCart.busy ? "…" : "+"}</button>
+          </div>
+        ) : <button
           type="button"
           onClick={handleAddToCart}
           disabled={outOfStock || smartCart.busy}
-          className={`inline-flex h-10 shrink-0 items-center gap-1 rounded-full px-8 text-md font-bold transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
-            justAdded
+          className={`inline-flex h-10 shrink-0 items-center gap-1 rounded-full px-8 text-md font-bold transition-colors disabled:cursor-not-allowed ${
+            smartCart.busy
               ? "bg-brand-darker text-white"
               : outOfStock
-                ? "bg-cream text-ink-faint"
-                : "bg-brand-soft text-brand-dark hover:bg-brand hover:text-white"
+                ? "bg-cream text-ink-faint opacity-50"
+                : "bg-brand text-white active:bg-brand-darker"
           }`}
         >
           {outOfStock ? (
             "Sold Out"
           ) : smartCart.busy ? (
             "…"
-          ) : justAdded ? (
-            <>
-              <IconCheck className="h-3.5 w-3.5" strokeWidth={2.4} /> Added
-            </>
           ) : (
             <>
               <IconCart className="h-3.5 w-3.5" /> Add
             </>
           )}
-        </button>
+        </button>}
       </div>
       {smartCart.error && (
         <p role="alert" className="mt-1.5 text-xs text-red-700">
