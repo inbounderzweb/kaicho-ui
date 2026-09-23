@@ -41,6 +41,8 @@ export interface AdminProductListItem {
   name: string;
   slug: string;
   sku: string;
+  weightPerPackGrams?: number | null;
+  numberOfPacks?: number | null;
   shortDescription: string;
   category: { id: string; name: string | null };
   brand: { id: string; name: string | null };
@@ -59,6 +61,8 @@ export interface AdminProductDetail {
   name: string;
   slug: string;
   sku: string;
+  weightPerPackGrams?: number | null;
+  numberOfPacks?: number | null;
   shortDescription: string;
   description: string;
   category: { id: string; name: string; slug: string } | null;
@@ -98,6 +102,8 @@ export interface ProductFormInput {
   name: string;
   slug?: string;
   sku: string;
+  weightPerPackGrams?: number | null;
+  numberOfPacks?: number | null;
   shortDescription: string;
   description: string;
   categoryId: string;

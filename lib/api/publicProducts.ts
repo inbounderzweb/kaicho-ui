@@ -46,6 +46,8 @@ export interface PublicProductListItem {
   productId: string;
   name: string;
   slug: string;
+  weightPerPackGrams?: number | null;
+  numberOfPacks?: number | null;
   shortDescription: string;
   category: PublicProductCategoryRef | null;
   brand: PublicProductBrandRef | null;
@@ -99,6 +101,8 @@ export interface PublicProductDetail {
   name: string;
   slug: string;
   sku: string;
+  weightPerPackGrams?: number | null;
+  numberOfPacks?: number | null;
   shortDescription: string;
   description: string;
   category: PublicProductCategoryRef | null;

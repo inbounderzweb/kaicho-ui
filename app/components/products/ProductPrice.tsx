@@ -7,9 +7,13 @@ import type { PublicProductPricing } from "@/lib/api/publicProducts";
 export default function ProductPrice({
   pricing,
   size = "md",
+  showDiscountBadge = true,
+  className = "",
 }: {
   pricing: PublicProductPricing;
   size?: "sm" | "md" | "lg";
+  showDiscountBadge?: boolean;
+  className?: string;
 }) {
   const hasDiscount = pricing.discountPercentage > 0 && pricing.mrp > pricing.sellingPrice;
 
@@ -17,16 +21,16 @@ export default function ProductPrice({
   const mrpClass = size === "lg" ? "text-base" : "text-xs";
 
   return (
-    <div className="flex flex-wrap items-baseline gap-2">
+    <div className={`flex flex-wrap items-baseline gap-2 ${className}`}>
       <span className={`font-display font-extrabold text-brand ${priceClass}`}>
         Rs. {pricing.sellingPrice.toFixed(2)}
       </span>
       {hasDiscount && (
         <>
           <span className={`text-ink-faint line-through ${mrpClass}`}>Rs. {pricing.mrp.toFixed(2)}</span>
-          <span className="rounded-full bg-sale/10 px-2 py-0.5 text-[11px] font-bold text-sale">
+          {showDiscountBadge && <span className="rounded-full bg-sale/10 px-2 py-0.5 text-[11px] font-bold text-sale">
             {Math.round(pricing.discountPercentage)}% OFF
-          </span>
+          </span>}
         </>
       )}
     </div>

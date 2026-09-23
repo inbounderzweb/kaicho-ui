@@ -68,6 +68,8 @@ export default function ProductDetailClient({ id }: { id?: string }) {
       name: "",
       slug: "",
       sku: "",
+      weightPerPackGrams: "",
+      numberOfPacks: "",
       shortDescription: "",
       description: "",
       categoryId: "",
@@ -97,6 +99,8 @@ export default function ProductDetailClient({ id }: { id?: string }) {
         name: p.name,
         slug: p.slug,
         sku: p.sku,
+        weightPerPackGrams: p.weightPerPackGrams ?? "",
+        numberOfPacks: p.numberOfPacks ?? "",
         shortDescription: p.shortDescription,
         description: p.description,
         categoryId: p.categoryId,
@@ -200,6 +204,8 @@ export default function ProductDetailClient({ id }: { id?: string }) {
       name: values.name,
       slug: values.slug || undefined,
       sku: values.sku,
+      weightPerPackGrams: values.weightPerPackGrams === "" ? null : values.weightPerPackGrams,
+      numberOfPacks: values.numberOfPacks === "" ? null : values.numberOfPacks,
       shortDescription: values.shortDescription,
       description: values.description,
       categoryId: values.categoryId,
@@ -337,6 +343,17 @@ export default function ProductDetailClient({ id }: { id?: string }) {
                 {errors.brandId && <p className="mt-1 text-xs text-red-600 dark:text-red-400">{errors.brandId.message}</p>}
               </div>
 
+              <div>
+                <label htmlFor="weight-per-pack" className="mb-1 block text-sm font-semibold">Weight per pack (grams)</label>
+                <input id="weight-per-pack" type="number" min="0.01" step="any" placeholder="e.g. 200" {...register("weightPerPackGrams")} className="w-full rounded-xl border border-admin-border bg-admin-surface px-3 py-2 text-sm dark:border-admin-border-dark dark:bg-admin-surface-dark" />
+                {errors.weightPerPackGrams && <p className="text-xs text-red-600">{errors.weightPerPackGrams.message}</p>}
+              </div>
+              <div>
+                <label htmlFor="number-of-packs" className="mb-1 block text-sm font-semibold">Number of packs</label>
+                <input id="number-of-packs" type="number" min="1" step="1" placeholder="e.g. 1" {...register("numberOfPacks")} className="w-full rounded-xl border border-admin-border bg-admin-surface px-3 py-2 text-sm dark:border-admin-border-dark dark:bg-admin-surface-dark" />
+                {errors.numberOfPacks && <p className="text-xs text-red-600">{errors.numberOfPacks.message}</p>}
+              </div>
+              <p className="text-xs text-ink-muted sm:col-span-2">Pack details describe one purchase of this product. Leave blank if unknown. These fields do not change stock or combo pricing.</p>
               <div className="sm:col-span-2">
                 <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-black/50 dark:text-white/50">
                   Short Description *
