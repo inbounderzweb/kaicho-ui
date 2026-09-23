@@ -21,6 +21,8 @@ export const productFormSchema = z
       .min(2, "SKU is too short")
       .max(64, "SKU is too long")
       .regex(/^[A-Za-z0-9_-]+$/, "SKU can only contain letters, numbers, hyphens, and underscores"),
+    weightPerPackGrams: z.union([z.literal(""), z.coerce.number().positive("Weight must be greater than zero")]).optional(),
+    numberOfPacks: z.union([z.literal(""), z.coerce.number().int("Use a whole number").positive("Pack count must be greater than zero")]).optional(),
     shortDescription: z.string().trim().min(1, "Short description is required").max(300, "Short description is too long"),
     description: z.string().trim().min(1, "Description is required").max(20000, "Description is too long"),
     categoryId: z.string().trim().min(1, "Category is required"),
