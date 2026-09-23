@@ -7,6 +7,7 @@ import { toEcommerceItem } from "@/lib/analytics/ecommerce";
 interface CartStoreState {
   items: CartItem[];
   addItem: (item: CartItem) => void;
+  decrementItem: (item: CartItem) => void;
   removeItem: (itemKey: string) => void;
   updateQuantity: (itemKey: string, quantity: number) => void;
   clearCart: () => void;
@@ -31,6 +32,27 @@ function mergePackBreakdown(
     byPackId.set(line.packId, prev ? { ...prev, packCount: prev.packCount + line.packCount } : { ...line });
   }
   return [...byPackId.values()];
+}
+
+// Inverse of mergePackBreakdown: takes one selection's pack counts back out.
+// A pack id that drops to zero leaves the breakdown entirely rather than
+// lingering as a "× 0" line.
+function subtractPackBreakdown(
+  existing: CartPackBreakdownLine[] | undefined,
+  incoming: CartPackBreakdownLine[] | undefined
+): CartPackBreakdownLine[] | undefined {
+  if (!existing?.length) return undefined;
+  if (!incoming?.length) return existing;
+  const byPackId = new Map(existing.map((line) => [line.packId, { ...line }]));
+  for (const line of incoming) {
+    const prev = byPackId.get(line.packId);
+    if (!prev) continue;
+    const nextCount = prev.packCount - line.packCount;
+    if (nextCount > 0) byPackId.set(line.packId, { ...prev, packCount: nextCount });
+    else byPackId.delete(line.packId);
+  }
+  const next = [...byPackId.values()];
+  return next.length ? next : undefined;
 }
 
 export const useCartStore = create<CartStoreState>()(
@@ -65,6 +87,47 @@ export const useCartStore = create<CartStoreState>()(
         // "Add to cart" button in the app (detail page, product card)
         // routes through here, so this is the one place it needs to fire.
         trackEvent("add_to_cart", {
+          currency: "INR",
+          value: item.price * item.quantity,
+          items: [
+            toEcommerceItem({
+              id: item.productId,
+              name: item.name,
+              price: item.price,
+              quantity: item.quantity,
+            }),
+          ],
+        });
+      },
+      // Exact inverse of addItem: takes ONE of that selection back out of the
+      // line it merged into. Symmetry is what makes it correct for packs too
+      // — a pack's `quantity` is base units, so the only coherent way to step
+      // it down is by the same selection that stepped it up (one whole
+      // "Combo of 3" = 3 units + that pack's counts), never by a raw unit.
+      // Note cartLineKey normalizes pack counts by their ratio, so the line's
+      // identity survives the decrement.
+      decrementItem: (item) => {
+        const key = cartLineKey(item);
+        const existing = get().items.find((i) => cartLineKey(i) === key);
+        if (!existing) return;
+        if (existing.quantity - item.quantity < 1) {
+          get().removeItem(key);
+          return;
+        }
+        set((state) => ({
+          items: state.items.map((i) =>
+            cartLineKey(i) === key
+              ? {
+                  ...i,
+                  quantity: i.quantity - item.quantity,
+                  packBreakdown: subtractPackBreakdown(i.packBreakdown, item.packBreakdown),
+                }
+              : i
+          ),
+        }));
+        // Mirrors addItem's add_to_cart: reports THIS removal, not the
+        // resulting line.
+        trackEvent("remove_from_cart", {
           currency: "INR",
           value: item.price * item.quantity,
           items: [
