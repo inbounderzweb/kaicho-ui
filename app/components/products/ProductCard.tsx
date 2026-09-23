@@ -113,10 +113,12 @@ export default function ProductCard({
           aria-label={inWishlist ? `Remove ${product.name} from wishlist` : `Add ${product.name} to wishlist`}
           aria-pressed={inWishlist}
           disabled={toggleWishlist.isPending}
-          className="absolute right-2 top-2 z-20 flex h-7 w-7 items-center justify-center rounded-full bg-white/90 text-ink-muted shadow-sm transition-colors hover:text-sale focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand disabled:opacity-60"
+          className="absolute right-2 top-2 z-20 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-border bg-white text-ink-muted shadow-sm transition-colors hover:text-sale focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand disabled:opacity-60"
         >
-          <IconHeart className={`h-3.5 w-3.5 ${inWishlist ? "fill-sale text-sale" : ""}`} />
+          <IconHeart className={`h-5 w-5 ${inWishlist ? "fill-sale text-sale" : ""}`} />
         </button>
+
+
       </div>
 
       <div className="mt-3 flex-1">
@@ -133,11 +135,13 @@ export default function ProductCard({
         <ProductAvailability inventory={product.inventory} size="sm" className="mt-0.5" />
       </div>
 
-      <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+      <div className="mt-3 flex flex-col items-start gap-3">
         <ProductPrice pricing={product.pricing} size="sm" />
 
+        <div className="flex w-full min-w-0 items-center gap-1.5 sm:gap-2">
+
         {quantity > 0 ? (
-          <div className="inline-flex h-11 shrink-0 items-center overflow-hidden rounded-full bg-brand text-white" role="group" aria-label={`Quantity of ${product.name}`}>
+          <div className="ml-auto inline-flex h-11 min-w-0 max-w-36 flex-1 items-center overflow-hidden rounded-full bg-brand text-white" role="group" aria-label={`Quantity of ${product.name}`}>
             <button
               type="button"
               aria-label={`Remove one ${product.name}`}
@@ -145,22 +149,22 @@ export default function ProductCard({
               onClick={() => {
                 if (cartLine) useCartStore.getState().decrementItem({ ...cartLine, quantity: 1 });
               }}
-              className="h-11 w-10 text-xl transition-colors active:bg-brand-darker disabled:opacity-50"
+              className="h-11 min-w-0 flex-1 text-xl transition-colors active:bg-brand-darker disabled:opacity-50"
             >−</button>
-            <span aria-live="polite" aria-atomic="true" className="min-w-7 text-center text-sm font-bold">{quantity}</span>
+            <span aria-live="polite" aria-atomic="true" className="min-w-5 text-center text-sm font-bold">{quantity}</span>
             <button
               type="button"
               aria-label={`Add one more ${product.name}`}
               disabled={outOfStock || smartCart.busy || (product.inventory.trackInventory && quantity >= product.inventory.stockQuantity)}
               onClick={handleAddToCart}
-              className={`h-11 w-10 text-xl transition-colors active:bg-brand-darker disabled:opacity-50 ${smartCart.busy ? "bg-brand-darker" : ""}`}
+              className={`h-11 min-w-0 flex-1 text-xl transition-colors active:bg-brand-darker disabled:opacity-50 ${smartCart.busy ? "bg-brand-darker" : ""}`}
             >{smartCart.busy ? "…" : "+"}</button>
           </div>
         ) : <button
           type="button"
           onClick={handleAddToCart}
           disabled={outOfStock || smartCart.busy}
-          className={`inline-flex h-10 shrink-0 items-center gap-1 rounded-full px-8 text-md font-bold transition-colors disabled:cursor-not-allowed ${
+          className={`ml-auto inline-flex h-11 min-w-0 max-w-36 flex-1 items-center justify-center gap-1 rounded-full px-2 text-sm sm:px-5 font-bold transition-colors disabled:cursor-not-allowed ${
             smartCart.busy
               ? "bg-brand-darker text-white"
               : outOfStock
@@ -178,6 +182,8 @@ export default function ProductCard({
             </>
           )}
         </button>}
+
+        </div>
       </div>
       {smartCart.error && (
         <p role="alert" className="mt-1.5 text-xs text-red-700">
