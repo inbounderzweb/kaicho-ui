@@ -135,7 +135,7 @@ export default function ProductCard({
           type="button"
           onClick={handleAddToCart}
           disabled={outOfStock || smartCart.busy}
-          className={`inline-flex h-8 shrink-0 items-center gap-1 rounded-full px-5 text-xs font-bold transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
+          className={`inline-flex h-10 shrink-0 items-center gap-1 rounded-full px-8 text-md font-bold transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
             justAdded
               ? "bg-brand-darker text-white"
               : outOfStock

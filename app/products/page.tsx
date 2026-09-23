@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import ProductsHero from "../components/products/ProductsHero";
+import PageBanner from "../components/ui/PageBanner";
 import ProductsPageClient from "../components/products/ProductsPageClient";
 import ProductGrid from "../components/products/ProductGrid";
 import { buildPageMetadata } from "@/lib/seo/metadata";
@@ -14,7 +14,11 @@ export const metadata = buildPageMetadata({
 export default function ProductsPage() {
   return (
     <>
-      <ProductsHero />
+      <PageBanner
+        title="Our Products"
+        description="Healthy, ready-to-eat meals, combos and saver packs for busy lifestyles."
+        breadcrumbs={[{ label: "Home", href: "/" }, { label: "Products", href: "/products" }]}
+      />
       {/* ProductsPageClient reads useSearchParams() (via useCatalogFilters)
           for its URL-driven filter state — the App Router requires that to
           be wrapped in Suspense, or a static prerender of this page fails
