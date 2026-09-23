@@ -19,40 +19,53 @@ export interface ProductFiltersProps {
   /** Hide the category filter — the category landing page already pins
    *  category via its route, so showing it again would be redundant. */
   showCategoryFilter?: boolean;
+  /** "sidebar" (default): permanent left column on desktop + drawer trigger
+   *  on mobile — used by /category/:slug. "toolbar": always a compact
+   *  trigger + slide-over drawer regardless of breakpoint, no permanent
+   *  column — used by /products, which now leads with category pill tabs
+   *  (ProductCategoryTabs) instead of a sidebar checklist, so only the
+   *  secondary brand/price/stock filters live behind this drawer there. */
+  layout?: "sidebar" | "toolbar";
 }
 
 // Renders as a sticky sidebar on desktop and a slide-over drawer (trigger
 // button + panel) on mobile — both wrap the same <FilterFields>, so the
 // filtering logic only exists once.
 export default function ProductFilters(props: ProductFiltersProps) {
+  const { layout = "sidebar" } = props;
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const isToolbar = layout === "toolbar";
 
   return (
     <>
-      {/* Mobile trigger */}
-      <div className="mb-4 lg:hidden">
+      {/* Trigger: mobile-only in sidebar mode (desktop has the permanent
+          column instead); always shown in toolbar mode. */}
+      <div className={isToolbar ? "" : "mb-4 lg:hidden"}>
         <button
           type="button"
           onClick={() => setDrawerOpen(true)}
-          className="flex h-10 items-center gap-2 rounded-full border border-border bg-white px-4 text-sm font-semibold text-ink"
+          className="flex h-10 items-center gap-2 rounded-full border border-border bg-white px-4 text-sm font-semibold text-ink transition-colors hover:border-brand hover:text-brand"
         >
           Filters
         </button>
       </div>
 
-      {/* Desktop sidebar */}
-      <aside className="hidden w-64 shrink-0 lg:block">
-        <div className="sticky top-24 rounded-2xl border border-border bg-white p-5">
-          <h2 className="font-display text-sm font-bold uppercase tracking-wide text-ink">Filters</h2>
-          <div className="mt-4">
-            <FilterFields {...props} />
+      {/* Desktop sidebar — sidebar layout only */}
+      {!isToolbar && (
+        <aside className="hidden w-64 shrink-0 lg:block">
+          <div className="sticky top-24 rounded-2xl border border-border bg-white p-5">
+            <h2 className="font-display text-sm font-bold uppercase tracking-wide text-ink">Filters</h2>
+            <div className="mt-4">
+              <FilterFields {...props} />
+            </div>
           </div>
-        </div>
-      </aside>
+        </aside>
+      )}
 
-      {/* Mobile drawer */}
+      {/* Drawer: mobile-only in sidebar mode (desktop already has the
+          column); every breakpoint in toolbar mode. */}
       {drawerOpen && (
-        <div className="fixed inset-0 z-50 lg:hidden">
+        <div className={`fixed inset-0 z-50 ${isToolbar ? "" : "lg:hidden"}`}>
           <button
             type="button"
             aria-label="Close filters"
