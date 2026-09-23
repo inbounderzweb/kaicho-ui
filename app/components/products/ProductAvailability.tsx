@@ -7,23 +7,25 @@ import type { PublicProductInventory } from "@/lib/api/publicProducts";
 export default function ProductAvailability({
   inventory,
   size = "md",
+  className = "",
 }: {
   inventory: PublicProductInventory;
   size?: "sm" | "md";
+  className?: string;
 }) {
   const textSize = size === "sm" ? "text-xs" : "text-sm";
 
   if (!inventory.inStock) {
-    return <p className={`font-semibold text-sale ${textSize}`}>Out of stock</p>;
+    return <p className={`font-semibold text-sale ${textSize} ${className}`}>Out of stock</p>;
   }
 
   if (inventory.lowStock) {
     return (
-      <p className={`font-semibold text-terracotta ${textSize}`}>
+      <p className={`font-semibold text-terracotta ${textSize} ${className}`}>
         Only {inventory.stockQuantity} left in stock
       </p>
     );
   }
 
-  return <p className={`font-semibold text-brand ${textSize}`}>In stock</p>;
+  return <p className={`font-semibold text-brand ${textSize} ${className}`}>In stock</p>;
 }
