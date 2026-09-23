@@ -11,6 +11,8 @@ import { useToggleWishlist } from "@/lib/hooks/useToggleWishlist";
 import { useAuthGate } from "@/lib/auth/useAuthGate";
 import { IconHeart, IconCart } from "../ui/icons";
 import ProductPrice from "./ProductPrice";
+import ProductPackDetails from "./ProductPackDetails";
+import styles from "./ProductCard.module.css";
 import ProductAvailability from "./ProductAvailability";
 import type { PublicProductListItem } from "@/lib/api/publicProducts";
 
@@ -75,7 +77,7 @@ export default function ProductCard({
   }
 
   return (
-    <div className="group relative flex h-full min-w-0 flex-col rounded-2xl border border-border bg-white p-3 transition-all duration-300 hover:-translate-y-1 hover:border-brand/30 hover:shadow-[0_20px_40px_-24px_rgba(28,28,28,0.25)] sm:p-3.5">
+    <div className={`${styles.card} group relative flex h-full min-w-0 flex-col rounded-2xl border border-border bg-white p-3 transition-all duration-300 hover:-translate-y-1 hover:border-brand/30 hover:shadow-[0_20px_40px_-24px_rgba(28,28,28,0.25)] sm:p-3.5`}>
       <div className="relative shrink-0">
         <Link href={href} className="relative block aspect-square w-full overflow-hidden rounded-xl bg-cream">
           {outOfStock ? (
@@ -117,31 +119,30 @@ export default function ProductCard({
         >
           <IconHeart className={`h-5 w-5 ${inWishlist ? "fill-sale text-sale" : ""}`} />
         </button>
-
-
       </div>
 
-      <div className="mt-3 flex-1">
-        {product.brand && (
-          <span className="text-[11px] font-semibold uppercase tracking-wide text-ink-faint">
-            {product.brand.name}
-          </span>
-        )}
+      <div className="mt-2 flex-1">
+        <span className="block h-4 truncate text-[11px] font-semibold uppercase leading-4 tracking-wide text-ink-faint">
+          {product.brand?.name ?? ""}
+        </span>
         <Link href={href}>
           <h3 className="line-clamp-2 min-h-[2.75em] break-words font-display text-sm font-bold leading-snug text-ink hover:text-brand sm:text-base">
             {product.name}
           </h3>
         </Link>
-        <ProductAvailability inventory={product.inventory} size="sm" className="mt-0.5" />
+        <ProductPackDetails weightPerPackGrams={product.weightPerPackGrams} numberOfPacks={product.numberOfPacks} />
       </div>
 
-      <div className="mt-3 flex flex-col items-start gap-3">
-        <ProductPrice pricing={product.pricing} size="sm" />
+      <div className={styles.footer}>
+        <div className="min-w-0 space-y-1">
+          <ProductAvailability inventory={product.inventory} size="sm" className="leading-4" />
+          <ProductPrice pricing={product.pricing} size="sm" showDiscountBadge={false} className={styles.price} />
+        </div>
 
-        <div className="flex w-full min-w-0 items-center gap-1.5 sm:gap-2">
+        <div className={styles.controls}>
 
         {quantity > 0 ? (
-          <div className="ml-auto inline-flex h-11 min-w-0 max-w-36 flex-1 items-center overflow-hidden rounded-full bg-brand text-white" role="group" aria-label={`Quantity of ${product.name}`}>
+          <div className="inline-flex h-11 w-full min-w-0 items-center overflow-hidden rounded-full bg-brand text-white" role="group" aria-label={`Quantity of ${product.name}`}>
             <button
               type="button"
               aria-label={`Remove one ${product.name}`}
@@ -164,7 +165,7 @@ export default function ProductCard({
           type="button"
           onClick={handleAddToCart}
           disabled={outOfStock || smartCart.busy}
-          className={`ml-auto inline-flex h-11 min-w-0 max-w-36 flex-1 items-center justify-center gap-1 rounded-full px-2 text-sm sm:px-5 font-bold transition-colors disabled:cursor-not-allowed ${
+          className={`inline-flex h-11 w-full min-w-0 items-center justify-center gap-1 rounded-full px-2 text-sm font-bold transition-colors disabled:cursor-not-allowed ${
             smartCart.busy
               ? "bg-brand-darker text-white"
               : outOfStock

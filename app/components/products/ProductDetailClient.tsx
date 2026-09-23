@@ -5,6 +5,7 @@ import { useSmartCart } from "@/lib/hooks/useSmartCart";
 import Breadcrumbs from "../ui/Breadcrumbs";
 import ProductGallery from "./ProductGallery";
 import ProductPrice from "./ProductPrice";
+import ProductPackDetails from "./ProductPackDetails";
 import ProductAvailability from "./ProductAvailability";
 import QuantitySelector from "./QuantitySelector";
 import RelatedProducts from "./RelatedProducts";
@@ -77,6 +78,7 @@ export default function ProductDetailClient({ product }: { product: PublicProduc
 
           <div className="mt-4">
             <ProductPrice pricing={product.pricing} size="lg" />
+            <ProductPackDetails weightPerPackGrams={product.weightPerPackGrams} numberOfPacks={product.numberOfPacks} />
           </div>
 
           <div className="mt-2">
