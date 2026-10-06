@@ -47,7 +47,7 @@ export default function OrdersClient() {
       <div>
         <h1 className="font-display text-xl font-bold sm:text-2xl">Orders</h1>
         <p className="mt-0.5 text-sm text-black/55 dark:text-white/55">
-          Manage customer orders, statuses and refunds.
+          Manage customer orders, statuses, refunds and receipts.
         </p>
       </div>
 
@@ -124,6 +124,7 @@ export default function OrdersClient() {
                     <th className="px-5 py-3 font-semibold">Status</th>
                     <th className="px-5 py-3 font-semibold">Payment</th>
                     <th className="px-5 py-3 font-semibold">Placed</th>
+                    <th className="px-5 py-3 font-semibold">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-admin-border dark:divide-admin-border-dark">
@@ -146,6 +147,15 @@ export default function OrdersClient() {
                       <td className="px-5 py-3 text-black/55 dark:text-white/55">
                         {new Date(o.placedAt).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
                       </td>
+                      <td className="px-5 py-3">
+                        <Link
+                          href={`/admin/orders/${o.id}/receipt`}
+                          aria-label={`Make receipt for order ${o.id}`}
+                          className="inline-flex whitespace-nowrap rounded-full border border-admin-border px-3 py-1.5 text-xs font-semibold transition-colors hover:bg-admin-primary/20 dark:border-admin-border-dark"
+                        >
+                          Make receipt
+                        </Link>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -154,17 +164,26 @@ export default function OrdersClient() {
 
             <div className="divide-y divide-admin-border sm:hidden dark:divide-admin-border-dark">
               {data.items.map((o) => (
-                <Link key={o.id} href={`/admin/orders/${o.id}`} className="block space-y-1.5 p-4">
-                  <div className="flex items-center justify-between gap-2">
-                    <p className="font-semibold">{o.id}</p>
-                    <OrderStatusBadge status={o.status} />
-                  </div>
-                  <p className="text-xs text-black/60 dark:text-white/60">{o.customer}</p>
-                  <p className="text-xs tabular-nums text-black/60 dark:text-white/60">
-                    {o.items} item{o.items > 1 ? "s" : ""} · {currency.format(o.total)}
-                  </p>
-                  {o.paymentStatus && <PaymentStatusBadge status={o.paymentStatus} />}
-                </Link>
+                <div key={o.id} className="space-y-3 p-4">
+                  <Link href={`/admin/orders/${o.id}`} className="block space-y-1.5">
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="font-semibold">{o.id}</p>
+                      <OrderStatusBadge status={o.status} />
+                    </div>
+                    <p className="text-xs text-black/60 dark:text-white/60">{o.customer}</p>
+                    <p className="text-xs tabular-nums text-black/60 dark:text-white/60">
+                      {o.items} item{o.items > 1 ? "s" : ""} · {currency.format(o.total)}
+                    </p>
+                    {o.paymentStatus && <PaymentStatusBadge status={o.paymentStatus} />}
+                  </Link>
+                  <Link
+                    href={`/admin/orders/${o.id}/receipt`}
+                    aria-label={`Make receipt for order ${o.id}`}
+                    className="inline-flex rounded-full border border-admin-border px-3 py-1.5 text-xs font-semibold transition-colors hover:bg-admin-primary/20 dark:border-admin-border-dark"
+                  >
+                    Make receipt
+                  </Link>
+                </div>
               ))}
             </div>
           </div>

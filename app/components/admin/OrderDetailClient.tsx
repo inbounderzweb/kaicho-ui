@@ -139,6 +139,12 @@ export default function OrderDetailClient({ id }: { id: string }) {
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
+          <Link
+            href={`/admin/orders/${id}/receipt`}
+            className="inline-flex rounded-full bg-admin-primary px-4 py-2 text-sm font-semibold text-black transition-opacity hover:opacity-90"
+          >
+            Make receipt
+          </Link>
           <OrderStatusBadge status={order.status} />
           <PaymentStatusBadge status={order.paymentStatus} />
         </div>

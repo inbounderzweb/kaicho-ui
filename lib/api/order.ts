@@ -175,6 +175,12 @@ export interface OrderStatusHistoryEntry {
   note?: string;
 }
 
+export interface OrderPayment {
+  razorpayOrderId: string | null;
+  paidAt: string | null;
+  refundedAmount: number;
+}
+
 export interface Order {
   // The backend's DTO field is `orderId`, not `id` — matches the rest of the
   // codebase's convention of naming a document's own id `<entity>Id` (see
@@ -188,6 +194,8 @@ export interface Order {
   status: OrderStatus;
   paymentMethod: PaymentMethod;
   paymentStatus: PaymentStatus;
+  /** Recorded payment details; optional for older cached order responses. */
+  payment?: OrderPayment;
   statusHistory: OrderStatusHistoryEntry[];
   /** Courier / tracking record — null until an admin creates a shipment. */
   shipment: OrderShipment | null;
