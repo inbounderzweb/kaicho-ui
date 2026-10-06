@@ -17,7 +17,7 @@
   background: #00b974;
 }
 
-.leaves { object-fit: cover; object-position: center top; opacity: .75; filter: brightness(1.8); mix-blend-mode: multiply; }
+.leaves { transform: scale(var(--scroll-zoom-bg, 1)); transition: transform .35s ease-out; will-change: transform; object-fit: cover; object-position: center top; opacity: .75; filter: brightness(1.8); mix-blend-mode: multiply; }
 
 .content { position: relative; display: flex; flex-direction: column; align-items: center; width: 100%; padding: calc(var(--unit) * 76) calc(var(--unit) * 25) calc(var(--unit) * 64); }
 .copy { width: 100%; text-align: center; }
@@ -26,7 +26,7 @@
 .longTitle { font-size: calc(var(--unit) * 35); line-height: 1.35; }
 .copy > p { margin-top: calc(var(--unit) * 8); font-family: var(--font-sora), Arial, Helvetica, sans-serif; font-size: calc(var(--unit) * 18); line-height: calc(var(--unit) * 22); font-weight: 400; }
 
-.productStage { position: relative; width: calc(var(--unit) * 280); height: calc(var(--unit) * 280); margin-top: calc(var(--unit) * 42); margin-left: calc(var(--unit) * 40); touch-action: pan-y; outline: none; }
+.productStage { position: relative; width: calc(var(--unit) * 280); height: calc(var(--unit) * 280); margin-top: calc(var(--unit) * 42); margin-left: calc(var(--unit) * 40); touch-action: pan-y; outline: none; transform: scale(var(--scroll-zoom, 1)); transition: transform .35s ease-out; will-change: transform; }
 .productStage:focus-visible { border-radius: 24px; outline: 2px solid #ffffffb3; outline-offset: 10px; }
 .hero[data-motion-paused] .steamWisp,
 .hero[data-motion-paused] .steamHaze { animation-play-state: paused; }
@@ -69,12 +69,12 @@
 .playIcon { width: 0; height: 0; border-top: 5px solid transparent; border-bottom: 5px solid transparent; border-left: 7px solid currentColor; }
 
 @keyframes slideEnter {
-  from { opacity: 0; transform: translate3d(calc(var(--slide-direction) * 12%), 0, 0); }
-  to { opacity: 1; transform: translate3d(0, 0, 0); }
+  from { opacity: 0; transform: scale(1.18); }
+  to { opacity: 1; transform: scale(1); }
 }
 @keyframes slideExit {
-  from { opacity: 1; transform: translate3d(0, 0, 0); }
-  to { opacity: 0; transform: translate3d(calc(var(--slide-direction) * -8%), 0, 0); }
+  from { opacity: 1; transform: scale(1); }
+  to { opacity: 0; transform: scale(.82); }
 }
 @keyframes steamFlow {
   0% { opacity: 0; transform: translate3d(0, 6%, 0) rotate(0) scale(.7, .86); }

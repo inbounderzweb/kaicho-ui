@@ -99,6 +99,29 @@ export default function Hero() {
   }, []);
 
   useEffect(() => {
+    const hero = heroRef.current;
+    if (!hero || reducedMotion) return;
+    let frame = 0;
+    const update = () => {
+      frame = 0;
+      const progress = Math.min(window.scrollY / 600, 1);
+      hero.style.setProperty("--scroll-zoom", String(1 + progress * 0.08));
+      hero.style.setProperty("--scroll-zoom-bg", String(1 + progress * 0.05));
+    };
+    const onScroll = () => {
+      if (!frame) frame = requestAnimationFrame(update);
+    };
+    update();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      if (frame) cancelAnimationFrame(frame);
+      hero.style.removeProperty("--scroll-zoom");
+      hero.style.removeProperty("--scroll-zoom-bg");
+    };
+  }, [reducedMotion]);
+
+  useEffect(() => {
     let inView = true;
     const updateVisibility = () => setVisible(inView && !document.hidden);
     const observer = new IntersectionObserver(([entry]) => {
