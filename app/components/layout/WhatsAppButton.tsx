@@ -1,7 +1,10 @@
 "use client";
 
+import Image from "next/image";
+import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { IconWhatsapp, IconPhone, IconClose } from "../ui/icons";
+import styles from "./HomeChrome.module.css";
 
 // Floating contact button. Tapping it opens a small speed-dial with two
 // actions — Call and WhatsApp. Kept as a client component for the open/close
@@ -15,6 +18,8 @@ const ACTION_CIRCLE =
   "flex h-12 w-12 items-center justify-center rounded-full text-white shadow-lg shadow-black/20 transition-transform group-hover:scale-105 group-active:scale-95";
 
 export default function WhatsAppButton() {
+  const pathname = usePathname();
+  const isHome = pathname === "/";
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
 
@@ -39,10 +44,11 @@ export default function WhatsAppButton() {
   return (
     <div
       ref={rootRef}
-      className="fixed bottom-24 right-4 z-50 flex flex-col items-end gap-3 sm:bottom-6 sm:right-6"
+      className={`fixed bottom-24 right-4 z-50 flex flex-col items-end gap-3 sm:bottom-6 sm:right-6 ${isHome ? styles.homeContact : ""}`}
     >
       {/* Speed-dial actions */}
       <div
+        id="contact-options"
         className={`flex flex-col items-end gap-3 transition-all duration-200 ${
           open
             ? "pointer-events-auto translate-y-0 opacity-100"
@@ -78,17 +84,31 @@ export default function WhatsAppButton() {
         </a>
       </div>
 
-      {/* FAB toggle — keeps its WhatsApp-green identity; shows an X when open */}
+      {/* The homepage uses the supplied WhatsApp artwork; open options show an X. */}
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
-        aria-haspopup="menu"
+        aria-controls="contact-options"
         aria-label={open ? "Close contact options" : "Contact us on WhatsApp or by phone"}
-        className="flex h-14 w-14 items-center justify-center rounded-full bg-[#25D366] text-white shadow-lg shadow-black/20 transition-transform hover:scale-105 active:scale-95"
+        className={`flex h-14 w-14 items-center justify-center rounded-full bg-[#25D366] text-white shadow-lg shadow-black/20 transition-transform hover:scale-105 active:scale-95 ${isHome ? styles.homeContactToggle : ""} ${isHome && !open ? styles.homeContactArtwork : ""}`}
       >
         <span className={`transition-transform duration-200 ${open ? "rotate-90" : ""}`}>
-          {open ? <IconClose className="h-6 w-6" /> : <IconWhatsapp className="h-7 w-7" />}
+          {open ? (
+            <IconClose className="h-6 w-6" />
+          ) : isHome ? (
+            <Image
+              src="/hero-page/whatsapp_icon.png"
+              alt=""
+              width={44}
+              height={44}
+              loading="eager"
+              unoptimized
+              className={styles.homeContactImage}
+            />
+          ) : (
+            <IconWhatsapp className="h-7 w-7" />
+          )}
         </span>
       </button>
     </div>

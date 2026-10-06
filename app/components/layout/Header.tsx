@@ -13,9 +13,11 @@ import { useCurrentUser } from "@/lib/hooks/useCurrentUser";
 import { useWishlist } from "@/lib/hooks/useWishlist";
 import { getAccountHref } from "@/lib/auth/getAccountHref";
 import { IconCart, IconHeart, IconMenu, IconSearch, IconUser } from "../ui/icons";
+import styles from "./HomeChrome.module.css";
 
 export default function Header() {
   const pathname = usePathname();
+  const isHome = pathname === "/";
   const [scrolled, setScrolled] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -35,12 +37,12 @@ export default function Header() {
   return (
     <>
       <header
-        className={`sticky top-0 z-40 w-full bg-white/95 backdrop-blur transition-shadow ${
+        className={`sticky top-0 z-40 w-full bg-white/95 backdrop-blur transition-shadow ${isHome ? styles.homeHeader : ""} ${
           scrolled ? "shadow-[0_1px_0_0_rgba(0,0,0,0.06)]" : ""
         }`}
       >
         {/* Mobile top bar: hamburger — logo — search + cart */}
-        <div className="mx-auto grid h-16 w-full max-w-[1280px] grid-cols-[1fr_auto_1fr] items-center px-4 sm:px-6 lg:hidden">
+        <div className={`mx-auto grid h-16 w-full max-w-[1280px] grid-cols-[1fr_auto_1fr] items-center px-4 sm:px-6 lg:hidden ${isHome ? styles.homeTopBar : ""}`}>
           <div className="flex items-center justify-self-start gap-0.5">
             <button
               type="button"
@@ -59,7 +61,7 @@ export default function Header() {
               alt="Kaicho Foods"
               width={110}
               height={35}
-              priority
+              loading="eager"
               className="h-8 w-auto"
             />
           </Link>
@@ -95,7 +97,7 @@ export default function Header() {
               alt="Kaicho Foods"
               width={132}
               height={42}
-              priority
+              loading="eager"
               className="h-9 w-auto sm:h-10"
             />
           </Link>
