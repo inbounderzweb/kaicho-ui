@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Sora, Urbanist } from "next/font/google";
+import { Sora } from "next/font/google";
 import Providers from "./providers";
 import GoogleTagManager from "./components/analytics/GoogleTagManager";
 import PageViewTracker from "./components/analytics/PageViewTracker";
@@ -15,16 +15,10 @@ import { organizationJsonLd, websiteJsonLd } from "@/lib/seo/structured-data";
 import { SITE_URL } from "@/lib/seo/urls";
 import "./globals.css";
 
-const urbanist = Urbanist({
-  variable: "--font-urbanist",
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-});
-
 const sora = Sora({
   variable: "--font-sora",
   subsets: ["latin"],
-  weight: ["500", "600", "700", "800"],
+  weight: ["300", "400", "500", "600", "700", "800"],
 });
 
 export const metadata: Metadata = {
@@ -78,7 +72,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="en"
-      className={`${urbanist.variable} ${sora.variable} h-full antialiased`}
+      className={`${sora.variable} h-full antialiased`}
       suppressHydrationWarning
     >
       <body className="flex min-h-full flex-col bg-white text-ink">

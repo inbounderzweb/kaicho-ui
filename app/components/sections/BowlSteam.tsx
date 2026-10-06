@@ -10,7 +10,7 @@ const WISPS = [
 ] as const;
 
 /** The supplied photos share a bowl opening at 71.4% across, 69% down.
- *  This layer travels with the photo through every tilt and reveal. */
+ *  Steam stays attached to the photo throughout its slide and fade. */
 export default function BowlSteam() {
   const id = useId().replace(/[^a-zA-Z0-9_-]/g, "");
 

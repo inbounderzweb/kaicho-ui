@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type CSSProperties } from "react";
 import { IconArrowRight, IconChevronRight } from "../ui/icons";
 import BowlSteam from "./BowlSteam";
 import styles from "./Hero.module.css";
@@ -21,18 +21,74 @@ const FEATURES = [
   { lines: ["High in Fiber", "& Protein"], image: "icon_Layer_4.png", width: 40 },
 ] as const;
 
-const SLIDE_DURATION = 2000;
+const SLIDE_DURATION = 6000;
+const ENTER_DURATION = 1200;
+const EXIT_DURATION = 1600;
+const HOLD_DURATION = SLIDE_DURATION - EXIT_DURATION;
+
+function productIndex(slide: number) {
+  return ((slide % PRODUCTS.length) + PRODUCTS.length) % PRODUCTS.length;
+}
 
 export default function Hero() {
-  const [active, setActive] = useState(0);
+  const [slide, setSlide] = useState(0);
+  const [outgoing, setOutgoing] = useState<number | null>(null);
+  const [transitioning, setTransitioning] = useState(false);
+  const [direction, setDirection] = useState(1);
   const [paused, setPaused] = useState(false);
   const [interacting, setInteracting] = useState(false);
   const [reducedMotion, setReducedMotion] = useState(false);
   const [visible, setVisible] = useState(true);
   const [manualChange, setManualChange] = useState(false);
   const heroRef = useRef<HTMLElement>(null);
+  const currentSlide = useRef(0);
+  const pendingSlide = useRef<number | null>(null);
+  const moving = useRef(false);
+  const hasMoved = useRef(false);
   const touchStart = useRef<{ x: number; y: number } | null>(null);
+  const active = productIndex(slide);
   const product = PRODUCTS[active];
+
+  const slideTo = useCallback((target: number) => {
+    if (reducedMotion) {
+      pendingSlide.current = null;
+      currentSlide.current = target;
+      moving.current = false;
+      hasMoved.current = true;
+      setSlide(target);
+      setOutgoing(null);
+      setTransitioning(false);
+      return;
+    }
+    if (moving.current) {
+      pendingSlide.current = target;
+      return;
+    }
+    if (productIndex(target) === productIndex(currentSlide.current)) return;
+
+    // Retain the previous image until its slow exit has completely finished.
+    setOutgoing(productIndex(currentSlide.current));
+    setDirection(target > currentSlide.current ? 1 : -1);
+    pendingSlide.current = null;
+    currentSlide.current = target;
+    moving.current = true;
+    hasMoved.current = true;
+    setSlide(target);
+    setTransitioning(true);
+  }, [reducedMotion]);
+
+  useEffect(() => {
+    if (!transitioning) return;
+    const timeout = window.setTimeout(() => {
+      moving.current = false;
+      setTransitioning(false);
+      setOutgoing(null);
+      const target = pendingSlide.current;
+      pendingSlide.current = null;
+      if (target !== null) slideTo(target);
+    }, EXIT_DURATION + 34);
+    return () => window.clearTimeout(timeout);
+  }, [slide, transitioning, slideTo]);
 
   useEffect(() => {
     const media = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -59,17 +115,25 @@ export default function Hero() {
   }, []);
 
   useEffect(() => {
-    if (paused || interacting || reducedMotion || !visible) return;
+    if (paused || interacting || reducedMotion || !visible || transitioning) return;
     const timeout = window.setTimeout(() => {
       setManualChange(false);
-      setActive((index) => (index + 1) % PRODUCTS.length);
-    }, SLIDE_DURATION);
+      slideTo(currentSlide.current + 1);
+    }, hasMoved.current ? HOLD_DURATION : SLIDE_DURATION);
     return () => window.clearTimeout(timeout);
-  }, [active, paused, interacting, reducedMotion, visible]);
+  }, [slide, transitioning, paused, interacting, reducedMotion, visible, slideTo]);
+
+  function moveProduct(direction: number) {
+    setManualChange(true);
+    slideTo((pendingSlide.current ?? currentSlide.current) + direction);
+  }
 
   function showProduct(index: number) {
     setManualChange(true);
-    setActive((index + PRODUCTS.length) % PRODUCTS.length);
+    const base = currentSlide.current;
+    let distance = (index - productIndex(base) + PRODUCTS.length) % PRODUCTS.length;
+    if (distance > PRODUCTS.length / 2) distance -= PRODUCTS.length;
+    slideTo(base + distance);
   }
 
   return (
@@ -102,6 +166,14 @@ export default function Hero() {
 
         <div
           className={styles.productStage}
+          data-product-stage
+          data-slide={slide}
+          data-transitioning={transitioning || undefined}
+          style={{
+            "--enter-duration": `${ENTER_DURATION}ms`,
+            "--exit-duration": `${EXIT_DURATION}ms`,
+            "--slide-direction": direction,
+          } as CSSProperties}
           role="group"
           aria-roledescription="slide"
           aria-label={`${active + 1} of ${PRODUCTS.length}: ${product.name}`}
@@ -109,7 +181,7 @@ export default function Hero() {
           onKeyDown={(event) => {
             if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
               event.preventDefault();
-              showProduct(active + (event.key === "ArrowLeft" ? -1 : 1));
+              moveProduct(event.key === "ArrowLeft" ? -1 : 1);
             }
           }}
           onTouchStart={(event) => {
@@ -123,47 +195,46 @@ export default function Hero() {
             const touch = event.changedTouches[0];
             const distance = touch.clientX - start.x;
             if (Math.abs(distance) > 40 && Math.abs(distance) > Math.abs(touch.clientY - start.y)) {
-              showProduct(active + (distance < 0 ? 1 : -1));
+              moveProduct(distance < 0 ? 1 : -1);
             }
           }}
           onTouchCancel={() => { touchStart.current = null; }}
-          onPointerMove={(event) => {
-            if (reducedMotion || event.pointerType !== "mouse") return;
-            const bounds = event.currentTarget.getBoundingClientRect();
-            event.currentTarget.style.setProperty("--tilt-x", `${((event.clientX - bounds.left) / bounds.width - 0.5) * 6}deg`);
-            event.currentTarget.style.setProperty("--tilt-y", `${((event.clientY - bounds.top) / bounds.height - 0.5) * -6}deg`);
-          }}
-          onPointerLeave={(event) => {
-            event.currentTarget.style.setProperty("--tilt-x", "0deg");
-            event.currentTarget.style.setProperty("--tilt-y", "0deg");
-          }}
         >
-          <div className={styles.productTilt}>
-            <div className={styles.productFloat}>
-              {PRODUCTS.map((item, index) => (
-                <div key={item.image} className={`${styles.productSlide} ${index === active ? styles.activeSlide : ""}`} aria-hidden={index !== active} data-product-slide={item.image}>
-                  <div className={styles.productReveal}>
-                    <Image
-                      src={`/hero-page/product-images/${item.image}`}
-                      alt={index === active ? `Kaicho ${item.name} pack with a freshly served bowl` : ""}
-                      width={280}
-                      height={280}
-                      unoptimized
-                      preload={index === 0}
-                      loading={index === 0 ? undefined : "eager"}
-                      sizes="(min-width: 1024px) 540px, (min-width: 768px) 440px, 68vw"
-                      className={styles.productImage}
-                    />
-                    <BowlSteam />
-                  </div>
+          <div className={styles.productSlider} data-product-slider>
+            {PRODUCTS.map((item, index) => (
+              <div
+                key={item.image}
+                className={[
+                  styles.productSlide,
+                  index === active ? styles.activeSlide : "",
+                  index === active && transitioning ? styles.incomingSlide : "",
+                  index === outgoing ? styles.outgoingSlide : "",
+                ].filter(Boolean).join(" ")}
+                aria-hidden={index !== active}
+                data-product-slide={item.image}
+                data-slide-state={index === active ? transitioning ? "incoming" : "active" : index === outgoing ? "outgoing" : "inactive"}
+              >
+                <div className={styles.productReveal}>
+                  <Image
+                    src={`/hero-page/product-images/${item.image}`}
+                    alt={index === active ? `Kaicho ${item.name} pack with a freshly served bowl` : ""}
+                    width={280}
+                    height={280}
+                    unoptimized
+                    preload={index === 0}
+                    loading={index === 0 ? undefined : "eager"}
+                    sizes="(min-width: 1024px) 540px, (min-width: 768px) 440px, 68vw"
+                    className={styles.productImage}
+                  />
+                  <BowlSteam />
                 </div>
-              ))}
-            </div>
+              </div>
+            ))}
           </div>
-          <button type="button" className={`${styles.productArrow} ${styles.previous}`} aria-label="Previous meal" onClick={() => showProduct(active - 1)}>
+          <button type="button" className={`${styles.productArrow} ${styles.previous}`} aria-label="Previous meal" onClick={() => moveProduct(-1)}>
             <IconChevronRight className="h-5 w-5 rotate-180" />
           </button>
-          <button type="button" className={`${styles.productArrow} ${styles.next}`} aria-label="Next meal" onClick={() => showProduct(active + 1)}>
+          <button type="button" className={`${styles.productArrow} ${styles.next}`} aria-label="Next meal" onClick={() => moveProduct(1)}>
             <IconChevronRight className="h-5 w-5" />
           </button>
         </div>
