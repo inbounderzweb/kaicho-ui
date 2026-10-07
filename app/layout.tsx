@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Sora, Urbanist } from "next/font/google";
+import { Sora } from "next/font/google";
 import Providers from "./providers";
 import GoogleTagManager from "./components/analytics/GoogleTagManager";
 import PageViewTracker from "./components/analytics/PageViewTracker";
@@ -15,16 +15,10 @@ import { organizationJsonLd, websiteJsonLd } from "@/lib/seo/structured-data";
 import { SITE_URL } from "@/lib/seo/urls";
 import "./globals.css";
 
-const urbanist = Urbanist({
-  variable: "--font-urbanist",
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-});
-
 const sora = Sora({
   variable: "--font-sora",
   subsets: ["latin"],
-  weight: ["500", "600", "700", "800"],
+  weight: ["300", "400", "500", "600", "700", "800"],
 });
 
 export const metadata: Metadata = {
@@ -54,11 +48,9 @@ export const metadata: Metadata = {
   publisher: SITE_NAME,
   category: "food",
   icons: {
-    icon: [
-      { url: "/favicon.svg", type: "image/svg+xml" },
-      { url: "/favicon-32x32.png", sizes: "32x32", type: "image/png" },
-    ],
-    apple: "/apple-touch-icon.png",
+    icon: [{ url: "/icons/kaicho-touch-icon.png", type: "image/png" }],
+    shortcut: "/icons/kaicho-touch-icon.png",
+    apple: "/icons/kaicho-touch-icon.png",
   },
   verification: {
     google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION || undefined,
@@ -78,7 +70,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="en"
-      className={`${urbanist.variable} ${sora.variable} h-full antialiased`}
+      className={`${sora.variable} h-full antialiased`}
       suppressHydrationWarning
     >
       <body className="flex min-h-full flex-col bg-white text-ink">

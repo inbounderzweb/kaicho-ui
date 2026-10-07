@@ -1,5 +1,5 @@
-import Image from "next/image";
 import Link from "next/link";
+import BannerImage from "./BannerImage";
 import JsonLd from "../seo/JsonLd";
 import { breadcrumbJsonLd } from "@/lib/seo/structured-data";
 import { IconChevronRight } from "./icons";
@@ -31,8 +31,8 @@ export default function PageBanner({
           breadcrumbs.map((crumb) => ({ name: crumb.label, path: crumb.href }))
         )}
       />
-      <Image src={image} alt="" fill priority className="object-cover" />
-      <div className="absolute inset-0 bg-gradient-to-t from-charcoal/80 via-charcoal/40 to-charcoal/20" />
+      <BannerImage src={image} />
+      <div className="absolute inset-0 bg-gradient-to-t from-charcoal/90 via-charcoal/60 to-charcoal/40" />
 
       <div className="relative z-10 flex h-full flex-col items-center justify-center px-5 text-center">
         <h1 className="font-display text-2xl font-extrabold tracking-tight text-white sm:text-3xl lg:text-4xl">

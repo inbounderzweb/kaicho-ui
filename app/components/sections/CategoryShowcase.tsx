@@ -15,11 +15,11 @@ export default async function CategoryShowcase() {
   const collections = await loadCollections();
   return (
     <section className="bg-white md:py-12 py-20 sm:py-24">
-      <Container>
+      <Container fluid>
         <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <span className="text-xs font-bold uppercase tracking-[0.3em] text-terracotta">Full Menu</span>
-            <h2 className="mt-3 font-display text-3xl font-bold text-black sm:text-4xl">Shop by Collection</h2>
+            <h2 className="mt-3 font-display text-2xl font-bold text-black sm:text-3xl">Shop by Collection</h2>
           </div>
           {/* <p className="max-w-sm text-sm leading-relaxed text-black/50">Homepage collections are managed from the admin dashboard and rendered dynamically.</p> */}
         </div>

@@ -186,7 +186,7 @@ export default function StoryCover() {
       </Container> */}
 
       {/* bulk-order inquiry — same panel, transparent/glass fields over the fixed backdrop */}
-      <Container className="relative mt-2 pt-16 sm:mt-2 sm:pt-2">
+      <Container fluid className="relative mt-2 pt-16 sm:mt-2 sm:pt-2">
         <div className="grid grid-cols-1 gap-10 lg:grid-cols-[minmax(0,320px)_1fr] lg:gap-14">
           <div>
             <h2 className="font-display text-3xl font-bold leading-tight sm:text-4xl">
