@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { FiAward, FiEye, FiGlobe, FiHeart, FiSun, FiTarget, FiUsers } from "react-icons/fi";
+import { FiAward, FiGlobe, FiHeart, FiSun, FiUsers } from "react-icons/fi";
 import Button from "../ui/Button";
 import Container from "../ui/Container";
 import {
@@ -33,18 +33,14 @@ const VALUES = [
 const PURPOSES = [
   {
     title: "Mission",
-    Icon: FiTarget,
     background: "bg-[#e4f1dc]",
-    accent: "bg-brand",
     decoration: "text-brand/15",
     description:
       "At Kaicho Foods, our mission is to create food experiences that are rooted in health, culture and care. We are committed to making healthy eating convenient and enjoyable by combining traditional wisdom with modern food technology. Every product we bring to the market is designed to nurture well-being, support health, and maintain authentic taste — making it easier for individuals and families to choose healthy every day.",
   },
   {
     title: "Vision",
-    Icon: FiEye,
     background: "bg-[#f7f2e3]",
-    accent: "bg-[#b99a59]",
     decoration: "text-[#8b9565]/20",
     description:
       "To become a comprehensive food company that redefines healthy eating by offering a wide range of products and experiences — from packaged foods to cafes, restaurants, and cloud kitchens — all under one trusted brand, without ever compromising on health or taste.",
@@ -176,10 +172,10 @@ export default function StorySection() {
             >
               {/* Image */}
               <Image
-                src="/kaicho-hero.png"
+                src="/hero-page/product-images/desktop-Mixed-Millet.png"
                 alt="Kaicho ready-to-eat meal"
-                width={1536}
-                height={1024}
+                width={1254}
+                height={1254}
                 sizes="(min-width: 1024px) 620px, 90vw"
                 className="
                   relative z-10
@@ -276,7 +272,7 @@ export default function StorySection() {
           ))}
         </div>
         <div className="mt-12 grid gap-6 lg:grid-cols-2">
-          {PURPOSES.map(({ title, Icon, background, accent, decoration, description }) => (
+          {PURPOSES.map(({ title, background, decoration, description }) => (
             <article
               key={title}
               aria-labelledby={`our-${title.toLowerCase()}`}
@@ -290,15 +286,19 @@ export default function StorySection() {
                 <IconLeaf className="absolute bottom-4 left-16 h-40 w-40 rotate-35" />
               </div>
               <div className="grid gap-6 sm:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)] sm:gap-8 lg:grid-cols-1 xl:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]">
-                <div>
-                  <div className={`flex h-20 w-20 items-center justify-center rounded-full text-white ${accent}`}>
-                    <Icon aria-hidden="true" className="h-10 w-10" strokeWidth={1.5} />
-                  </div>
+                <div className="flex items-center gap-4 sm:block">
+                  <Image
+                    src="/icons/kaicho-touch-icon.png"
+                    alt=""
+                    width={186}
+                    height={180}
+                    className="h-[75px] w-auto"
+                  />
                   <h3
                     id={`our-${title.toLowerCase()}`}
-                    className="mt-5 font-display text-3xl font-semibold leading-tight tracking-tight text-ink sm:text-4xl"
+                    className="font-display text-3xl font-semibold leading-tight tracking-tight text-ink sm:mt-5 sm:text-4xl"
                   >
-                    <span className="block text-2xl">Our</span>
+                    <span className="mr-2 inline sm:mr-0 sm:block sm:text-2xl">Our</span>
                     {title}
                   </h3>
                 </div>

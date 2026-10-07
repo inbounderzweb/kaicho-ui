@@ -91,8 +91,8 @@ export default function Header() {
         </div>
 
         {/* Desktop bar */}
-        <div className={`mx-auto hidden h-20 w-full max-w-[1280px] items-center justify-between px-5 sm:px-6 lg:flex lg:px-8 ${isHome ? styles.homeDesktopBar : ""}`}>
-          <Link href="/" className={`flex shrink-0 items-center ${isHome ? styles.homeDesktopLogo : ""}`} aria-label="Kaicho Foods home">
+        <div className={`mx-auto hidden h-20 w-full max-w-[1280px] items-center justify-between px-5 sm:px-6 lg:flex lg:px-8 ${styles.homeDesktopBar}`}>
+          <Link href="/" className={`flex shrink-0 items-center ${styles.homeDesktopLogo}`} aria-label="Kaicho Foods home">
             <Image
               src="/logo_07aad60c-0e17-4a1b-936b-88609e93a1cc.svg"
               alt="Kaicho Foods"
@@ -103,7 +103,7 @@ export default function Header() {
             />
           </Link>
 
-          <nav aria-label="Main navigation" className={`flex items-center gap-5 xl:gap-8 ${isHome ? styles.homeDesktopNav : ""}`}>
+          <nav aria-label="Main navigation" className={`flex items-center gap-5 xl:gap-8 ${styles.homeDesktopNav}`}>
             {NAV_LINKS.map((link) => (
               <Link
                 key={link.href}
@@ -117,7 +117,7 @@ export default function Header() {
             ))}
           </nav>
 
-          <div className={`flex items-center gap-1 sm:gap-2 ${isHome ? styles.homeDesktopActions : ""}`}>
+          <div className={`flex items-center gap-1 sm:gap-2 ${styles.homeDesktopActions}`}>
             <button
               type="button"
               aria-label="Search"
@@ -155,9 +155,9 @@ export default function Header() {
               </span>
             </Link>
 
-            <Button href="/products" variant="primary" size="sm" className={`ml-2 ${isHome ? styles.homeShopButton : ""}`}>
+            <Button href="/products" variant="primary" size="sm" className={`ml-2 ${styles.homeShopButton}`}>
               Shop Now
-              {isHome && <IconArrowRight className="h-5 w-5" />}
+              <IconArrowRight className="h-5 w-5" />
             </Button>
           </div>
         </div>

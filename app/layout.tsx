@@ -48,11 +48,9 @@ export const metadata: Metadata = {
   publisher: SITE_NAME,
   category: "food",
   icons: {
-    icon: [
-      { url: "/favicon.svg", type: "image/svg+xml" },
-      { url: "/favicon-32x32.png", sizes: "32x32", type: "image/png" },
-    ],
-    apple: "/apple-touch-icon.png",
+    icon: [{ url: "/icons/kaicho-touch-icon.png", type: "image/png" }],
+    shortcut: "/icons/kaicho-touch-icon.png",
+    apple: "/icons/kaicho-touch-icon.png",
   },
   verification: {
     google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION || undefined,
