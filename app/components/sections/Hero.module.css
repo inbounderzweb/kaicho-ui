@@ -108,7 +108,7 @@
     /* left edge = header pill inset + pill padding, so copy lines up with the logo */
     --edge: calc(clamp(20px, 2.0175vw, 40px) + clamp(24px, 2.9vw, 52px));
     --desktop-unit: min(calc(100vw / 1586), calc(100svh / 1000), 1px);
-    min-height: max(560px, calc(100svh - clamp(60px, calc(4.6vw - 8px), 68px)));
+    min-height: max(560px, calc(100svh - clamp(75px, calc(4.6vw + 7px), 83px)));
   }
   .foliage { height: 100%; }
   .leaves { object-position: center; }
