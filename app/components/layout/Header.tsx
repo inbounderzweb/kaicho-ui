@@ -12,7 +12,7 @@ import { useCartStore } from "@/lib/store/cart.store";
 import { useCurrentUser } from "@/lib/hooks/useCurrentUser";
 import { useWishlist } from "@/lib/hooks/useWishlist";
 import { getAccountHref } from "@/lib/auth/getAccountHref";
-import { IconCart, IconHeart, IconMenu, IconSearch, IconUser } from "../ui/icons";
+import { IconArrowRight, IconCart, IconHeart, IconMenu, IconSearch, IconUser } from "../ui/icons";
 import styles from "./HomeChrome.module.css";
 
 export default function Header() {
@@ -37,6 +37,7 @@ export default function Header() {
   return (
     <>
       <header
+        data-scrolled={scrolled}
         className={`sticky top-0 z-40 w-full bg-white/95 backdrop-blur transition-shadow ${isHome ? styles.homeHeader : ""} ${
           scrolled ? "shadow-[0_1px_0_0_rgba(0,0,0,0.06)]" : ""
         }`}
@@ -90,8 +91,8 @@ export default function Header() {
         </div>
 
         {/* Desktop bar */}
-        <div className="mx-auto hidden h-20 w-full max-w-[1280px] items-center justify-between px-5 sm:px-6 lg:flex lg:px-8">
-          <Link href="/" className="flex shrink-0 items-center" aria-label="Kaicho Foods home">
+        <div className={`mx-auto hidden h-20 w-full max-w-[1280px] items-center justify-between px-5 sm:px-6 lg:flex lg:px-8 ${isHome ? styles.homeDesktopBar : ""}`}>
+          <Link href="/" className={`flex shrink-0 items-center ${isHome ? styles.homeDesktopLogo : ""}`} aria-label="Kaicho Foods home">
             <Image
               src="/logo_07aad60c-0e17-4a1b-936b-88609e93a1cc.svg"
               alt="Kaicho Foods"
@@ -102,7 +103,7 @@ export default function Header() {
             />
           </Link>
 
-          <nav aria-label="Main navigation" className="flex items-center gap-5 xl:gap-8">
+          <nav aria-label="Main navigation" className={`flex items-center gap-5 xl:gap-8 ${isHome ? styles.homeDesktopNav : ""}`}>
             {NAV_LINKS.map((link) => (
               <Link
                 key={link.href}
@@ -116,7 +117,7 @@ export default function Header() {
             ))}
           </nav>
 
-          <div className="flex items-center gap-1 sm:gap-2">
+          <div className={`flex items-center gap-1 sm:gap-2 ${isHome ? styles.homeDesktopActions : ""}`}>
             <button
               type="button"
               aria-label="Search"
@@ -154,8 +155,9 @@ export default function Header() {
               </span>
             </Link>
 
-            <Button href="/products" variant="primary" size="sm" className="ml-2">
+            <Button href="/products" variant="primary" size="sm" className={`ml-2 ${isHome ? styles.homeShopButton : ""}`}>
               Shop Now
+              {isHome && <IconArrowRight className="h-5 w-5" />}
             </Button>
           </div>
         </div>

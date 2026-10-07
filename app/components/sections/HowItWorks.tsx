@@ -10,7 +10,7 @@ const STEPS = [
 export default function HowItWorks() {
   return (
     <section className="py-16 sm:py-20 bg-fixed">
-      <Container>
+      <Container fluid>
         {/* bg-fixed reuses the same pinned-background technique as Hero/StoryCover */}
         <div className="relative flex flex-col overflow-hidden rounded-2xl bg-forest sm:flex-row md:bg-[url('/desktop-coverimage.png')]">
           {/* ink, not forest — forest is literally the same color as the

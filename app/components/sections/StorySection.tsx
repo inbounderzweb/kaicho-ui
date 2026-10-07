@@ -90,7 +90,7 @@ export default function StorySection() {
       id="story"
       className="relative overflow-hidden py-24 md:py-12 sm:py-32"
     >
-      <Container>
+      <Container fluid>
         {/* Header */}
         <div className="mb-14 md:mb-2 flex items-end justify-between gap-6 md:gap-2">
           <div>
@@ -109,10 +109,10 @@ export default function StorySection() {
         </div>
 
         {/* Main editorial layout */}
-        <div className="grid items-center gap-14 lg:grid-cols-[0.9fr_1.1fr] lg:gap-20">
+        <div className="grid items-center gap-14 lg:grid-cols-[1fr_1fr] lg:gap-14 xl:gap-20">
           {/* LEFT CONTENT */}
           <div className="max-w-xl">
-            <h2 className="font-display text-4xl font-semibold leading-[1.05] tracking-tight text-ink sm:text-5xl lg:text-6xl">
+            <h2 className="font-display text-4xl font-semibold leading-[1.05] tracking-tight text-ink sm:text-4xl lg:text-5xl">
               Food rooted in
               <span className="block text-brand">
                 tradition.
@@ -120,7 +120,7 @@ export default function StorySection() {
               Made for today.
             </h2>
 
-            <p className="mt-7 max-w-lg text-base leading-8 text-ink-muted sm:text-lg">
+            <p className="mt-7 max-w-lg text-sm leading-7 text-ink-muted sm:text-base">
               At Kaicho Foods, we believe wholesome food should fit naturally
               into modern life. We bring together time-honoured food traditions,
               carefully selected ingredients, and Japanese retort technology

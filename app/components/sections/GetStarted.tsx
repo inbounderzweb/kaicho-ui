@@ -18,17 +18,17 @@ const HIGHLIGHTS = [
 export default function GetStarted() {
   return (
     <section className="bg-cream py-20 md:py-12 sm:py-24">
-      <Container className="grid grid-cols-1 items-center gap-12 lg:grid-cols-2 lg:gap-16">
+      <Container fluid className="grid grid-cols-1 items-center gap-12 lg:grid-cols-2 lg:gap-16">
         <div>
           <span className="text-xs font-bold uppercase tracking-[0.2em] text-terracotta">
             Start With Healthy
           </span>
-          <h2 className="mt-3 font-display text-4xl font-bold tracking-tight text-ink sm:text-5xl">
+          <h2 className="mt-3 font-display text-3xl font-bold tracking-tight text-ink sm:text-4xl">
             Get Started Today!
           </h2>
           <span aria-hidden className="mt-5 block h-1 w-16 rounded-full bg-brand" />
 
-          <h3 className="mt-6 text-lg font-bold text-ink sm:text-xl">
+          <h3 className="mt-6 text-base font-bold text-ink sm:text-lg">
             Everything you need for wholesome, ready-to-eat meals.
           </h3>
           <p className="mt-3 max-w-md text-sm leading-relaxed text-ink-muted">
@@ -49,7 +49,7 @@ export default function GetStarted() {
           </div>
         </div>
 
-        <div className="relative mx-auto aspect-square w-full max-w-md">
+        <div className="relative mx-auto aspect-square w-full max-w-sm lg:max-w-[22rem] xl:max-w-md">
           <div aria-hidden className="absolute inset-[6%] rounded-full bg-brand-soft" />
           <div className="absolute inset-[10%] overflow-hidden rounded-full shadow-[0_30px_60px_-30px_rgba(0,0,0,0.35)]">
             <Image

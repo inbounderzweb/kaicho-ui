@@ -8,10 +8,10 @@ import BowlSteam from "./BowlSteam";
 import styles from "./Hero.module.css";
 
 const PRODUCTS = [
-  { name: "Chicken Oats Porridge", heading: "Chicken Oats", secondLine: "Porridge", description: "A nourishing meal, ready in minutes.", image: "Chicken-Oats.png" },
-  { name: "Broccoli & Mushroom Oats Porridge", heading: "Broccoli & Mushroom", secondLine: "Oats Porridge", description: "Veggie goodness, ready in minutes.", image: "Broccolli.png" },
-  { name: "Mixed Millet Porridge", heading: "Mixed Millet", secondLine: "Porridge", description: "Wholesome millets, ready in minutes.", image: "Mixed-Millet.png" },
-  { name: "Navadhanya Porridge", heading: "Navadhanya", secondLine: "Porridge", description: "Nine grains, one nourishing bowl.", image: "Navadhanya.png" },
+  { name: "Chicken Oats Porridge", heading: "Chicken Oats", secondLine: "Porridge", description: "A nourishing meal, ready in minutes.", image: "Chicken-Oats.png", desktopImage: "desktop-Chicken-Oats.png" },
+  { name: "Broccoli & Mushroom Oats Porridge", heading: "Broccoli & Mushroom", secondLine: "Oats Porridge", description: "Veggie goodness, ready in minutes.", image: "Broccolli.png", desktopImage: "desktop-Broccolli.png" },
+  { name: "Mixed Millet Porridge", heading: "Mixed Millet", secondLine: "Porridge", description: "Wholesome millets, ready in minutes.", image: "Mixed-Millet.png", desktopImage: "desktop-Mixed-Millet.png" },
+  { name: "Navadhanya Porridge", heading: "Navadhanya", secondLine: "Porridge", description: "Nine grains, one nourishing bowl.", image: "Navadhanya.png", desktopImage: "desktop-navadhanya.png" },
 ] as const;
 
 const FEATURES = [
@@ -25,13 +25,14 @@ const SLIDE_DURATION = 6000;
 const ENTER_DURATION = 1200;
 const EXIT_DURATION = 1600;
 const HOLD_DURATION = SLIDE_DURATION - EXIT_DURATION;
+const INITIAL_SLIDE = 2;
 
 function productIndex(slide: number) {
   return ((slide % PRODUCTS.length) + PRODUCTS.length) % PRODUCTS.length;
 }
 
 export default function Hero() {
-  const [slide, setSlide] = useState(0);
+  const [slide, setSlide] = useState(INITIAL_SLIDE);
   const [outgoing, setOutgoing] = useState<number | null>(null);
   const [transitioning, setTransitioning] = useState(false);
   const [direction, setDirection] = useState(1);
@@ -41,7 +42,7 @@ export default function Hero() {
   const [visible, setVisible] = useState(true);
   const [manualChange, setManualChange] = useState(false);
   const heroRef = useRef<HTMLElement>(null);
-  const currentSlide = useRef(0);
+  const currentSlide = useRef(INITIAL_SLIDE);
   const pendingSlide = useRef<number | null>(null);
   const moving = useRef(false);
   const hasMoved = useRef(false);
@@ -175,16 +176,20 @@ export default function Hero() {
       }}
     >
       <div className={styles.foliage} aria-hidden="true">
-        <Image src="/hero-page/mobile_bg_kaicho.png" alt="" fill preload unoptimized sizes="100vw" className={styles.leaves} />
+        <picture>
+          <source media="(min-width: 1024px)" srcSet="/hero-page/desktop_bg_kaicho.png" />
+          <Image src="/hero-page/mobile_bg_kaicho.png" alt="" fill loading="eager" fetchPriority="high" unoptimized sizes="100vw" className={styles.leaves} />
+        </picture>
       </div>
 
       <div className={styles.content}>
         <div className={styles.copy} aria-live={manualChange ? "polite" : "off"} aria-atomic="true">
+          <p className={styles.eyebrow}>Ready to eat</p>
           <h1 className={`${styles.title} ${active === 1 ? styles.longTitle : ""}`}>
             <span>{product.heading}</span>{" "}
             <span>{product.secondLine}</span>
           </h1>
-          <p>{product.description}</p>
+          <p className={styles.description}>{product.description}</p>
         </div>
 
         <div
@@ -238,34 +243,33 @@ export default function Hero() {
                 data-slide-state={index === active ? transitioning ? "incoming" : "active" : index === outgoing ? "outgoing" : "inactive"}
               >
                 <div className={styles.productReveal}>
+                  <picture>
+                    <source media="(min-width: 1024px)" srcSet={`/hero-page/product-images/${item.desktopImage}`} />
                   <Image
                     src={`/hero-page/product-images/${item.image}`}
                     alt={index === active ? `Kaicho ${item.name} pack with a freshly served bowl` : ""}
                     width={280}
                     height={280}
                     unoptimized
-                    preload={index === 0}
-                    loading={index === 0 ? undefined : "eager"}
-                    sizes="(min-width: 1024px) 540px, (min-width: 768px) 440px, 68vw"
+                    preload={index === INITIAL_SLIDE}
+                    loading={index === INITIAL_SLIDE ? undefined : "eager"}
+                    sizes="(min-width: 1920px) 920px, (min-width: 1024px) 46vw, (min-width: 560px) 378px, 68vw"
                     className={styles.productImage}
                   />
+                  </picture>
                   <BowlSteam />
                 </div>
               </div>
             ))}
           </div>
-          <button type="button" className={`${styles.productArrow} ${styles.previous}`} aria-label="Previous meal" onClick={() => moveProduct(-1)}>
-            <IconChevronRight className="h-5 w-5 rotate-180" />
-          </button>
-          <button type="button" className={`${styles.productArrow} ${styles.next}`} aria-label="Next meal" onClick={() => moveProduct(1)}>
-            <IconChevronRight className="h-5 w-5" />
-          </button>
         </div>
 
         <ul className={styles.features} aria-label="Our food promise">
           {FEATURES.map((feature) => (
             <li key={feature.image}>
-              <Image src={`/hero-page/${feature.image}`} width={feature.width} height={40} alt="" unoptimized className={styles.featureIcon} />
+              <span className={styles.featureArtwork}>
+                <Image src={`/hero-page/${feature.image}`} width={feature.width} height={40} alt="" unoptimized className={styles.featureIcon} />
+              </span>
               <p>{feature.lines.map((line) => <span key={line}>{line}</span>)}</p>
             </li>
           ))}
@@ -291,6 +295,12 @@ export default function Hero() {
           )}
         </div>
       </div>
+      <button type="button" className={`${styles.productArrow} ${styles.previous}`} aria-label="Previous meal" onClick={() => moveProduct(-1)}>
+        <IconChevronRight className="h-5 w-5 rotate-180" />
+      </button>
+      <button type="button" className={`${styles.productArrow} ${styles.next}`} aria-label="Next meal" onClick={() => moveProduct(1)}>
+        <IconChevronRight className="h-5 w-5" />
+      </button>
     </section>
   );
 }

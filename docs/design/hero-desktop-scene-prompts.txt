@@ -1,0 +1,25 @@
+Mode: built-in image_gen (two calls)
+Original source: /Users/test/Desktop/inbounderz/nextjs/kaicho/kaicho-ui/public/hero-page/product-images/Mixed-Millet.png
+Final scene: mixed-millet-desktop-scene.png
+The scene is a decorative overlay only. The original Mixed-Millet.png package is layered separately unchanged in the app.
+
+INITIAL GENERATION PROMPT (verbatim)
+
+Use case: compositing
+Asset type: high-resolution transparent product foreground for a responsive ecommerce hero.
+Input image 1: EDIT TARGET and exact packaging identity reference. Use its same upright Mixed Millet product box and same terracotta porridge bowl.
+Primary request: Extend this transparent product cutout into the polished product foreground shown in the user's desktop reference. Preserve the original box design, proportions, perspective, white/brown colors, logo, all visible typography, certifications and labeling exactly. Do not redesign or substitute the box with a pouch.
+Scene/backdrop: Genuine transparent alpha background, isolated objects only. No backdrop, leaves, UI, poster, gradient, or baked checkerboard.
+Subject: The original tall upright white and warm brown Mixed Millet Porridge cardboard box at left rear; an appetizing larger terracotta bowl of the same pale creamy millet porridge at lower right front. The bowl rests on a thick rustic dark natural wooden round slab. Scatter a small amount of yellow and reddish millet grains beside and below the box and bowl. Include two or three modest millet stalks at the far lower right and subtle translucent wisps of steam above the bowl.
+Style/medium: Realistic premium food product photography, crisp high resolution, soft natural lighting, believable terracotta and rough wood textures, clean transparent edges and restrained soft contact shadows beneath objects.
+Composition/framing: Slightly landscape canvas, approximately 900 by 800 design units. Maintain generous 25-unit transparent padding on all sides. Exact target layout: box bounds x45 to455 and y45 to620; large foreground bowl x380 to825 and y370 to655; wooden slab x360 to875 and y610 to740; scattered grains x250 to800 and y650 to765. These are relative composition coordinates, not text to draw. The box is much taller than the bowl and its entire package remains visible except the natural lower-right overlap by the bowl. No object is cropped.
+Text (verbatim package invariants): "KAICHO", "READY TO EAT", "MIXED MILLET", "PORRIDGE", "NET WEIGHT 400g". Preserve every visible original package word, including original logo lettering and marks. Generate no additional text.
+Constraints: Keep all original box artwork unchanged; keep porridge type unchanged; maintain a terracotta bowl; no ceramic white bowl, no cloth, no meat or vegetables, no nuts, no extra products or fabricated package claims, no watermark. Output one usable transparent PNG foreground asset, with the large bowl and dark wood slab to the lower right of the original exact box.
+
+TARGETED PACKAGE-REMOVAL EDIT PROMPT (verbatim)
+
+Use case: precise-object-edit
+Input image: EDIT TARGET, transparent product foreground.
+Change only one thing: remove the entire upright cardboard product package, including its label, front face, left face, top edge, shadow and every visible fragment of it. Replace the removed package area with genuine alpha transparency. There must be no package, packaging, logo or text remaining anywhere.
+Preserve exactly: The original foreground terracotta porridge bowl, its creamy millet contents, translucent steam, thick dark wooden round slab, scattered yellow/red millet grains and far-right millet stalks. Keep their appearance, geometry, perspective, colors, highlights, textures, coordinates and scale exactly as the input. Do not recenter them, do not enlarge them, do not create anything in the empty former package space. Keep the same 1330 by1182 canvas and the large empty transparent upper-left region.
+Output: Transparent PNG with true alpha transparency wherever the background and former package are. No checkerboard, no background fill, no backdrop, no leaves, no new objects, no text, no labels, no watermark. This is a precise package-removal edit only.

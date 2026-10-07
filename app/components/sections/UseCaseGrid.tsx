@@ -102,7 +102,7 @@ export default function UseCaseGrid() {
 
   return (
     <section className="bg-cream py-20 sm:py-24 md:py-12">
-      <Container>
+      <Container fluid>
         <SectionHeading
           eyebrow="Everyday Moments"
           heading="Where Kaicho Fits Into Your Day"
