@@ -22,8 +22,8 @@ const FEATURES = [
 ] as const;
 
 const SLIDE_DURATION = 6000;
-const ENTER_DURATION = 1200;
-const EXIT_DURATION = 1600;
+const ENTER_DURATION = 700;
+const EXIT_DURATION = 700;
 const HOLD_DURATION = SLIDE_DURATION - EXIT_DURATION;
 const INITIAL_SLIDE = 2;
 
@@ -36,7 +36,6 @@ export default function Hero() {
   const [outgoing, setOutgoing] = useState<number | null>(null);
   const [transitioning, setTransitioning] = useState(false);
   const [direction, setDirection] = useState(1);
-  const [paused, setPaused] = useState(false);
   const [interacting, setInteracting] = useState(false);
   const [reducedMotion, setReducedMotion] = useState(false);
   const [visible, setVisible] = useState(true);
@@ -139,13 +138,13 @@ export default function Hero() {
   }, []);
 
   useEffect(() => {
-    if (paused || interacting || reducedMotion || !visible || transitioning) return;
+    if (interacting || reducedMotion || !visible || transitioning) return;
     const timeout = window.setTimeout(() => {
       setManualChange(false);
       slideTo(currentSlide.current + 1);
     }, hasMoved.current ? HOLD_DURATION : SLIDE_DURATION);
     return () => window.clearTimeout(timeout);
-  }, [slide, transitioning, paused, interacting, reducedMotion, visible, slideTo]);
+  }, [slide, transitioning, interacting, reducedMotion, visible, slideTo]);
 
   function moveProduct(direction: number) {
     setManualChange(true);
@@ -165,7 +164,7 @@ export default function Hero() {
       ref={heroRef}
       id="home"
       className={styles.hero}
-      data-motion-paused={paused || interacting || !visible || undefined}
+      data-motion-paused={interacting || !visible || undefined}
       aria-label="Kaicho ready-to-eat meals"
       aria-roledescription="carousel"
       onFocusCapture={(event) => {
@@ -185,7 +184,7 @@ export default function Hero() {
       <div className={styles.content}>
         <div className={styles.copy} aria-live={manualChange ? "polite" : "off"} aria-atomic="true">
           <p className={styles.eyebrow}>Ready to eat</p>
-          <h1 className={`${styles.title} ${active === 1 ? styles.longTitle : ""}`}>
+          <h1 className={styles.title}>
             <span>{product.heading}</span>{" "}
             <span>{product.secondLine}</span>
           </h1>
@@ -288,11 +287,6 @@ export default function Hero() {
               </button>
             ))}
           </div>
-          {!reducedMotion && (
-            <button type="button" className={styles.pause} aria-label={paused ? "Play meal slideshow" : "Pause meal slideshow"} onClick={() => setPaused((value) => !value)}>
-              {paused ? <span className={styles.playIcon} /> : <span className={styles.pauseIcon} />}
-            </button>
-          )}
         </div>
       </div>
       <button type="button" className={`${styles.productArrow} ${styles.previous}`} aria-label="Previous meal" onClick={() => moveProduct(-1)}>
