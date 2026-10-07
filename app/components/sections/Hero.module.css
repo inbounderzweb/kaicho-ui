@@ -14,10 +14,9 @@
   height: calc(var(--unit) * 425);
   z-index: -1;
   overflow: hidden;
-  background: #00b974;
 }
 
-.leaves { transform: scale(var(--scroll-zoom-bg, 1)); transition: transform .35s ease-out; will-change: transform; object-fit: cover; object-position: center top; opacity: .75; filter: brightness(1.8); mix-blend-mode: multiply; }
+.leaves { transform: scale(var(--scroll-zoom-bg, 1)); transition: transform .35s ease-out; will-change: transform; object-fit: cover; object-position: center top; }
 
 .content { position: relative; display: flex; flex-direction: column; align-items: center; width: 100%; padding: calc(var(--unit) * 76) calc(var(--unit) * 25) calc(var(--unit) * 64); }
 .copy { width: 100%; text-align: center; }
