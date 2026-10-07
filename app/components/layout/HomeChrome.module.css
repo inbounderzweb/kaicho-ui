@@ -1,0 +1,234 @@
+.homeHeader {
+  background: #f7f7f5;
+}
+
+.homeContactArtwork {
+  background: transparent;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.homeContactImage {
+  display: block;
+  width: 44px;
+  height: 44px;
+  object-fit: contain;
+}
+
+@media (min-width: 1024px) {
+  .homeHeader {
+    background: #fff;
+  }
+
+  .homeDesktopBar {
+    display: grid;
+    grid-template-columns: clamp(120px, 10vw, 170px) minmax(0, 1fr) auto;
+    column-gap: clamp(16px, 2.52vw, 40px);
+    width: calc(100% - clamp(40px, 4.035vw, 80px));
+    max-width: none;
+    height: clamp(75px, calc(4.6vw + 7px), 83px);
+    padding-inline: clamp(24px, 2.9vw, 52px);
+    border-radius: 999px;
+    background: #fff;
+    box-shadow: 0 2px 22px rgb(36 64 44 / 4%);
+  }
+
+  .homeDesktopLogo img {
+    width: clamp(69px, calc(8.5vw - 35px), 113px);
+    height: auto;
+    filter: brightness(0.65) saturate(0.96);
+  }
+
+  .homeDesktopNav {
+    justify-content: center;
+    gap: clamp(20px, 2.2vw, 36px);
+    white-space: nowrap;
+    transform: translateY(4px);
+  }
+
+  .homeDesktopNav > a {
+    padding-block: 6px;
+    font-size: clamp(14px, 1vw, 16px);
+    font-weight: 400;
+    line-height: 1.5;
+  }
+
+  .homeDesktopNav > a[aria-current="page"] {
+    color: #08753f;
+    font-weight: 700;
+  }
+
+  .homeDesktopNav > a[aria-current="page"] > span {
+    display: none;
+  }
+
+  .homeDesktopNav > a > span {
+    bottom: 0;
+    height: 2.5px;
+    background: #08753f;
+  }
+
+  .homeDesktopActions {
+    gap: clamp(7px, 1.1vw, 18px);
+    transform: translateY(4px);
+  }
+
+  .homeDesktopActions > button,
+  .homeDesktopActions > a:not(.homeShopButton) {
+    width: clamp(30px, 2.2vw, 38px);
+    height: clamp(32px, 2.2vw, 38px);
+    color: #282c29;
+  }
+
+  .homeDesktopActions > button > svg,
+  .homeDesktopActions > a:not(.homeShopButton) > svg {
+    width: clamp(19px, 1.4vw, 23px);
+    height: clamp(19px, 1.4vw, 23px);
+  }
+
+  .homeDesktopActions > a > span {
+    top: 0;
+    right: 0;
+    width: clamp(15px, 1.1vw, 18px);
+    height: clamp(15px, 1.1vw, 18px);
+    background: #08753f;
+    font-size: clamp(9px, 0.66vw, 11px);
+    font-weight: 500;
+  }
+
+  .homeDesktopActions > .homeShopButton {
+    width: clamp(100px, 7.6vw, 128px);
+    height: clamp(32px, 2.2vw, 37px);
+    margin-left: clamp(0px, 0.5vw, 8px);
+    padding-inline: clamp(10px, 1.05vw, 20px);
+    gap: clamp(6px, 0.6vw, 10px);
+    background: #08753f;
+    box-shadow: none;
+    font-size: clamp(12px, 0.9vw, 14px);
+    font-weight: 500;
+    letter-spacing: 0;
+  }
+
+  .homeDesktopActions > .homeShopButton:hover {
+    background: #056536;
+  }
+
+  .homeShopButton > svg {
+    flex-shrink: 0;
+    width: clamp(14px, 1vw, 16px);
+    height: clamp(14px, 1vw, 16px);
+  }
+
+  @supports selector(:has(*)) {
+    :global(body):has(.homeHeader[data-scrolled="false"]) .homeContact {
+      visibility: hidden;
+      opacity: 0;
+    }
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  .homeContact {
+    right: 24px;
+    bottom: calc(88px + env(safe-area-inset-bottom));
+  }
+}
+
+@media (max-width: 767px) {
+  /* The supplied mobile artwork is proportional to a 414px-wide viewport. */
+  .homeTopBar {
+    height: calc(100vw * 60 / 414);
+    padding-inline: calc(100vw * 13 / 414);
+  }
+
+  .homeTopBar > a > img {
+    width: calc(100vw * 100 / 414);
+    height: auto;
+  }
+
+  .homeTopBar > div {
+    gap: 0;
+  }
+
+  .homeTopBar > div > button,
+  .homeTopBar > div > a {
+    width: calc(100vw * 40 / 414);
+    height: calc(100vw * 40 / 414);
+    color: #272b28;
+  }
+
+  .homeTopBar > div:first-child svg {
+    width: calc(100vw * 24 / 414);
+    height: calc(100vw * 24 / 414);
+  }
+
+  .homeTopBar > div:last-child svg {
+    width: calc(100vw * 20 / 414);
+    height: calc(100vw * 20 / 414);
+  }
+
+  .homeTopBar > div > a > span {
+    top: calc(100vw * 4 / 414);
+    right: calc(100vw * 4 / 414);
+    width: calc(100vw * 15 / 414);
+    height: calc(100vw * 15 / 414);
+    background: #479e60;
+    font-size: calc(100vw * 10 / 414);
+  }
+
+  .homeTabBar {
+    height: calc(100vw * 60 / 414 + env(safe-area-inset-bottom));
+    border-top-color: #d8dfd8;
+    background: #f7f7f5;
+  }
+
+  .homeTabBar > a {
+    justify-content: center;
+    gap: calc(100vw * 6 / 414);
+    padding-block: 0;
+    border-top-width: calc(100vw * 2 / 414);
+    color: #5b5d5b;
+  }
+
+  .homeTabBar > a[aria-current="page"] {
+    border-top-color: #55a66b;
+    background: #e9f5ed;
+    color: #3d8750;
+  }
+
+  .homeTabBar > a > svg {
+    width: calc(100vw * 18 / 414);
+    height: calc(100vw * 18 / 414);
+  }
+
+  .homeTabBar > a > span {
+    font-size: calc(100vw * 11 / 414);
+    line-height: 1.2;
+    font-weight: 600;
+  }
+
+  .homeContact {
+    right: calc(100vw * 22 / 414);
+    bottom: calc(100vw * 86 / 414 + env(safe-area-inset-bottom));
+  }
+
+  .homeContactToggle,
+  .homeContactImage {
+    width: calc(100vw * 44 / 414);
+    height: calc(100vw * 44 / 414);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .homeHeader,
+  .homeTabBar,
+  .homeContact *,
+  .homeContactToggle {
+    transition: none;
+  }
+
+  .homeContactToggle:hover,
+  .homeContactToggle:active {
+    transform: none;
+  }
+}

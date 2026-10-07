@@ -15,7 +15,7 @@ export default async function BlogSection() {
 
   return (
     <section id="blog" className="bg-white py-20 sm:py-24">
-      <Container>
+      <Container fluid>
         <SectionHeading eyebrow="Latest News" heading="Our Blog" />
 
         <div className="no-scrollbar mt-12 flex snap-x snap-mandatory gap-4 overflow-x-auto pb-1 sm:grid sm:grid-cols-2 sm:gap-6 sm:overflow-visible sm:pb-0 sm:snap-none lg:grid-cols-3">

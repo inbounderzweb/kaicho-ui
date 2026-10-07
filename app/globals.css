@@ -101,7 +101,7 @@
   --color-admin-border: var(--color-admin-border);
   --color-admin-border-dark: var(--color-admin-border-dark);
 
-  --font-sans: var(--font-urbanist);
+  --font-sans: var(--font-sora);
   --font-display: var(--font-sora);
 
   --shadow-card: var(--shadow-card);
@@ -111,6 +111,16 @@
   --animate-fade-up: fade-up 0.6s ease-out both;
   --animate-fade-scale: fade-scale 0.7s ease-out both;
   --animate-steam: steam-rise 4.2s ease-in-out infinite;
+  --animate-banner-zoom: banner-zoom 18s ease-in-out infinite alternate;
+}
+
+@keyframes banner-zoom {
+  from {
+    transform: scale(1);
+  }
+  to {
+    transform: scale(1.06);
+  }
 }
 
 @keyframes marquee {
@@ -176,6 +186,10 @@
 
   .animate-steam {
     display: none;
+  }
+
+  .animate-banner-zoom {
+    animation: none;
   }
 }
 

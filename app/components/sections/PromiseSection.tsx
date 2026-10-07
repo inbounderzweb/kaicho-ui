@@ -6,9 +6,9 @@ import { IconArrowRight, IconLeaf } from "../ui/icons";
 export default function PromiseSection() {
   return (
     <section aria-labelledby="our-promise" className="bg-[#f7f2e9]">
-      <Container>
+      <Container fluid>
         <div className="grid lg:grid-cols-2">
-          <div className="relative min-h-80 sm:min-h-96 lg:min-h-[480px]">
+          <div className="relative min-h-80 sm:min-h-96 lg:min-h-[400px] xl:min-h-[440px]">
             <Image
               src="/kaicho-lifestyle-banner.jpg"
               alt="Enjoying a nourishing bowl of Kaicho porridge at home"
@@ -17,7 +17,7 @@ export default function PromiseSection() {
               className="object-cover object-center"
             />
             <div className="absolute inset-0 bg-linear-to-t from-black/55 via-transparent to-transparent" />
-            <p className="absolute bottom-8 left-6 right-6 max-w-xs font-display text-3xl font-semibold leading-tight text-white sm:bottom-10 sm:left-10">
+            <p className="absolute bottom-8 left-6 right-6 max-w-xs font-display text-2xl font-semibold leading-tight text-white sm:text-3xl sm:bottom-10 sm:left-10">
               A healthier tomorrow, together.
             </p>
           </div>
@@ -27,7 +27,7 @@ export default function PromiseSection() {
               <span aria-hidden="true" className="h-px w-8 bg-brand" />
               <span className="text-xs font-bold uppercase tracking-[0.25em] text-brand">Our Promise</span>
             </div>
-            <h2 id="our-promise" className="mt-4 font-display text-3xl font-semibold leading-tight tracking-tight text-ink sm:text-4xl">
+            <h2 id="our-promise" className="mt-4 font-display text-2xl font-semibold leading-tight tracking-tight text-ink sm:text-3xl xl:text-4xl">
               Committed to a Better Tomorrow
             </h2>
             <p className="mt-5 max-w-xl text-base leading-7 text-ink-muted">
