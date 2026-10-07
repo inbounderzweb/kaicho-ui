@@ -107,29 +107,29 @@
     --unit: 1px;
     /* left edge = header pill inset + pill padding, so copy lines up with the logo */
     --edge: calc(clamp(20px, 2.0175vw, 40px) + clamp(24px, 2.9vw, 52px));
-    --desktop-unit: min(calc(100vw / 1586), calc(100svh / 1000), 1.15px);
-    min-height: max(560px, calc(100svh - clamp(80px, 6.305vw, 110px)));
+    --desktop-unit: min(calc(100vw / 1586), calc(100svh / 1000), 1px);
+    min-height: max(560px, calc(100svh - clamp(60px, calc(4.6vw - 8px), 68px)));
   }
   .foliage { height: 100%; }
   .leaves { object-position: center; }
   .content { align-items: flex-start; justify-content: center; width: 100%; min-height: inherit; margin: 0 auto; padding: calc(var(--desktop-unit) * 110) calc(var(--desktop-unit) * 128) calc(var(--desktop-unit) * 90) calc(var(--edge) + 4vw + 60px); }
   .copy { width: calc(var(--desktop-unit) * 560); max-width: 44%; text-align: left; }
-  .eyebrow { position: relative; top: calc(var(--desktop-unit) * 6); display: flex; align-items: center; gap: calc(var(--desktop-unit) * 26); margin-bottom: calc(var(--desktop-unit) * 24); font-size: max(11px, calc(var(--desktop-unit) * 13)); font-weight: 600; line-height: 1.4; letter-spacing: .28em; text-transform: uppercase; }
+  .eyebrow { position: relative; top: calc(var(--desktop-unit) * 6); display: flex; align-items: center; gap: calc(var(--desktop-unit) * 26); margin-bottom: calc(var(--desktop-unit) * 24); font-size: max(11px, calc(var(--desktop-unit) * 12)); font-weight: 600; line-height: 1.4; letter-spacing: .28em; text-transform: uppercase; }
   .eyebrow::after { content: ""; width: calc(var(--desktop-unit) * 60); height: 2px; background: #ffffff73; }
-  .title { min-height: calc(var(--desktop-unit) * 148); font-size: max(40px, calc(var(--desktop-unit) * 74)); font-weight: 700; line-height: .98; letter-spacing: -.035em; }
-  .longTitle { font-size: max(28px, calc(var(--desktop-unit) * 44)); line-height: 1.3; letter-spacing: -.025em; }
-  .description { margin-top: calc(var(--desktop-unit) * 20); color: #ffffffbf; font-size: max(15px, calc(var(--desktop-unit) * 22)); font-weight: 500; line-height: 1.35; white-space: nowrap; }
+  .title { min-height: calc(var(--desktop-unit) * 132); font-size: max(38px, calc(var(--desktop-unit) * 66)); font-weight: 700; line-height: .98; letter-spacing: -.035em; }
+  .longTitle { font-size: max(26px, calc(var(--desktop-unit) * 40)); line-height: 1.3; letter-spacing: -.025em; }
+  .description { margin-top: calc(var(--desktop-unit) * 20); color: #ffffffbf; font-size: max(15px, calc(var(--desktop-unit) * 19)); font-weight: 500; line-height: 1.35; white-space: nowrap; }
   .productStage { position: absolute; top: calc(50% + var(--desktop-unit) * 18); right: calc(6.5% - 10px); width: 44%; height: auto; aspect-ratio: 1; margin: 0; transform: translateY(-50%) scale(var(--scroll-zoom, 1)); }
   .productImage { filter: drop-shadow(0 18px 12px #001c1a35); }
-  .features { width: calc(var(--desktop-unit) * 480); max-width: 44%; margin-top: calc(var(--desktop-unit) * 44); transform: translateX(calc(var(--desktop-unit) * -24)); }
-  .featureArtwork { width: calc(var(--desktop-unit) * 52); height: calc(var(--desktop-unit) * 52); border: 2px solid #ffffff; border-radius: 50%; }
-  .featureIcon { height: calc(var(--desktop-unit) * 34); }
+  .features { width: calc(var(--desktop-unit) * 440); max-width: 44%; margin-top: calc(var(--desktop-unit) * 38); transform: translateX(calc(var(--desktop-unit) * -24)); }
+  .featureArtwork { width: calc(var(--desktop-unit) * 46); height: calc(var(--desktop-unit) * 46); border: 2px solid #ffffff; border-radius: 50%; }
+  .featureIcon { height: calc(var(--desktop-unit) * 30); }
   .features li:first-child .featureArtwork { border: 0; }
-  .features li:first-child .featureIcon { height: calc(var(--desktop-unit) * 52); }
+  .features li:first-child .featureIcon { height: calc(var(--desktop-unit) * 46); }
   .features li:last-child .featureArtwork { border: 0; }
-  .features li:last-child .featureIcon { height: calc(var(--desktop-unit) * 52); }
-  .features p { margin-top: calc(var(--desktop-unit) * 10); font-size: max(12px, calc(var(--desktop-unit) * 15)); line-height: 1.3; font-weight: 400; }
-  .cta { gap: calc(var(--desktop-unit) * 18); min-width: calc(var(--desktop-unit) * 260); height: max(44px, calc(var(--desktop-unit) * 54)); margin-top: calc(var(--desktop-unit) * 44); padding: 0 calc(var(--desktop-unit) * 26); background: #00a861; font-size: max(14px, calc(var(--desktop-unit) * 18)); font-weight: 500; }
+  .features li:last-child .featureIcon { height: calc(var(--desktop-unit) * 46); }
+  .features p { margin-top: calc(var(--desktop-unit) * 10); font-size: max(12px, calc(var(--desktop-unit) * 14)); line-height: 1.3; font-weight: 400; }
+  .cta { gap: calc(var(--desktop-unit) * 18); min-width: calc(var(--desktop-unit) * 230); height: max(42px, calc(var(--desktop-unit) * 48)); margin-top: calc(var(--desktop-unit) * 38); padding: 0 calc(var(--desktop-unit) * 26); background: #00a861; font-size: max(14px, calc(var(--desktop-unit) * 16)); font-weight: 500; }
   .ctaArrow { width: calc(var(--desktop-unit) * 22); height: calc(var(--desktop-unit) * 22); }
   .controls { bottom: calc(var(--desktop-unit) * 52); opacity: .85; }
   .dots button { width: 32px; height: 32px; }
