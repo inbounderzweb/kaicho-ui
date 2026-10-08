@@ -33,7 +33,7 @@ export default function StorefrontChrome({ children }: { children: React.ReactNo
     <>
       <Header />
       {showLocationBar && <LocationBar />}
-      <main className="flex-1 pb-16 lg:pb-0">{children}</main>
+      <main className="flex-1">{children}</main>
       <Footer />
       <MobileTabBar />
       <WhatsAppButton />

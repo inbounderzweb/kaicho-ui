@@ -87,6 +87,30 @@
   .hero:hover .productArrow { opacity: 1; }
 }
 
+/* Phones. The hero must fit between the sticky top bar (60 units + 10px) and the fixed
+   bottom tab bar (56px + safe area) so the CTA is visible without scrolling.
+   Text scales with width (--unit); the product image takes whatever height is left. */
+@media (max-width: 559px) {
+  .hero {
+    --visible: calc(100svh - var(--unit) * 60 - 10px - 56px - env(safe-area-inset-bottom));
+    --stage: clamp(180px, calc(100svh - var(--unit) * 394 - 82px - env(safe-area-inset-bottom)), calc(var(--unit) * 345));
+    display: flex;
+    min-height: var(--visible);
+  }
+  .foliage { height: calc(var(--unit) * 373); }
+  .content { flex: 1; padding: calc(var(--unit) * 24) calc(var(--unit) * 25) calc(var(--unit) * 44); }
+  .copy { margin-bottom: calc(var(--unit) * 24); }
+  .title { font-size: max(24px, calc(var(--unit) * 32)); line-height: 1.19; min-height: 2.38em; }
+  .description { font-size: max(13px, calc(var(--unit) * 16)); line-height: 1.3; }
+  /* Auto margins hand any spare height to the gaps around the image. */
+  .productStage { width: var(--stage); height: var(--stage); margin-top: auto; margin-bottom: auto; margin-left: calc(var(--stage) * .13); }
+  .features { width: calc(var(--unit) * 380 - 28px); margin-top: 0; transform: translate(calc(var(--unit) * -7), -4px); }
+  .featureArtwork, .featureIcon { height: calc(var(--unit) * 40 - 16px); }
+  .features p { font-size: max(7px, calc(var(--unit) * 14 - 5px)); line-height: max(9px, calc(var(--unit) * 14 - 3px)); }
+  .cta { height: max(44px, calc(var(--unit) * 44)); margin-top: calc(var(--unit) * 20); }
+  .productArrow { top: calc(var(--unit) * 156 + var(--stage) / 2 - 18px); }
+}
+
 @media (min-width: 560px) and (max-width: 1023px) {
   .hero { --unit: 1.2px; min-height: max(906px, calc(100svh - 128px)); }
   .foliage { height: 510px; }

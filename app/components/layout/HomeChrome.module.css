@@ -137,12 +137,12 @@
 @media (max-width: 767px) {
   /* The supplied mobile artwork is proportional to a 414px-wide viewport. */
   .homeTopBar {
-    height: calc(100vw * 60 / 414);
+    height: calc(100vw * 60 / 414 + 10px);
     padding-inline: calc(100vw * 13 / 414);
   }
 
   .homeTopBar > a > img {
-    width: calc(100vw * 100 / 414);
+    width: calc(100vw * 100 / 414 - 5px);
     height: auto;
   }
 
@@ -176,52 +176,20 @@
     font-size: calc(100vw * 10 / 414);
   }
 
-  .homeTabBar {
-    height: calc(100vw * 60 / 414 + env(safe-area-inset-bottom));
-    border-top-color: #d8dfd8;
-    background: #f7f7f5;
-  }
-
-  .homeTabBar > a {
-    justify-content: center;
-    gap: calc(100vw * 6 / 414);
-    padding-block: 0;
-    border-top-width: calc(100vw * 2 / 414);
-    color: #5b5d5b;
-  }
-
-  .homeTabBar > a[aria-current="page"] {
-    border-top-color: #55a66b;
-    background: #e9f5ed;
-    color: #3d8750;
-  }
-
-  .homeTabBar > a > svg {
-    width: calc(100vw * 18 / 414);
-    height: calc(100vw * 18 / 414);
-  }
-
-  .homeTabBar > a > span {
-    font-size: calc(100vw * 11 / 414);
-    line-height: 1.2;
-    font-weight: 600;
-  }
-
   .homeContact {
     right: calc(100vw * 22 / 414);
-    bottom: calc(100vw * 86 / 414 + env(safe-area-inset-bottom));
+    bottom: calc(72px + env(safe-area-inset-bottom));
   }
 
   .homeContactToggle,
   .homeContactImage {
-    width: calc(100vw * 44 / 414);
-    height: calc(100vw * 44 / 414);
+    width: max(44px, calc(100vw * 44 / 414));
+    height: max(44px, calc(100vw * 44 / 414));
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .homeHeader,
-  .homeTabBar,
   .homeContact *,
   .homeContactToggle {
     transition: none;

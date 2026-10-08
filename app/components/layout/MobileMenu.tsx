@@ -6,10 +6,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useRef } from "react";
 import Button from "../ui/Button";
 import { NAV_LINKS, isNavLinkActive } from "./nav-links";
-import { IconClose, IconMail, IconMapPin, IconPhone, IconUser } from "../ui/icons";
-import { useCurrentUser } from "@/lib/hooks/useCurrentUser";
-import { getAccountHref } from "@/lib/auth/getAccountHref";
-import { useLocation } from "@/lib/location/useLocation";
+import { IconArrowRight, IconClose } from "../ui/icons";
 
 export default function MobileMenu({
   open,
@@ -20,9 +17,6 @@ export default function MobileMenu({
 }) {
   const pathname = usePathname();
   const panelRef = useRef<HTMLDivElement>(null);
-  const { data: user } = useCurrentUser();
-  const accountHref = getAccountHref(user);
-  const { label: locationLabelText, isResolved: hasLocation, openSelector } = useLocation();
 
   useEffect(() => {
     if (!open) return;
@@ -90,43 +84,17 @@ export default function MobileMenu({
               href={link.href}
               onClick={onClose}
               aria-current={isNavLinkActive(pathname, link.href) ? "page" : undefined}
-              className={`rounded-xl border-l-4 px-3 py-3.5 text-lg font-semibold transition-colors hover:bg-brand-soft hover:text-brand ${isNavLinkActive(pathname, link.href) ? "border-brand bg-brand-soft text-brand-dark" : "border-transparent text-ink"}`}
+              className={`px-3 py-3.5 text-[17px] transition-colors hover:text-brand ${isNavLinkActive(pathname, link.href) ? "font-bold text-brand-dark" : "font-normal text-ink"}`}
             >
               {link.label}
             </a>
           ))}
         </nav>
 
-        <div className="space-y-3 border-t border-border px-5 py-6">
-          <button
-            type="button"
-            onClick={() => {
-              onClose();
-              openSelector();
-            }}
-            className="flex w-full items-center gap-3 text-left text-sm text-ink-muted"
-          >
-            <IconMapPin className="h-4 w-4 shrink-0 text-brand" />
-            <span className="min-w-0 flex-1 truncate">
-              {hasLocation ? locationLabelText : "Set your delivery area"}
-            </span>
-            <span className="shrink-0 font-semibold text-brand">Change</span>
-          </button>
-          <Link
-            href={accountHref}
-            onClick={onClose}
-            className="flex items-center gap-3 text-sm text-ink-muted"
-          >
-            <IconUser className="h-4 w-4 text-brand" /> {user ? "My Account" : "Login / Account"}
-          </Link>
-          <a href="tel:+918792799631" className="flex items-center gap-3 text-sm text-ink-muted">
-            <IconPhone className="h-4 w-4 text-brand" /> +91 87927 99631
-          </a>
-          <a href="mailto:hello@kaicho.in" className="flex items-center gap-3 text-sm text-ink-muted">
-            <IconMail className="h-4 w-4 text-brand" /> hello@kaicho.in
-          </a>
-          <Button href="/products" onClick={onClose} className="mt-2 w-full">
+        <div className="border-t border-border px-5 py-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))]">
+          <Button href="/products" onClick={onClose} className="w-full">
             Shop Now
+            <IconArrowRight aria-hidden="true" className="h-4 w-4" />
           </Button>
         </div>
       </div>
