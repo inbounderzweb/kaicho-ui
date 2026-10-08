@@ -43,7 +43,7 @@ export default function Header() {
         }`}
       >
         {/* Mobile top bar: hamburger — logo — search + cart */}
-        <div className={`mx-auto grid h-16 w-full max-w-[1280px] grid-cols-[1fr_auto_1fr] items-center px-4 sm:px-6 lg:hidden ${isHome ? styles.homeTopBar : ""}`}>
+        <div className={`mx-auto grid h-[74px] w-full max-w-[1280px] grid-cols-[1fr_auto_1fr] items-center px-4 sm:px-6 lg:hidden ${isHome ? styles.homeTopBar : ""}`}>
           <div className="flex items-center justify-self-start gap-0.5">
             <button
               type="button"
@@ -63,7 +63,7 @@ export default function Header() {
               width={110}
               height={35}
               loading="eager"
-              className="h-8 w-auto"
+              className="h-[30.4px] w-auto"
             />
           </Link>
 
