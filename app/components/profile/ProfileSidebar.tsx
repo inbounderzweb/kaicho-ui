@@ -6,16 +6,19 @@ import {
   IconLogout,
   IconMapPin,
   IconMessageCircle,
+  IconShieldCheck,
   IconTruck,
 } from "../ui/icons";
 import { useLogout } from "@/lib/hooks/useLogout";
+import { useTrackingConsent } from "@/lib/hooks/useTrackingConsent";
 
-export type ProfileSectionId = "orders" | "addresses" | "saved" | "support";
+export type ProfileSectionId = "orders" | "addresses" | "saved" | "support" | "privacy";
 
 const NAV_ITEMS: { id: ProfileSectionId; label: string; Icon: typeof IconTruck }[] = [
   { id: "orders", label: "My Orders", Icon: IconTruck },
   { id: "addresses", label: "Your Addresses", Icon: IconMapPin },
   // { id: "saved", label: "Saved Items", Icon: IconHeart },
+  { id: "privacy", label: "Privacy", Icon: IconShieldCheck },
   { id: "support", label: "Customer Support", Icon: IconMessageCircle },
 ];
 
@@ -28,6 +31,9 @@ export default function ProfileSidebar({
 }) {
   const router = useRouter();
   const logout = useLogout();
+  // The Privacy tab only exists while the backend has interaction tracking on.
+  const { data: consent } = useTrackingConsent();
+  const navItems = NAV_ITEMS.filter((item) => item.id !== "privacy" || consent !== undefined);
 
   const handleLogout = () => {
     // Redirect regardless of the request outcome — useLogout clears the
@@ -44,7 +50,7 @@ export default function ProfileSidebar({
           so it sat off-screen to the right and looked like it had
           disappeared. It's now a separate, always-visible row below. */}
       <div className="flex gap-2 overflow-x-auto pb-1 lg:flex-col lg:overflow-visible lg:gap-2 lg:pb-0">
-        {NAV_ITEMS.map(({ id, label, Icon }) => {
+        {navItems.map(({ id, label, Icon }) => {
           const isActive = active === id;
           return (
             <button

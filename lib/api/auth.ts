@@ -18,6 +18,8 @@ export interface AuthUser {
   role: UserRole;
   createdAt: string;
   lastLoginAt?: string;
+  /** null/absent = never asked. Delivered with /auth/me, so no extra request. */
+  trackingConsent?: { granted: boolean; updatedAt: string } | null;
 }
 
 export interface SendOtpResult {

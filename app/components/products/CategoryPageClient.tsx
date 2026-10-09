@@ -10,6 +10,7 @@ import Pagination from "./Pagination";
 import { useCatalogFilters } from "@/lib/hooks/useCatalogFilters";
 import { useCategoryProducts } from "@/lib/hooks/useCategoryProducts";
 import { trackEvent } from "@/lib/analytics/events";
+import { recordInteraction } from "@/lib/interaction/tracker";
 import { toEcommerceItem } from "@/lib/analytics/ecommerce";
 
 // The /category/:slug product grid — same search/filter/sort/pagination UX
@@ -51,6 +52,11 @@ export default function CategoryPageClient({ slug }: { slug: string }) {
       ),
     });
   }, [data, slug]);
+
+  const categoryId = data?.items[0]?.category?.categoryId;
+  useEffect(() => {
+    if (categoryId) recordInteraction({ type: "category_view", categoryId });
+  }, [categoryId]);
 
   return (
     <Container className="py-8 sm:py-10">

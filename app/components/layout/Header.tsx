@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 import Button from "../ui/Button";
 import MobileMenu from "./MobileMenu";
 import ProductSearch from "./ProductSearch";
+import NotificationBell from "./NotificationBell";
 import { NAV_LINKS, isNavLinkActive } from "./nav-links";
 import { useCartStore } from "@/lib/store/cart.store";
 import { useCurrentUser } from "@/lib/hooks/useCurrentUser";
@@ -58,7 +59,7 @@ export default function Header() {
 
           <Link href="/" className="flex items-center" aria-label="Kaicho Foods home">
             <Image
-              src="/logo_07aad60c-0e17-4a1b-936b-88609e93a1cc.svg"
+              src="/icons/kaicho_logo.svg"
               alt="Kaicho Foods"
               width={110}
               height={35}
@@ -77,6 +78,7 @@ export default function Header() {
             >
               <IconSearch className="h-5 w-5" />
             </button>
+            <NotificationBell />
             <Link
               href="/cart"
               aria-label={`Cart, ${cartCount} items`}
@@ -94,7 +96,7 @@ export default function Header() {
         <div className={`mx-auto hidden h-20 w-full max-w-[1280px] items-center justify-between px-5 sm:px-6 lg:flex lg:px-8 ${styles.homeDesktopBar}`}>
           <Link href="/" className={`flex shrink-0 items-center ${styles.homeDesktopLogo}`} aria-label="Kaicho Foods home">
             <Image
-              src="/logo_07aad60c-0e17-4a1b-936b-88609e93a1cc.svg"
+              src="/icons/kaicho_logo.svg"
               alt="Kaicho Foods"
               width={132}
               height={42}
@@ -127,6 +129,7 @@ export default function Header() {
             >
               <IconSearch className="h-5 w-5" />
             </button>
+            <NotificationBell />
             <Link
               href={accountHref}
               aria-label="Account"
