@@ -73,6 +73,76 @@ export function loginWithGoogle(
   });
 }
 
+/** The backend's machine-readable code for "right password, email not verified yet". */
+export const EMAIL_NOT_VERIFIED = "EMAIL_NOT_VERIFIED";
+
+export function isEmailNotVerifiedError(error: unknown): boolean {
+  return (
+    error instanceof ApiError &&
+    error.status === 403 &&
+    (error.details as { code?: unknown } | undefined)?.code === EMAIL_NOT_VERIFIED
+  );
+}
+
+export interface RegisterInput {
+  name: string;
+  email: string;
+  password: string;
+}
+
+/** Creates an UNVERIFIED account and emails a link. Does not sign the user in. */
+export function registerAccount(input: RegisterInput): Promise<{ registered: boolean }> {
+  return apiFetch<{ registered: boolean }>("/auth/register", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+}
+
+export function loginWithPassword(
+  email: string,
+  password: string
+): Promise<{ user: AuthUser; requiresName: boolean }> {
+  return apiFetch<{ user: AuthUser; requiresName: boolean }>("/auth/login", {
+    method: "POST",
+    body: JSON.stringify({ email, password }),
+  });
+}
+
+/** Exchanges the emailed one-time token for a verified account + session. */
+export function verifyEmail(token: string): Promise<{ user: AuthUser; requiresName: boolean }> {
+  return apiFetch<{ user: AuthUser; requiresName: boolean }>("/auth/verify-email", {
+    method: "POST",
+    body: JSON.stringify({ token }),
+  });
+}
+
+export interface ResendVerificationResult {
+  sent: boolean;
+  /** Seconds before another resend will actually send - drives the countdown. */
+  resendAfter: number;
+}
+
+export function resendVerification(email: string): Promise<ResendVerificationResult> {
+  return apiFetch<ResendVerificationResult>("/auth/resend-verification", {
+    method: "POST",
+    body: JSON.stringify({ email }),
+  });
+}
+
+/**
+ * Message safe to show a user. Client-error messages from the auth endpoints
+ * are deliberately generic/validation-level, so they pass through; anything
+ * else (5xx, network, unparseable) collapses to a neutral line instead of
+ * leaking server internals.
+ */
+export function friendlyAuthError(error: unknown): string | undefined {
+  if (!error) return undefined;
+  if (error instanceof ApiError && error.status >= 400 && error.status < 500) {
+    return error.message;
+  }
+  return "Something went wrong. Please try again.";
+}
+
 export function updateName(name: string): Promise<{ user: AuthUser }> {
   return apiFetch<{ user: AuthUser }>("/auth/me", {
     method: "PATCH",
