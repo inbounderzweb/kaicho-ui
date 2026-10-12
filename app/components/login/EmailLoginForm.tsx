@@ -56,6 +56,11 @@ export default function EmailLoginForm({
         error={errors.password?.message}
         {...register("password")}
       />
+      <div className="-mt-3 text-right">
+        <Link href="/forgot-password" className="text-xs font-semibold text-forest hover:text-brand-dark">
+          Forgot password?
+        </Link>
+      </div>
 
       {unverified ? (
         <div className="space-y-3 rounded-2xl border border-border bg-cream/50 p-4">

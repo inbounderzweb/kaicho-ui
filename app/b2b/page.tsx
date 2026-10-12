@@ -33,10 +33,10 @@ const strengths = [
   { Icon: FiUsers, title: "Dedicated Support", text: "A team to help you plan your order." },
 ];
 const products = [
-  { name: "Veg Oats Porridge", image: "/kaicho-hero.png" },
-  { name: "Chicken Oats Porridge", image: "/kaicho-chickenoats.png" },
-  { name: "Navadhanya Porridge", image: "/image_navadhanya.png" },
-  { name: "Broccoli & Mushroom Oats Porridge", image: "/Broccoli-&-Mushroom-Oats-Porridge.png" },
+  { name: "Chicken Oats Porridge", image: "/hero-page/product-images/desktop-Chicken-Oats.png" },
+  { name: "Broccoli & Mushroom Oats Porridge", image: "/hero-page/product-images/desktop-Broccolli.png" },
+  { name: "Mixed Millet Porridge", image: "/hero-page/product-images/desktop-Mixed-Millet.png" },
+  { name: "Navadhanya Porridge", image: "/hero-page/product-images/desktop-navadhanya.png" },
 ];
 const eyebrow = "text-xs font-bold uppercase tracking-[0.18em] text-brand-dark";
 const heading = "mt-3 font-display text-3xl font-semibold leading-tight tracking-tight text-ink sm:text-4xl";
@@ -59,7 +59,7 @@ export default function B2BPage() {
             <div className="flex flex-wrap gap-3"><Button href="#inquiry">Get a Quote <FiArrowRight aria-hidden="true" /></Button><Button href="/products" variant="ghost">Explore Our Range <FiArrowRight aria-hidden="true" /></Button></div>
           </div>
           <div className="relative min-w-0">
-            <Image src="/kaicho-hero.png" alt="Kaicho Veg Oats Porridge with a freshly prepared bowl" width={1536} height={1024} sizes="(min-width: 1024px) 50vw, 100vw" preload className="h-auto w-full rounded-t-[3rem] object-contain lg:rounded-[3rem]" />
+            <Image src="/hero-page/product-images/desktop-Chicken-Oats.png" alt="Kaicho Veg Oats Porridge with a freshly prepared bowl" width={1536} height={1024} sizes="(min-width: 1024px) 50vw, 100vw" preload className="h-auto w-full rounded-t-[3rem] object-contain drop-shadow-[0_24px_28px_rgba(0,0,0,0.28)] lg:rounded-[3rem]" />
             <p className="my-5 text-center font-display text-lg italic text-brand-dark">Tradition nourishes tomorrow.</p>
           </div>
         </Container>

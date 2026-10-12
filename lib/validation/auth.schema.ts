@@ -69,3 +69,19 @@ export type LoginFormValues = z.infer<typeof loginFormSchema>;
 export const resendFormSchema = z.object({ email: emailField });
 
 export type ResendFormValues = z.infer<typeof resendFormSchema>;
+
+export const forgotPasswordFormSchema = z.object({ email: emailField });
+
+export type ForgotPasswordFormValues = z.infer<typeof forgotPasswordFormSchema>;
+
+export const resetPasswordFormSchema = z
+  .object({
+    password: newPasswordField,
+    confirmPassword: z.string().min(1, "Please confirm your password"),
+  })
+  .refine((v) => v.password === v.confirmPassword, {
+    message: "Passwords do not match",
+    path: ["confirmPassword"],
+  });
+
+export type ResetPasswordFormValues = z.infer<typeof resetPasswordFormSchema>;

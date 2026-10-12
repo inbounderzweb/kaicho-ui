@@ -131,6 +131,28 @@ export function resendVerification(email: string): Promise<ResendVerificationRes
   });
 }
 
+export interface ForgotPasswordResult {
+  sent: boolean;
+  /** Seconds before another request will actually send - drives the countdown. */
+  resendAfter: number;
+}
+
+/** Always resolves the same way whether or not the address has an account. */
+export function forgotPassword(email: string): Promise<ForgotPasswordResult> {
+  return apiFetch<ForgotPasswordResult>("/auth/forgot-password", {
+    method: "POST",
+    body: JSON.stringify({ email }),
+  });
+}
+
+/** Spends the emailed one-time token to set a new password. Does not sign in. */
+export function resetPassword(token: string, password: string): Promise<{ reset: boolean }> {
+  return apiFetch<{ reset: boolean }>("/auth/reset-password", {
+    method: "POST",
+    body: JSON.stringify({ token, password }),
+  });
+}
+
 /**
  * Message safe to show a user. Client-error messages from the auth endpoints
  * are deliberately generic/validation-level, so they pass through; anything

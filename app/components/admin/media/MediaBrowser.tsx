@@ -244,7 +244,7 @@ export default function MediaBrowser({
                   {item.mediaType === "IMAGE" ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
-                      src={resolveMediaUrl(item.thumbnailUrl!)}
+                      src={resolveMediaUrl(item.thumbnailUrl ?? item.url)}
                       alt={item.altText ?? item.originalName}
                       loading="lazy"
                       className="h-full w-full object-cover transition-transform group-hover:scale-105"
