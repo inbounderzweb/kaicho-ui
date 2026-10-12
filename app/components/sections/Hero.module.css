@@ -93,13 +93,13 @@
 @media (max-width: 559px) {
   .hero {
     --visible: calc(100svh - var(--unit) * 60 - 10px - 56px - env(safe-area-inset-bottom));
-    --stage: clamp(180px, calc(100svh - var(--unit) * 394 - 82px - env(safe-area-inset-bottom)), calc(var(--unit) * 345));
+    --stage: clamp(180px, calc(100svh - var(--unit) * 394 - 88px - env(safe-area-inset-bottom)), calc(var(--unit) * 345));
     display: flex;
     min-height: var(--visible);
   }
   .foliage { height: calc(var(--unit) * 373); }
   .content { flex: 1; padding: calc(var(--unit) * 24) calc(var(--unit) * 25) calc(var(--unit) * 44); }
-  .copy { margin-bottom: calc(var(--unit) * 24); }
+  .copy { margin-top: 6px; margin-bottom: calc(var(--unit) * 24); }
   .title { font-size: max(24px, calc(var(--unit) * 32)); line-height: 1.19; min-height: 2.38em; }
   .description { font-size: max(13px, calc(var(--unit) * 16)); line-height: 1.3; }
   /* Auto margins hand any spare height to the gaps around the image. */

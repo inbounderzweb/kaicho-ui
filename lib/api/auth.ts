@@ -18,6 +18,8 @@ export interface AuthUser {
   role: UserRole;
   createdAt: string;
   lastLoginAt?: string;
+  /** null/absent = never asked. Delivered with /auth/me, so no extra request. */
+  trackingConsent?: { granted: boolean; updatedAt: string } | null;
 }
 
 export interface SendOtpResult {
@@ -71,6 +73,98 @@ export function loginWithGoogle(
     method: "POST",
     body: JSON.stringify({ credential }),
   });
+}
+
+/** The backend's machine-readable code for "right password, email not verified yet". */
+export const EMAIL_NOT_VERIFIED = "EMAIL_NOT_VERIFIED";
+
+export function isEmailNotVerifiedError(error: unknown): boolean {
+  return (
+    error instanceof ApiError &&
+    error.status === 403 &&
+    (error.details as { code?: unknown } | undefined)?.code === EMAIL_NOT_VERIFIED
+  );
+}
+
+export interface RegisterInput {
+  name: string;
+  email: string;
+  password: string;
+}
+
+/** Creates an UNVERIFIED account and emails a link. Does not sign the user in. */
+export function registerAccount(input: RegisterInput): Promise<{ registered: boolean }> {
+  return apiFetch<{ registered: boolean }>("/auth/register", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+}
+
+export function loginWithPassword(
+  email: string,
+  password: string
+): Promise<{ user: AuthUser; requiresName: boolean }> {
+  return apiFetch<{ user: AuthUser; requiresName: boolean }>("/auth/login", {
+    method: "POST",
+    body: JSON.stringify({ email, password }),
+  });
+}
+
+/** Exchanges the emailed one-time token for a verified account + session. */
+export function verifyEmail(token: string): Promise<{ user: AuthUser; requiresName: boolean }> {
+  return apiFetch<{ user: AuthUser; requiresName: boolean }>("/auth/verify-email", {
+    method: "POST",
+    body: JSON.stringify({ token }),
+  });
+}
+
+export interface ResendVerificationResult {
+  sent: boolean;
+  /** Seconds before another resend will actually send - drives the countdown. */
+  resendAfter: number;
+}
+
+export function resendVerification(email: string): Promise<ResendVerificationResult> {
+  return apiFetch<ResendVerificationResult>("/auth/resend-verification", {
+    method: "POST",
+    body: JSON.stringify({ email }),
+  });
+}
+
+export interface ForgotPasswordResult {
+  sent: boolean;
+  /** Seconds before another request will actually send - drives the countdown. */
+  resendAfter: number;
+}
+
+/** Always resolves the same way whether or not the address has an account. */
+export function forgotPassword(email: string): Promise<ForgotPasswordResult> {
+  return apiFetch<ForgotPasswordResult>("/auth/forgot-password", {
+    method: "POST",
+    body: JSON.stringify({ email }),
+  });
+}
+
+/** Spends the emailed one-time token to set a new password. Does not sign in. */
+export function resetPassword(token: string, password: string): Promise<{ reset: boolean }> {
+  return apiFetch<{ reset: boolean }>("/auth/reset-password", {
+    method: "POST",
+    body: JSON.stringify({ token, password }),
+  });
+}
+
+/**
+ * Message safe to show a user. Client-error messages from the auth endpoints
+ * are deliberately generic/validation-level, so they pass through; anything
+ * else (5xx, network, unparseable) collapses to a neutral line instead of
+ * leaking server internals.
+ */
+export function friendlyAuthError(error: unknown): string | undefined {
+  if (!error) return undefined;
+  if (error instanceof ApiError && error.status >= 400 && error.status < 500) {
+    return error.message;
+  }
+  return "Something went wrong. Please try again.";
 }
 
 export function updateName(name: string): Promise<{ user: AuthUser }> {

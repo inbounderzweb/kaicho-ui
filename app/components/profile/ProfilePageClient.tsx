@@ -5,6 +5,7 @@ import Link from "next/link";
 import AddressesSection from "./AddressesSection";
 import CustomerSupportSection from "./CustomerSupportSection";
 import OrdersSection from "./OrdersSection";
+import PrivacySection from "./PrivacySection";
 // import SavedItemsSection from "./SavedItemsSection";
 import ProfileSidebar, { type ProfileSectionId } from "./ProfileSidebar";
 import { IconChevronRight } from "../ui/icons";
@@ -14,6 +15,7 @@ const TITLES: Record<ProfileSectionId, string> = {
   orders: "My Orders",
   addresses: "Your Addresses",
   saved: "Saved Items",
+  privacy: "Privacy",
   support: "Customer Support",
 };
 
@@ -102,6 +104,7 @@ export default function ProfilePageClient() {
           {section === "orders" && <OrdersSection />}
           {section === "addresses" && <AddressesSection />}
           {/* {section === "saved" && <SavedItemsSection />} */}
+          {section === "privacy" && <PrivacySection />}
           {section === "support" && <CustomerSupportSection />}
         </div>
       </div>

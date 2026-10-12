@@ -65,7 +65,8 @@ export default function NameStepForm({
         <p className="animate-fade-up text-xs font-semibold text-sale">{errorMessage}</p>
       )}
 
-      <Button type="submit" disabled={updateName.isPending} size="lg" className="w-full">
+      <div className="[&>button]:w-full">
+      <Button type="submit" disabled={updateName.isPending} size="lg">
         {updateName.isPending ? (
           <span className="inline-flex items-center gap-2">
             <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
@@ -78,6 +79,7 @@ export default function NameStepForm({
           </>
         )}
       </Button>
+      </div>
     </form>
   );
 }

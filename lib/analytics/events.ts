@@ -1,5 +1,6 @@
 import { pushToDataLayer } from "./gtm";
 import { hasAnalyticsConsent } from "./consent";
+import { forwardAnalyticsEvent } from "../interaction/bridge";
 import type { StandardEvent, StandardEventName } from "./types";
 
 /**
@@ -15,6 +16,9 @@ export function trackEvent<N extends StandardEventName>(
   name: N,
   params: Extract<StandardEvent, { name: N }>["params"]
 ) {
+  // Private interaction history has its own account-level opt-in, so it is
+  // forwarded before (and independently of) the GTM consent gate below.
+  forwardAnalyticsEvent({ name, params } as StandardEvent);
   if (!hasAnalyticsConsent()) return;
   pushToDataLayer({ event: name, ...params });
 }

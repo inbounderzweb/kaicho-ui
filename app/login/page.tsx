@@ -4,7 +4,7 @@ import { buildPageMetadata } from "@/lib/seo/metadata";
 
 export const metadata = buildPageMetadata({
   title: "Login",
-  description: "Log in to your Kaicho account with your mobile number or Google.",
+  description: "Log in to your Kaicho account with your email and password, or with Google.",
   path: "/login",
   noIndex: true,
 });

@@ -140,6 +140,10 @@ export const inquiryKeys = {
   assignees: ["admin", "inquiries", "assignees"] as const,
 };
 
+export const notificationKeys = {
+  all: ["notifications"] as const,
+};
+
 export const wishlistKeys = {
   all: ["wishlist"] as const,
 };
