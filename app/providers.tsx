@@ -5,6 +5,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useCartStore } from "@/lib/store/cart.store";
 import { useLocationStore } from "@/lib/store/location.store";
 import { useAuthStore } from "@/lib/store/auth.store";
+import InteractionTrackingProvider from "./components/interaction/InteractionTrackingProvider";
+import TrackingConsentBanner from "./components/interaction/TrackingConsentBanner";
 
 export default function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(
@@ -37,6 +39,10 @@ export default function Providers({ children }: { children: React.ReactNode }) {
   }, []);
 
   return (
-    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    <QueryClientProvider client={queryClient}>
+      {children}
+      <InteractionTrackingProvider />
+      <TrackingConsentBanner />
+    </QueryClientProvider>
   );
 }
