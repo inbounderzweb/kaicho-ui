@@ -19,7 +19,7 @@ const TOAST_LIFETIME_MS = 6000;
 // every /admin/** page, matching the shell's own "gate the whole section
 // once" approach.
 export default function AdminOrderNotifications({ enabled }: { enabled: boolean }) {
-  const { notifications, toasts, unreadCount, dismissToast, markAllRead } = useAdminOrderNotifications(enabled);
+  const { notifications, toasts, unreadCount, loadError, dismissToast, markAllRead } = useAdminOrderNotifications(enabled);
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -60,9 +60,14 @@ export default function AdminOrderNotifications({ enabled }: { enabled: boolean 
               New orders
             </div>
             <div className="max-h-96 overflow-y-auto">
+              {loadError && (
+                <p role="status" className="px-4 py-3 text-xs text-amber-700 dark:text-amber-300">
+                  Unable to refresh orders. Retrying automatically.
+                </p>
+              )}
               {notifications.length === 0 ? (
                 <p className="px-4 py-6 text-center text-sm text-black/50 dark:text-white/50">
-                  No new orders yet.
+                  {loadError ? "Order notifications are temporarily unavailable." : "No new orders yet."}
                 </p>
               ) : (
                 notifications.map((n) => (

@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { placeOrder, type PlaceOrderInput, type PlaceOrderResult } from "../api/checkout";
-import { orderKeys } from "./query-keys";
+import { notificationKeys, orderKeys } from "./query-keys";
 
 // The idempotency key is supplied by the caller (CheckoutClient holds one
 // in a ref for the life of the page) rather than generated here — a hook
@@ -17,10 +17,13 @@ export function useCreateOrder() {
       input: PlaceOrderInput;
       idempotencyKey: string;
     }): Promise<PlaceOrderResult> => placeOrder(input, idempotencyKey),
-    onSuccess: () => {
+    onSuccess: ({ order }) => {
       // A new order (even one still PENDING_PAYMENT) belongs in the
       // customer's order list immediately.
       queryClient.invalidateQueries({ queryKey: orderKeys.lists });
+      if (order.status === "CONFIRMED") {
+        queryClient.invalidateQueries({ queryKey: notificationKeys.all });
+      }
     },
   });
 }

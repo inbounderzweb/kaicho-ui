@@ -1,19 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { io, type Socket } from "socket.io-client";
+import { io } from "socket.io-client";
 import { ApiError } from "@/lib/api/ApiError";
 import { apiFetch, BACKEND_ORIGIN } from "@/lib/api/client";
 
-export interface AdminOrderNotification {
-  id: string;
-  orderId: string;
-  orderNumber: string;
-  customerName: string;
-  amount: number;
-  itemsCount: number;
-  createdAt: string;
-}
-
-const MAX_STORED = 20;
+import { watchAdminOrderNotifications, type AdminOrderNotification, type AdminOrderFeed } from "@/lib/notifications/adminOrderNotifications";
+export type { AdminOrderNotification } from "@/lib/notifications/adminOrderNotifications";
 const ALERT_DURATION_MS = 60_000;
 const ALERT_REPEAT_MS = 2400;
 
@@ -99,17 +90,13 @@ function playChime(): void {
   }
 }
 
-// Real-time leg of the new-order admin notification feature (see
-// kaicho-be's modules/notification). One admin-authenticated Socket.IO
-// connection per mounted AdminShell, joined server-side to the "admin" room;
-// an admin who's offline or has no tab open simply picks the order up from
-// the normal /admin/orders list next time they look — this hook only adds
-// the "someone's watching right now" fast path on top.
+// One socket per AdminShell, with durable history/polling for missed events.
 export function useAdminOrderNotifications(enabled: boolean) {
   const [notifications, setNotifications] = useState<AdminOrderNotification[]>([]);
   const [toasts, setToasts] = useState<AdminOrderNotification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
-  const socketRef = useRef<Socket | null>(null);
+  const [loadError, setLoadError] = useState(false);
+  const watcherRef = useRef<ReturnType<typeof watchAdminOrderNotifications> | null>(null);
   const repeatRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const stopRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -151,8 +138,6 @@ export function useAdminOrderNotifications(enabled: boolean) {
   useEffect(() => {
     if (!enabled) return;
 
-    let disposed = false;
-    let retryTimer: ReturnType<typeof setTimeout> | undefined;
     const socket = io(BACKEND_ORIGIN, {
       autoConnect: false,
       // WebSocket only: HTTP long-polling needs every request of a session to
@@ -161,50 +146,36 @@ export function useAdminOrderNotifications(enabled: boolean) {
       // fails with "Session ID unknown" and the admin never connects.
       transports: ["websocket"],
     });
-    socketRef.current = socket;
-
-    // Get a fresh ticket via the same-origin API for each connection/reconnection.
-    const connect = async () => {
-      if (disposed) return;
-      try {
-        const { token } = await apiFetch<{ token: string }>("/admin/notifications/token", { method: "POST" });
-        if (disposed) return;
-        socket.auth = { token };
-        socket.connect();
-      } catch (error) {
-        if (!disposed && !(error instanceof ApiError && [401, 403].includes(error.status))) {
-          retryTimer = setTimeout(connect, 5000);
-        }
-      }
-    };
-    // Own retries so every reconnect obtains a fresh, short-lived ticket.
-    socket.io.reconnection(false);
-    const retry = () => {
-      if (disposed) return;
-      clearTimeout(retryTimer);
-      retryTimer = setTimeout(connect, 5000);
-    };
-    socket.on("connect_error", (err) => {
-      console.warn("[notifications] socket connect_error:", err.message);
-      retry();
+    const watcher = watchAdminOrderNotifications({
+      socket,
+      fetchFeed: () => apiFetch<AdminOrderFeed>("/admin/notifications", { cache: "no-store" }),
+      fetchTicket: () => apiFetch<{ token: string }>("/admin/notifications/token", { method: "POST" }),
+      markRead: (orderIds) => apiFetch("/admin/notifications/read", { method: "POST", body: JSON.stringify({ orderIds }) }),
+      isAuthError: (error) => error instanceof ApiError && [401, 403].includes(error.status),
+      onFeed: (feed) => {
+        setNotifications(feed.items);
+        setUnreadCount(feed.unreadCount);
+        if (feed.unreadCount === 0) stopAlert();
+      },
+      onNewOrders: (orders) => {
+        setToasts((previous) => [...orders, ...previous].slice(0, 3));
+        startAlert();
+      },
+      onError: (error) => setLoadError(error !== null),
     });
-    socket.on("disconnect", retry);
-    void connect();
-
-
-    socket.on("order:new", (payload: Omit<AdminOrderNotification, "id">) => {
-      const entry: AdminOrderNotification = { ...payload, id: `${payload.orderId}-${payload.createdAt}` };
-      setNotifications((prev) => [entry, ...prev].slice(0, MAX_STORED));
-      setUnreadCount((prev) => prev + 1);
-      setToasts((prev) => [...prev, entry]);
-      startAlert();
-    });
+    watcherRef.current = watcher;
+    const refresh = () => { void watcher.refresh(); };
+    const onVisibility = () => { if (document.visibilityState === "visible") refresh(); };
+    window.addEventListener("online", refresh);
+    window.addEventListener("focus", refresh);
+    document.addEventListener("visibilitychange", onVisibility);
 
     return () => {
-      disposed = true;
-      clearTimeout(retryTimer);
-      socket.disconnect();
-      socketRef.current = null;
+      watcher.dispose();
+      watcherRef.current = null;
+      window.removeEventListener("online", refresh);
+      window.removeEventListener("focus", refresh);
+      document.removeEventListener("visibilitychange", onVisibility);
       stopAlert();
     };
   }, [enabled, startAlert, stopAlert]);
@@ -215,8 +186,8 @@ export function useAdminOrderNotifications(enabled: boolean) {
 
   const markAllRead = useCallback(() => {
     stopAlert();
-    setUnreadCount(0);
+    watcherRef.current?.markAllRead();
   }, [stopAlert]);
 
-  return { notifications, toasts, unreadCount, dismissToast, markAllRead };
+  return { notifications, toasts, unreadCount, loadError, dismissToast, markAllRead };
 }

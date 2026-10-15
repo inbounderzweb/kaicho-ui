@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { verifyRazorpayPayment, type VerifyPaymentInput } from "../api/payment";
-import { orderKeys } from "./query-keys";
+import { notificationKeys, orderKeys } from "./query-keys";
 
 // Called from the Razorpay Checkout.js success handler. This is the fast
 // path for updating the UI; the Razorpay webhook is the authoritative one
@@ -15,6 +15,7 @@ export function useVerifyPayment() {
     onSuccess: ({ order }) => {
       queryClient.setQueryData(orderKeys.detail(order.orderNumber), order);
       queryClient.invalidateQueries({ queryKey: orderKeys.lists });
+      queryClient.invalidateQueries({ queryKey: notificationKeys.all });
     },
   });
 }
