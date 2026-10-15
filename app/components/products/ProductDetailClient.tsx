@@ -18,7 +18,7 @@ import { trackEvent } from "@/lib/analytics/events";
 import { toEcommerceItem } from "@/lib/analytics/ecommerce";
 import type { PublicProductDetail } from "@/lib/api/publicProducts";
 
-const PAYMENT_METHODS = ["UPI", "Visa", "Mastercard", "RuPay", "COD"];
+const PAYMENT_METHODS = ["UPI", "Visa", "Mastercard", "RuPay"];
 
 export default function ProductDetailClient({ product }: { product: PublicProductDetail }) {
   const [quantity, setQuantity] = useState(1);

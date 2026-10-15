@@ -8,11 +8,6 @@ const METHODS: { id: PaymentMethod; title: string; description: string }[] = [
     title: "Pay online",
     description: "UPI, cards, net banking & wallets via Razorpay.",
   },
-  {
-    id: "COD",
-    title: "Cash on delivery",
-    description: "Pay in cash when your order arrives.",
-  },
 ];
 
 export default function PaymentMethodSelector({

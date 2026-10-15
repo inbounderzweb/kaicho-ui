@@ -20,7 +20,7 @@ const LEGAL_LINKS = [
   { label: "Refund Policy", href: "/refund-policy" },
 ];
 
-const PAYMENT_METHODS = ["UPI", "Visa", "Mastercard", "RuPay", "COD"];
+const PAYMENT_METHODS = ["UPI", "Visa", "Mastercard", "RuPay"];
 
 export default function Footer() {
   return (

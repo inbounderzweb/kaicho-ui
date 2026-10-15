@@ -235,11 +235,6 @@ export default function CheckoutClient() {
 
     const { order, razorpayOrder } = result;
 
-    if (paymentMethod === "COD") {
-      goToOrder(order.orderNumber);
-      return;
-    }
-
     if (!razorpayOrder) {
       // Order exists but the gateway handle is missing — don't clear the
       // cart, and point the customer at the order so they can retry there.
@@ -251,7 +246,7 @@ export default function CheckoutClient() {
     const razorpayKey = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID;
     if (!razorpayKey) {
       setPendingOrderNumber(order.orderNumber);
-      setFlowError("Online payment isn't configured right now. Please try Cash on Delivery.");
+      setFlowError("Online payment isn't configured right now. Please try again later.");
       return;
     }
 
@@ -449,11 +444,7 @@ export default function CheckoutClient() {
                 disabled={!canPlaceOrder}
                 className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-full bg-brand text-sm font-semibold tracking-wide text-white transition-colors hover:bg-brand-dark disabled:cursor-not-allowed disabled:bg-brand/40"
               >
-                {createOrderMutation.isPending || isPaying
-                  ? "Please wait…"
-                  : paymentMethod === "COD"
-                    ? "Place order"
-                    : "Pay now"}
+                {createOrderMutation.isPending || isPaying ? "Please wait…" : "Pay now"}
               </button>
 
               {!effectiveAddressId && (
