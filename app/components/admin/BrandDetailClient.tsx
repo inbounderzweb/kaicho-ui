@@ -13,6 +13,8 @@ import { brandFormSchema, type BrandFormValues } from "@/lib/validation/brand.sc
 import { ApiError } from "@/lib/api/ApiError";
 import BrandLogoPicker, { type PickedImage } from "./BrandLogoPicker";
 import ConfirmDialog from "./ConfirmDialog";
+import DraftBanner from "./DraftBanner";
+import { useFormDraft } from "@/lib/hooks/admin/useFormDraft";
 import { IconChevronLeft } from "../ui/icons";
 
 function slugifyClient(input: string): string {
@@ -37,6 +39,10 @@ export default function BrandDetailClient({ id }: { id?: string }) {
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [savedFlash, setSavedFlash] = useState(false);
 
+  const form = useForm<BrandFormValues>({
+    resolver: zodResolver(brandFormSchema),
+    defaultValues: { name: "", slug: "", description: "", logoMediaId: "", isActive: true, sortOrder: 0 },
+  });
   const {
     register,
     handleSubmit,
@@ -44,10 +50,7 @@ export default function BrandDetailClient({ id }: { id?: string }) {
     setValue,
     reset,
     formState: { errors },
-  } = useForm<BrandFormValues>({
-    resolver: zodResolver(brandFormSchema),
-    defaultValues: { name: "", slug: "", description: "", logoMediaId: "", isActive: true, sortOrder: 0 },
-  });
+  } = form;
 
   useEffect(() => {
     if (data?.brand) {
@@ -63,6 +66,17 @@ export default function BrandDetailClient({ id }: { id?: string }) {
       setLogo(b.logo);
     }
   }, [data, reset]);
+
+  const draft = useFormDraft({
+    key: isEdit ? `brand:${id}` : "brand:new",
+    form,
+    ready: !isEdit || Boolean(data?.brand),
+    extra: { logo, slugTouched },
+    onRestoreExtra: (x) => {
+      setLogo(x.logo);
+      setSlugTouched(x.slugTouched);
+    },
+  });
 
   const nameValue = watch("name");
   useEffect(() => {
@@ -127,13 +141,17 @@ export default function BrandDetailClient({ id }: { id?: string }) {
     if (isEdit) {
       updateMutation.mutate(payload, {
         onSuccess: () => {
+          draft.clearDraft();
           setSavedFlash(true);
           setTimeout(() => setSavedFlash(false), 2500);
         },
       });
     } else {
       createMutation.mutate(payload, {
-        onSuccess: (res) => router.push(`/admin/brands/${res.brand.brandId}`),
+        onSuccess: (res) => {
+          draft.clearDraft();
+          router.push(`/admin/brands/${res.brand.brandId}`);
+        },
       });
     }
   };
@@ -153,6 +171,8 @@ export default function BrandDetailClient({ id }: { id?: string }) {
         <span className="text-black/30 dark:text-white/30">/</span>
         <span className="font-semibold">{isEdit ? data?.brand.name ?? "Edit" : "New Brand"}</span>
       </div>
+
+<DraftBanner restoredAt={draft.restoredAt} onDiscard={draft.discardDraft} />
 
       <form onSubmit={handleSubmit(onSubmit)} className="grid grid-cols-1 gap-6 lg:grid-cols-3" noValidate>
         <div className="space-y-4 rounded-2xl border border-admin-border bg-admin-card p-5 dark:border-admin-border-dark dark:bg-admin-card-dark lg:col-span-2">

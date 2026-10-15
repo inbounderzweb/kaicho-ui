@@ -17,6 +17,8 @@ import type { CouponFormPayload } from "@/lib/api/coupon";
 import CouponStatusBadge from "./CouponStatusBadge";
 import CouponUsageClient from "./CouponUsageClient";
 import ConfirmDialog from "./ConfirmDialog";
+import DraftBanner from "./DraftBanner";
+import { useFormDraft } from "@/lib/hooks/admin/useFormDraft";
 import { IconChevronLeft } from "../ui/icons";
 
 const FIELD =
@@ -64,16 +66,17 @@ export default function CouponDetailClient({ id }: { id?: string }) {
   const [archiveOpen, setArchiveOpen] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
 
+  const form = useForm<CouponFormValues>({
+    resolver: zodResolver(couponFormSchema),
+    defaultValues: EMPTY,
+  });
   const {
     register,
     handleSubmit,
     watch,
     reset,
     formState: { errors },
-  } = useForm<CouponFormValues>({
-    resolver: zodResolver(couponFormSchema),
-    defaultValues: EMPTY,
-  });
+  } = form;
 
   const coupon = data?.coupon;
 
@@ -94,6 +97,12 @@ export default function CouponDetailClient({ id }: { id?: string }) {
       status: coupon.status === "ARCHIVED" ? "PAUSED" : coupon.status,
     });
   }, [coupon, reset]);
+
+  const draft = useFormDraft({
+    key: isEdit ? `coupon:${id}` : "coupon:new",
+    form,
+    ready: !isEdit || Boolean(coupon),
+  });
 
   const discountType = watch("discountType");
   const isArchived = coupon?.status === "ARCHIVED";
@@ -125,13 +134,17 @@ export default function CouponDetailClient({ id }: { id?: string }) {
       delete patch.status;
       updateMutation.mutate(patch, {
         onSuccess: () => {
+          draft.clearDraft();
           setSavedFlash(true);
           setTimeout(() => setSavedFlash(false), 2500);
         },
       });
     } else {
       createMutation.mutate(payload, {
-        onSuccess: (res) => router.push(`/admin/coupons/${res.coupon.id}`),
+        onSuccess: (res) => {
+          draft.clearDraft();
+          router.push(`/admin/coupons/${res.coupon.id}`);
+        },
       });
     }
   };
@@ -281,6 +294,8 @@ export default function CouponDetailClient({ id }: { id?: string }) {
               {actionError}
             </p>
           )}
+
+<DraftBanner restoredAt={draft.restoredAt} onDiscard={draft.discardDraft} />
 
           <form onSubmit={handleSubmit(onSubmit)} className="grid grid-cols-1 gap-6 lg:grid-cols-3" noValidate>
             <fieldset disabled={isArchived} className="space-y-6 lg:col-span-2">

@@ -19,6 +19,9 @@ import PackConfigSection from "./products/PackConfigSection";
 import InventoryTrackingSection from "./products/InventoryTrackingSection";
 import RelatedComboSection from "./products/RelatedComboSection";
 import ConfirmDialog from "./ConfirmDialog";
+import DraftBanner from "./DraftBanner";
+import FormErrorToast, { type FormErrorItem } from "./FormErrorToast";
+import { useFormDraft } from "@/lib/hooks/admin/useFormDraft";
 import { IconChevronLeft, IconClose } from "../ui/icons";
 
 const STATUS_LABELS: Record<string, string> = {
@@ -27,6 +30,30 @@ const STATUS_LABELS: Record<string, string> = {
   INACTIVE: "Inactive",
   OUT_OF_STOCK: "Out of Stock",
   ARCHIVED: "Archived",
+};
+
+const FIELD_LABELS: Record<string, string> = {
+  name: "Name",
+  slug: "Slug",
+  sku: "SKU",
+  weightPerPackGrams: "Weight",
+  numberOfPacks: "Packs",
+  shortDescription: "Short description",
+  description: "Description",
+  categoryId: "Category",
+  brandId: "Brand",
+  mrp: "MRP",
+  sellingPrice: "Selling price",
+  costPrice: "Cost price",
+  stockQuantity: "Stock",
+  lowStockThreshold: "Low stock",
+  seoTitle: "SEO title",
+  seoDescription: "SEO description",
+  seoKeywords: "SEO keywords",
+  canonicalUrl: "Canonical URL",
+  ogTitle: "OG title",
+  ogDescription: "OG description",
+  sortOrder: "Sort order",
 };
 
 function slugifyClient(input: string): string {
@@ -54,15 +81,10 @@ export default function ProductDetailClient({ id }: { id?: string }) {
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [savedFlash, setSavedFlash] = useState(false);
+  const [errorItems, setErrorItems] = useState<FormErrorItem[]>([]);
+  const [draftSavedAt, setDraftSavedAt] = useState<number | null>(null);
 
-  const {
-    register,
-    handleSubmit,
-    watch,
-    setValue,
-    reset,
-    formState: { errors },
-  } = useForm<ProductFormValues>({
+  const form = useForm<ProductFormValues>({
     resolver: zodResolver(productFormSchema),
     defaultValues: {
       name: "",
@@ -91,6 +113,14 @@ export default function ProductDetailClient({ id }: { id?: string }) {
       sortOrder: 0,
     },
   });
+  const {
+    register,
+    handleSubmit,
+    watch,
+    setValue,
+    reset,
+    formState: { errors },
+  } = form;
 
   useEffect(() => {
     if (data?.product) {
@@ -124,6 +154,18 @@ export default function ProductDetailClient({ id }: { id?: string }) {
       setImages(p.images.map((img) => ({ mediaId: img.mediaId, url: img.url, thumbnailUrl: img.thumbnailUrl })));
     }
   }, [data, reset]);
+
+  const draft = useFormDraft({
+    key: isEdit ? `product:${id}` : "product:new",
+    form,
+    ready: !isEdit || Boolean(data?.product),
+    extra: { images, imagesTouched, slugTouched },
+    onRestoreExtra: (x) => {
+      setImages(x.images);
+      setImagesTouched(x.imagesTouched);
+      setSlugTouched(x.slugTouched);
+    },
+  });
 
   const nameValue = watch("name");
   useEffect(() => {
@@ -237,14 +279,37 @@ export default function ProductDetailClient({ id }: { id?: string }) {
     if (isEdit) {
       updateMutation.mutate(payload, {
         onSuccess: () => {
+          draft.clearDraft();
           setSavedFlash(true);
           setTimeout(() => setSavedFlash(false), 2500);
         },
       });
     } else {
       createMutation.mutate(payload, {
-        onSuccess: (res) => router.push(`/admin/products/${res.product.productId}`),
+        onSuccess: (res) => {
+          draft.clearDraft();
+          router.push(`/admin/products/${res.product.productId}`);
+        },
       });
+    }
+  };
+
+  const onInvalid = (errs: typeof errors) => {
+    setErrorItems(
+      Object.entries(errs).map(([field, e]) => ({
+        field,
+        label: FIELD_LABELS[field] ?? field,
+        message: typeof e?.message === "string" ? e.message : "Invalid value",
+      }))
+    );
+  };
+
+  const jumpToField = (field: string) => {
+    setErrorItems([]);
+    const el = document.querySelector<HTMLElement>(`[name="${field}"]`);
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+      el.focus({ preventScroll: true });
     }
   };
 
@@ -264,7 +329,10 @@ export default function ProductDetailClient({ id }: { id?: string }) {
         <span className="font-semibold">{isEdit ? data?.product.name ?? "Edit" : "New Product"}</span>
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="grid grid-cols-1 gap-6 lg:grid-cols-3" noValidate>
+      <FormErrorToast items={errorItems} onClose={() => setErrorItems([])} onJump={jumpToField} />
+      <DraftBanner restoredAt={draft.restoredAt} onDiscard={draft.discardDraft} />
+
+      <form onSubmit={handleSubmit(onSubmit, onInvalid)} className="grid grid-cols-1 gap-6 lg:grid-cols-3" noValidate>
         <div className="space-y-6 lg:col-span-2">
           {/* Product Information */}
           <section className="space-y-4 rounded-2xl border border-admin-border bg-admin-card p-5 dark:border-admin-border-dark dark:bg-admin-card-dark">
@@ -485,7 +553,7 @@ export default function ProductDetailClient({ id }: { id?: string }) {
 
             <div>
               <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-black/50 dark:text-white/50">
-                SEO Title *
+                SEO Title <span className="font-normal normal-case tracking-normal text-black/40 dark:text-white/40">(optional)</span>
               </label>
               <input
                 {...register("seoTitle")}
@@ -504,7 +572,7 @@ export default function ProductDetailClient({ id }: { id?: string }) {
 
             <div>
               <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-black/50 dark:text-white/50">
-                SEO Description *
+                SEO Description <span className="font-normal normal-case tracking-normal text-black/40 dark:text-white/40">(optional)</span>
               </label>
               <textarea
                 {...register("seoDescription")}
@@ -524,7 +592,7 @@ export default function ProductDetailClient({ id }: { id?: string }) {
 
             <div>
               <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-black/50 dark:text-white/50">
-                Keywords *
+                Keywords <span className="font-normal normal-case tracking-normal text-black/40 dark:text-white/40">(optional)</span>
               </label>
               <div className="flex flex-wrap items-center gap-1.5 rounded-xl border border-admin-border bg-admin-surface p-2 dark:border-admin-border-dark dark:bg-admin-surface-dark">
                 {seoKeywords.map((kw) => (
@@ -539,6 +607,7 @@ export default function ProductDetailClient({ id }: { id?: string }) {
                   </span>
                 ))}
                 <input
+                  name="seoKeywords"
                   value={keywordInput}
                   onChange={(e) => setKeywordInput(e.target.value)}
                   onKeyDown={(e) => {
@@ -690,7 +759,21 @@ export default function ProductDetailClient({ id }: { id?: string }) {
             </p>
           )}
 
+          {draftSavedAt && (
+            <p className="rounded-xl bg-emerald-500/10 p-3 text-xs font-semibold text-emerald-700 dark:text-emerald-400">
+              Draft saved on this device at {new Date(draftSavedAt).toLocaleTimeString()}. Reopen this page to continue.
+            </p>
+          )}
+
           <div className="flex flex-col gap-2">
+            <button
+              type="button"
+              onClick={() => setDraftSavedAt(draft.saveDraftNow())}
+              disabled={mutation.isPending}
+              className="rounded-full border border-admin-border px-5 py-2.5 text-sm font-semibold transition-opacity hover:opacity-80 disabled:opacity-50 dark:border-admin-border-dark"
+            >
+              Save draft
+            </button>
             <button
               type="submit"
               disabled={mutation.isPending}

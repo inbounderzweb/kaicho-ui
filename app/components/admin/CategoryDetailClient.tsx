@@ -16,6 +16,8 @@ import type { CategoryOption } from "@/lib/api/category";
 import CategoryImagePicker, { type PickedImage } from "./CategoryImagePicker";
 import PackConfigSection from "./products/PackConfigSection";
 import ConfirmDialog from "./ConfirmDialog";
+import DraftBanner from "./DraftBanner";
+import { useFormDraft } from "@/lib/hooks/admin/useFormDraft";
 import { IconChevronLeft } from "../ui/icons";
 
 function slugifyClient(input: string): string {
@@ -64,14 +66,7 @@ export default function CategoryDetailClient({ id }: { id?: string }) {
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [savedFlash, setSavedFlash] = useState(false);
 
-  const {
-    register,
-    handleSubmit,
-    watch,
-    setValue,
-    reset,
-    formState: { errors },
-  } = useForm<CategoryFormValues>({
+  const form = useForm<CategoryFormValues>({
     resolver: zodResolver(categoryFormSchema),
     defaultValues: {
       name: "",
@@ -84,6 +79,14 @@ export default function CategoryDetailClient({ id }: { id?: string }) {
       sortOrder: 0,
     },
   });
+  const {
+    register,
+    handleSubmit,
+    watch,
+    setValue,
+    reset,
+    formState: { errors },
+  } = form;
 
   useEffect(() => {
     if (data?.category) {
@@ -101,6 +104,17 @@ export default function CategoryDetailClient({ id }: { id?: string }) {
       setImage(c.image);
     }
   }, [data, reset]);
+
+  const draft = useFormDraft({
+    key: isEdit ? `category:${id}` : "category:new",
+    form,
+    ready: !isEdit || Boolean(data?.category),
+    extra: { image, slugTouched },
+    onRestoreExtra: (x) => {
+      setImage(x.image);
+      setSlugTouched(x.slugTouched);
+    },
+  });
 
   const nameValue = watch("name");
   // Live slug suggestion on create, deferred via setTimeout(…,0) rather than
@@ -174,13 +188,17 @@ export default function CategoryDetailClient({ id }: { id?: string }) {
     if (isEdit) {
       updateMutation.mutate(payload, {
         onSuccess: () => {
+          draft.clearDraft();
           setSavedFlash(true);
           setTimeout(() => setSavedFlash(false), 2500);
         },
       });
     } else {
       createMutation.mutate(payload, {
-        onSuccess: (res) => router.push(`/admin/categories/${res.category.categoryId}`),
+        onSuccess: (res) => {
+          draft.clearDraft();
+          router.push(`/admin/categories/${res.category.categoryId}`);
+        },
       });
     }
   };
@@ -200,6 +218,8 @@ export default function CategoryDetailClient({ id }: { id?: string }) {
         <span className="text-black/30 dark:text-white/30">/</span>
         <span className="font-semibold">{isEdit ? data?.category.name ?? "Edit" : "New Category"}</span>
       </div>
+
+      <DraftBanner restoredAt={draft.restoredAt} onDiscard={draft.discardDraft} />
 
       <form
         onSubmit={handleSubmit(onSubmit)}

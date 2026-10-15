@@ -19,6 +19,8 @@ import {
 import { parseInstagramUrl } from "@/lib/utils/instagramUrl";
 import { ApiError } from "@/lib/api/ApiError";
 import ConfirmDialog from "./ConfirmDialog";
+import DraftBanner from "./DraftBanner";
+import { useFormDraft } from "@/lib/hooks/admin/useFormDraft";
 import StatusBadge from "./StatusBadge";
 import InstagramEmbed from "./InstagramEmbed";
 import { IconChevronLeft, IconInstagram } from "../ui/icons";
@@ -84,16 +86,17 @@ export default function InstagramPostDetailClient({ id }: { id?: string }) {
   const [archiveOpen, setArchiveOpen] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
 
+  const form = useForm<InstagramPostFormValues>({
+    resolver: zodResolver(instagramPostFormSchema),
+    defaultValues: { url: "", displayOrder: 0, status: "ACTIVE" },
+  });
   const {
     register,
     handleSubmit,
     watch,
     reset,
     formState: { errors },
-  } = useForm<InstagramPostFormValues>({
-    resolver: zodResolver(instagramPostFormSchema),
-    defaultValues: { url: "", displayOrder: 0, status: "ACTIVE" },
-  });
+  } = form;
 
   const post = data?.post;
   const isArchived = post?.status === "ARCHIVED";
@@ -106,6 +109,12 @@ export default function InstagramPostDetailClient({ id }: { id?: string }) {
       status: post.status === "ARCHIVED" ? "INACTIVE" : post.status,
     });
   }, [post, reset]);
+
+  const draft = useFormDraft({
+    key: isEdit ? `instagram-post:${id}` : "instagram-post:new",
+    form,
+    ready: !isEdit || Boolean(post),
+  });
 
   const urlValue = watch("url");
   const mutation = isEdit ? updateMutation : createMutation;
@@ -121,13 +130,17 @@ export default function InstagramPostDetailClient({ id }: { id?: string }) {
     if (isEdit) {
       updateMutation.mutate(payload, {
         onSuccess: () => {
+          draft.clearDraft();
           setSavedFlash(true);
           setTimeout(() => setSavedFlash(false), 2500);
         },
       });
     } else {
       createMutation.mutate(payload, {
-        onSuccess: (res) => router.push(`/admin/instagram-posts/${res.post.id}`),
+        onSuccess: (res) => {
+          draft.clearDraft();
+          router.push(`/admin/instagram-posts/${res.post.id}`);
+        },
       });
     }
   };
@@ -229,6 +242,8 @@ export default function InstagramPostDetailClient({ id }: { id?: string }) {
           </button>
         </div>
       )}
+
+<DraftBanner restoredAt={draft.restoredAt} onDiscard={draft.discardDraft} />
 
       <form onSubmit={handleSubmit(onSubmit)} className="grid grid-cols-1 gap-6 lg:grid-cols-3" noValidate>
         <div className="lg:col-span-2">

@@ -28,7 +28,8 @@ import SeoPreview from "./SeoPreview";
 import SeoChecklist from "./SeoChecklist";
 import BlogTagInput from "./BlogTagInput";
 import ConfirmDialog from "./ConfirmDialog";
-import { BlogStatusBadge } from "./BlogStatusBadge";
+import DraftBanner from "./DraftBanner";
+import { useFormDraft } from "@/lib/hooks/admin/useFormDraft";import { BlogStatusBadge } from "./BlogStatusBadge";
 import { IconChevronLeft, IconEye, IconClose } from "../ui/icons";
 
 const inputClass =
@@ -102,6 +103,10 @@ export default function BlogEditorClient({ id }: { id?: string }) {
   const [scheduleDate, setScheduleDate] = useState("");
   const [scheduleTime, setScheduleTime] = useState("");
 
+  const form = useForm<BlogFormValues>({
+    resolver: zodResolver(blogFormSchema),
+    defaultValues: EMPTY_DEFAULTS,
+  });
   const {
     register,
     handleSubmit,
@@ -109,10 +114,7 @@ export default function BlogEditorClient({ id }: { id?: string }) {
     setValue,
     reset,
     formState: { errors, isDirty },
-  } = useForm<BlogFormValues>({
-    resolver: zodResolver(blogFormSchema),
-    defaultValues: EMPTY_DEFAULTS,
-  });
+  } = form;
 
   // Hydrate from fetched data (edit / duplicate landing).
   useEffect(() => {
@@ -167,6 +169,19 @@ export default function BlogEditorClient({ id }: { id?: string }) {
     syncMediaField("ogImageMediaId", ogImage?.mediaId ?? "");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ogImage]);
+
+  const draft = useFormDraft({
+    key: isEdit ? `blog:${id}` : "blog:new",
+    form,
+    ready: !isEdit || Boolean(blog),
+    extra: { featuredImage, thumbnailImage, ogImage, slugTouched },
+    onRestoreExtra: (x) => {
+      setFeaturedImage(x.featuredImage);
+      setThumbnailImage(x.thumbnailImage);
+      setOgImage(x.ogImage);
+      setSlugTouched(x.slugTouched);
+    },
+  });
 
   const titleValue = watch("title");
   useEffect(() => {
@@ -247,9 +262,11 @@ export default function BlogEditorClient({ id }: { id?: string }) {
     const payload = buildPayload(values);
     if (isEdit && id) {
       await updateMutation.mutateAsync(payload);
+      draft.clearDraft();
       return id;
     }
     const res = await createMutation.mutateAsync(payload);
+    draft.clearDraft();
     return res.blog.blogId;
   }
 
@@ -376,6 +393,8 @@ export default function BlogEditorClient({ id }: { id?: string }) {
         <span className="font-semibold">{isEdit ? blog?.title ?? "Edit" : "New Blog"}</span>
         {status && <BlogStatusBadge status={status} />}
       </div>
+
+      <DraftBanner restoredAt={draft.restoredAt} onDiscard={draft.discardDraft} />
 
       <form onSubmit={onSaveOnly} className="grid grid-cols-1 gap-6 lg:grid-cols-3" noValidate>
         {/* Main column */}
