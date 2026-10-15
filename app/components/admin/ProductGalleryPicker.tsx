@@ -8,6 +8,13 @@ import { IconUploadCloud, IconTrash, IconStar } from "../ui/icons";
 import MediaLibraryModal from "./media/MediaLibraryModal";
 import MediaSourceMenu from "./media/MediaSourceMenu";
 import UploadProgress from "./media/UploadProgress";
+import UploadIssues from "./media/UploadIssues";
+import {
+  ACCEPTED_IMAGE_TYPES,
+  MAX_IMAGE_MB,
+  partitionImageFiles,
+  type RejectedFile,
+} from "@/lib/media/uploadRules";
 
 // Product images are NOT stored as binaries or extra URL fields on Product —
 // this picker only ever writes/reads Media records via the existing Media
@@ -16,8 +23,6 @@ import UploadProgress from "./media/UploadProgress";
 // syncProductMedia) treats array index 0 as the primary image and the rest
 // of the order as gallery sortOrder — so "set primary" here is implemented
 // as "move to index 0" rather than a separate flag, matching that contract.
-const ACCEPTED_MIME_TYPES = ["image/jpeg", "image/png", "image/webp", "image/avif"];
-const MAX_IMAGE_MB = 1.5;
 const MAX_IMAGES = 20;
 const RECOMMENDED_DIMENSIONS = "1000 × 1000px";
 
@@ -59,6 +64,9 @@ export default function ProductGalleryPicker({
   // Non-fatal notes ("2 files skipped — 20 image limit reached") shown in
   // amber alongside a successful upload; hard failures go through upload.error.
   const [notice, setNotice] = useState<string | null>(null);
+  // Files from the last bulk add that weren't uploaded, each with its reason.
+  const [issues, setIssues] = useState<RejectedFile[]>([]);
+  const [uploadedInBatch, setUploadedInBatch] = useState(0);
   const [libraryOpen, setLibraryOpen] = useState(false);
   // When set, the library modal is replacing this single tile instead of adding.
   const [replaceViaLibrary, setReplaceViaLibrary] = useState<number | null>(null);
@@ -101,26 +109,10 @@ export default function ProductGalleryPicker({
     onChange(next);
   };
 
-  const validateFiles = (files: File[]): { valid: File[]; rejected: string[] } => {
-    const valid: File[] = [];
-    const rejected: string[] = [];
-    for (const file of files) {
-      if (!ACCEPTED_MIME_TYPES.includes(file.type)) {
-        rejected.push(`${file.name}: unsupported file type`);
-        continue;
-      }
-      if (file.size > MAX_IMAGE_MB * 1024 * 1024) {
-        rejected.push(`${file.name}: exceeds ${MAX_IMAGE_MB}MB limit`);
-        continue;
-      }
-      valid.push(file);
-    }
-    return { valid, rejected };
-  };
-
   const handleAddFiles = (files: File[]) => {
     if (upload.isBusy) return; // guard against a double upload
     setNotice(null);
+    setIssues([]);
     if (files.length === 0) return;
 
     const slots = MAX_IMAGES - value.length;
@@ -129,11 +121,20 @@ export default function ProductGalleryPicker({
       return;
     }
 
-    const { valid, rejected } = validateFiles(files.slice(0, slots));
-    const droppedForLimit = files.length > slots ? files.length - slots : 0;
+    // Validate the WHOLE selection first, then fit the survivors into the free
+    // slots — rejected files must not eat slots that valid ones could use.
+    const { valid: allValid, rejected } = partitionImageFiles(files);
+    const valid = allValid.slice(0, slots);
+    const droppedForLimit = allValid.length - valid.length;
 
     if (valid.length === 0) {
-      upload.failWith(rejected[0] ?? "No valid images selected.");
+      setIssues(rejected);
+      setUploadedInBatch(0);
+      upload.failWith(
+        rejected.length > 0
+          ? `None of the ${rejected.length} selected ${rejected.length === 1 ? "file" : "files"} could be uploaded.`
+          : "No valid images selected."
+      );
       return;
     }
 
@@ -157,22 +158,32 @@ export default function ProductGalleryPicker({
           if (uploaded.length > 0) {
             onChange([...value, ...uploaded]);
           }
-          const messages = [
+          // Per-file failures (client pre-flight + server verdicts) go to the
+          // issues list with their reasons; soft notes stay in the amber notice.
+          const failures: RejectedFile[] = [
             ...rejected,
-            ...result.errors.map((e) => `${e.originalName}: ${e.message}`),
+            ...result.errors.map((e) => ({ name: e.originalName, reason: e.message })),
+          ];
+          const notes = [
             ...(duplicateCount > 0 ? [`${duplicateCount} image(s) already in the gallery were skipped.`] : []),
             ...(droppedForLimit > 0 ? [`${droppedForLimit} file(s) skipped — ${MAX_IMAGES} image limit reached.`] : []),
           ];
+          setIssues(failures);
+          setUploadedInBatch(uploaded.length);
           // "Nothing new, but nothing failed either" (all duplicates) is a soft
           // outcome, not an error.
           if (uploaded.length > 0 || (duplicateCount > 0 && result.errors.length === 0)) {
             upload.succeed();
-            setNotice(messages.length > 0 ? messages.join("; ") : null);
+            setNotice(notes.length > 0 ? notes.join(" ") : null);
           } else {
-            upload.failWith(messages[0] ?? "Upload failed. Please try again.");
+            upload.failWith(
+              failures.length > 0
+                ? `None of the ${failures.length} ${failures.length === 1 ? "file" : "files"} could be uploaded.`
+                : "Upload failed. Please try again."
+            );
           }
         },
-        onError: () => upload.failWith("Upload failed. Please try again."),
+        onError: (err) => upload.failWith(err instanceof Error ? err.message : "Upload failed. Please try again."),
       }
     );
   };
@@ -183,9 +194,9 @@ export default function ProductGalleryPicker({
     if (upload.isBusy) return; // guard against a double upload
     setNotice(null);
 
-    const { valid, rejected } = validateFiles([file]);
+    const { valid, rejected } = partitionImageFiles([file]);
     if (valid.length === 0) {
-      upload.failWith(rejected[0] ?? "Unsupported file.");
+      upload.failWith(rejected[0] ? `${rejected[0].name}: ${rejected[0].reason}` : "Unsupported file.");
       return;
     }
 
@@ -206,7 +217,7 @@ export default function ProductGalleryPicker({
           upload.succeed();
           replaceAt(index, { mediaId: uploaded.mediaId, url: uploaded.url, thumbnailUrl: uploaded.thumbnailUrl });
         },
-        onError: () => upload.failWith("Upload failed. Please try again."),
+        onError: (err) => upload.failWith(err instanceof Error ? err.message : "Upload failed. Please try again."),
       }
     );
   };
@@ -383,6 +394,7 @@ export default function ProductGalleryPicker({
         onRetry={handleRetry}
       />
 
+      <UploadIssues issues={issues} uploadedCount={uploadedInBatch} onDismiss={() => setIssues([])} />
       {notice && <p className="mt-2 text-xs font-semibold text-amber-600 dark:text-amber-400">{notice}</p>}
       {value.length === 0 && !notice && upload.phase !== "error" && (
         <p className="mt-2 text-xs font-semibold text-amber-600 dark:text-amber-400">
@@ -393,7 +405,7 @@ export default function ProductGalleryPicker({
       <input
         ref={addInputRef}
         type="file"
-        accept={ACCEPTED_MIME_TYPES.join(",")}
+        accept={ACCEPTED_IMAGE_TYPES.join(",")}
         multiple
         className="hidden"
         onChange={(e) => {
@@ -405,7 +417,7 @@ export default function ProductGalleryPicker({
       <input
         ref={replaceInputRef}
         type="file"
-        accept={ACCEPTED_MIME_TYPES.join(",")}
+        accept={ACCEPTED_IMAGE_TYPES.join(",")}
         className="hidden"
         onChange={(e) => {
           const file = e.target.files?.[0];

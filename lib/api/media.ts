@@ -148,11 +148,29 @@ interface UploadResponseBody {
   errors?: UploadMediaError[];
 }
 
+// Hosting proxies cap request bodies (Vercel's is ~4.5MB), and a request over
+// the cap is rejected with an HTML 413 before our API ever sees it — which
+// used to surface as a generic "Upload failed" when several photos were picked
+// at once. Files are therefore sent in small sequential batches, and a failed
+// batch only fails its own files.
+const MAX_BATCH_BYTES = 3.5 * 1024 * 1024;
+const MAX_BATCH_FILES = 10; // matches the backend's MAX_MEDIA_FILES_PER_REQUEST default
+const UPLOAD_TIMEOUT_MS = 120_000;
+
+function describeUploadFailure(status: number, body: UploadResponseBody | undefined): string {
+  if (status === 401 || status === 403) return "Your session has expired. Please sign in again and retry.";
+  if (status === 413) return "The file is too large for the server. Try a smaller or compressed image.";
+  if (status === 429) return "Too many uploads in a short time. Please wait a minute and try again.";
+  if (body?.message) return body.message;
+  if (status >= 500) return `The server couldn't process the upload (error ${status}). Please try again.`;
+  return "Upload failed. Please try again.";
+}
+
 // Plain fetch/apiFetch has no upload-progress API — XMLHttpRequest is the
 // only way to observe bytes-sent for a real progress bar.
-export function uploadMedia(
+function uploadBatch(
   files: File[],
-  onProgress?: (percent: number) => void
+  onProgress?: (fraction: number) => void
 ): Promise<UploadMediaResult> {
   return new Promise((resolve, reject) => {
     const formData = new FormData();
@@ -161,10 +179,11 @@ export function uploadMedia(
     const xhr = new XMLHttpRequest();
     xhr.open("POST", `${API_BASE_URL}/admin/media/upload`);
     xhr.withCredentials = true;
+    xhr.timeout = UPLOAD_TIMEOUT_MS;
 
     xhr.upload.onprogress = (event) => {
-      if (onProgress && event.lengthComputable) {
-        onProgress(Math.round((event.loaded / event.total) * 100));
+      if (onProgress && event.lengthComputable && event.total > 0) {
+        onProgress(event.loaded / event.total);
       }
     };
 
@@ -186,10 +205,90 @@ export function uploadMedia(
         resolve({ data: body.data ?? [], errors: body.errors });
         return;
       }
-      reject(new ApiError(body?.message ?? "Upload failed. Please try again.", xhr.status));
+      reject(new ApiError(describeUploadFailure(xhr.status, body), xhr.status));
     };
 
-    xhr.onerror = () => reject(new ApiError("Network error during upload.", 0));
+    xhr.onerror = () =>
+      reject(new ApiError("Network error during upload. Check your connection and try again.", 0));
+    xhr.ontimeout = () =>
+      reject(new ApiError("The upload timed out. Try fewer or smaller images.", 0));
     xhr.send(formData);
   });
+}
+
+function toBatches(files: File[]): File[][] {
+  const batches: File[][] = [];
+  let current: File[] = [];
+  let currentBytes = 0;
+  for (const file of files) {
+    if (current.length > 0 && (currentBytes + file.size > MAX_BATCH_BYTES || current.length >= MAX_BATCH_FILES)) {
+      batches.push(current);
+      current = [];
+      currentBytes = 0;
+    }
+    current.push(file);
+    currentBytes += file.size;
+  }
+  if (current.length > 0) batches.push(current);
+  return batches;
+}
+
+export async function uploadMedia(
+  files: File[],
+  onProgress?: (percent: number) => void
+): Promise<UploadMediaResult> {
+  const batches = toBatches(files);
+  const totalBytes = files.reduce((sum, f) => sum + f.size, 0) || 1;
+  const result: UploadMediaResult = { data: [], errors: [] };
+  let sentBytes = 0;
+  let transportError: ApiError | null = null;
+  let requestsOk = 0;
+
+  const report = (loadedInCurrent: number) =>
+    onProgress?.(Math.min(100, Math.round(((sentBytes + loadedInCurrent) / totalBytes) * 100)));
+
+  // One request. Returns false on a hard failure (recorded as per-file errors).
+  const send = async (group: File[]): Promise<"ok" | "rejected" | "fatal"> => {
+    const groupBytes = group.reduce((sum, f) => sum + f.size, 0);
+    try {
+      const res = await uploadBatch(group, (fraction) => report(fraction * groupBytes));
+      result.data.push(...res.data);
+      result.errors.push(...res.errors);
+      requestsOk++;
+      return "ok";
+    } catch (err) {
+      const apiErr = err instanceof ApiError ? err : new ApiError("Upload failed. Please try again.", 0);
+      // An expired session fails every remaining request the same way — stop.
+      if (apiErr.status === 401 || apiErr.status === 403) throw apiErr;
+      transportError = apiErr;
+      // 400/413 = the server refused this whole request (e.g. one file over a
+      // hard cap makes multer/the proxy reject the lot). Not a per-file verdict
+      // yet, so the caller may isolate the culprit.
+      if (group.length > 1 && (apiErr.status === 400 || apiErr.status === 413)) return "rejected";
+      for (const file of group) result.errors.push({ originalName: file.name, message: apiErr.message });
+      return "fatal";
+    }
+  };
+
+  for (const batch of batches) {
+    const outcome = await send(batch);
+    if (outcome === "rejected") {
+      // Re-send one file at a time so a single bad file can't sink its
+      // batch-mates; each gets its own precise verdict.
+      for (const file of batch) {
+        await send([file]);
+        sentBytes += file.size;
+        report(0);
+      }
+    } else {
+      sentBytes += batch.reduce((sum, f) => sum + f.size, 0);
+      report(0);
+    }
+  }
+
+  // No request got through at all (network down, proxy/server error): reject so
+  // callers show the real reason. Per-file rejections from the server stay in
+  // `errors` with their file names.
+  if (requestsOk === 0 && transportError) throw transportError;
+  return result;
 }

@@ -9,9 +9,8 @@ import { IconUploadCloud, IconClose } from "../ui/icons";
 import MediaLibraryModal from "./media/MediaLibraryModal";
 import MediaSourceMenu from "./media/MediaSourceMenu";
 import UploadProgress from "./media/UploadProgress";
+import { ACCEPTED_IMAGE_TYPES, MAX_IMAGE_MB, imageFileProblem } from "@/lib/media/uploadRules";
 
-const ACCEPTED_MIME_TYPES = ["image/jpeg", "image/png", "image/webp", "image/avif"];
-const MAX_IMAGE_MB = 8;
 
 export interface PickedBlogImage {
   mediaId: string;
@@ -45,14 +44,10 @@ export default function BlogImagePicker({
 
   const handleFile = (file: File) => {
     if (upload.isBusy) return; // guard against a double upload
-    if (!ACCEPTED_MIME_TYPES.includes(file.type)) {
+    const problem = imageFileProblem(file);
+    if (problem) {
       lastFileRef.current = null;
-      upload.failWith("Unsupported file type — use JPG, PNG, WebP, or AVIF.");
-      return;
-    }
-    if (file.size > MAX_IMAGE_MB * 1024 * 1024) {
-      lastFileRef.current = null;
-      upload.failWith(`Image exceeds the ${MAX_IMAGE_MB}MB limit.`);
+      upload.failWith(`${file.name}: ${problem}.`);
       return;
     }
 
@@ -75,7 +70,7 @@ export default function BlogImagePicker({
             altText: "",
           });
         },
-        onError: () => upload.failWith("Upload failed. Please try again."),
+        onError: (err) => upload.failWith(err instanceof Error ? err.message : "Upload failed. Please try again."),
       }
     );
   };
@@ -184,7 +179,7 @@ export default function BlogImagePicker({
       <input
         ref={inputRef}
         type="file"
-        accept={ACCEPTED_MIME_TYPES.join(",")}
+        accept={ACCEPTED_IMAGE_TYPES.join(",")}
         className="hidden"
         onChange={(e) => {
           const file = e.target.files?.[0];

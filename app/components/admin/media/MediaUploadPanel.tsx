@@ -6,6 +6,7 @@ import { useUploadPhase } from "@/lib/hooks/admin/useUploadPhase";
 import type { UploadedMedia } from "@/lib/api/media";
 import { IconUploadCloud, IconClose } from "../../ui/icons";
 import UploadProgress from "./UploadProgress";
+import { ACCEPTED_IMAGE_TYPES, MAX_IMAGE_MB, formatBytes, imageFileProblem } from "@/lib/media/uploadRules";
 
 // The shared "Upload New" surface — drag/drop + a validated queue + a progress
 // bar. Extracted verbatim from the old MediaLibraryClient so the /admin/media
@@ -14,11 +15,12 @@ import UploadProgress from "./UploadProgress";
 // Client-side checks here are pure UX (skip an obviously-doomed upload before
 // it leaves the browser); the backend re-validates every file by content
 // signature regardless.
-const IMAGE_MIME_TYPES = ["image/jpeg", "image/png", "image/webp", "image/avif"];
+const IMAGE_MIME_TYPES = ACCEPTED_IMAGE_TYPES;
 const ALL_MIME_TYPES = [...IMAGE_MIME_TYPES, "application/pdf"];
-const MAX_IMAGE_MB = 10;
 const MAX_PDF_MB = 20;
-const MAX_FILES_PER_REQUEST = 10;
+// Selection cap for one drop/pick. Uploads are sent in small batches by
+// uploadMedia(), so this is a UX bound, not a request-size bound.
+const MAX_FILES_PER_REQUEST = 50;
 
 interface QueuedFile {
   id: string;
@@ -30,16 +32,10 @@ interface QueuedFile {
 function validateFile(file: File, imagesOnly: boolean, maxImageMb: number): string | null {
   const accepted = imagesOnly ? IMAGE_MIME_TYPES : ALL_MIME_TYPES;
   if (!accepted.includes(file.type)) return "Unsupported file type";
-  const isPdf = file.type === "application/pdf";
-  const maxBytes = (isPdf ? MAX_PDF_MB : maxImageMb) * 1024 * 1024;
-  if (file.size > maxBytes) return `Exceeds the ${isPdf ? MAX_PDF_MB : maxImageMb}MB limit`;
-  return null;
-}
-
-function formatBytes(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  if (file.type === "application/pdf") {
+    return file.size > MAX_PDF_MB * 1024 * 1024 ? `${formatBytes(file.size)} — exceeds the ${MAX_PDF_MB} MB limit` : null;
+  }
+  return imageFileProblem(file, maxImageMb * 1024 * 1024);
 }
 
 export default function MediaUploadPanel({
@@ -124,7 +120,7 @@ export default function MediaUploadPanel({
             upload.failWith("Some files couldn't be uploaded — see the details below.");
           }
         },
-        onError: () => upload.failWith("Network error during upload. Please try again."),
+        onError: (err) => upload.failWith(err instanceof Error ? err.message : "Upload failed. Please try again."),
       }
     );
   };
