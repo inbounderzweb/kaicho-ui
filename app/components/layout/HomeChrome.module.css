@@ -2,19 +2,6 @@
   background: #f7f7f5;
 }
 
-.homeContactArtwork {
-  background: transparent;
-  border-radius: 0;
-  box-shadow: none;
-}
-
-.homeContactImage {
-  display: block;
-  width: 44px;
-  height: 44px;
-  object-fit: contain;
-}
-
 @media (min-width: 1024px) {
   .homeHeader {
     background: #fff;
@@ -115,20 +102,6 @@
     width: clamp(14px, 1vw, 16px);
     height: clamp(14px, 1vw, 16px);
   }
-
-  @supports selector(:has(*)) {
-    :global(body):has(.homeHeader[data-scrolled="false"]) .homeContact {
-      visibility: hidden;
-      opacity: 0;
-    }
-  }
-}
-
-@media (min-width: 768px) and (max-width: 1023px) {
-  .homeContact {
-    right: 24px;
-    bottom: calc(88px + env(safe-area-inset-bottom));
-  }
 }
 
 @media (max-width: 767px) {
@@ -172,28 +145,10 @@
     background: #479e60;
     font-size: calc(100vw * 10 / 414);
   }
-
-  .homeContact {
-    right: calc(100vw * 22 / 414);
-    bottom: calc(72px + env(safe-area-inset-bottom));
-  }
-
-  .homeContactToggle,
-  .homeContactImage {
-    width: max(44px, calc(100vw * 44 / 414));
-    height: max(44px, calc(100vw * 44 / 414));
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .homeHeader,
-  .homeContact *,
-  .homeContactToggle {
+  .homeHeader {
     transition: none;
-  }
-
-  .homeContactToggle:hover,
-  .homeContactToggle:active {
-    transform: none;
   }
 }

@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import Container from "../ui/Container";
 import { NAV_LINKS } from "./nav-links";
-import {
+import PaymentBadges from "../ui/PaymentBadges";import {
   IconFacebook,
   IconInstagram,
   IconLinkedin,
@@ -19,8 +19,6 @@ const LEGAL_LINKS = [
   { label: "Shipping Policy", href: "/shipping-policy" },
   { label: "Refund Policy", href: "/refund-policy" },
 ];
-
-const PAYMENT_METHODS = ["UPI", "Visa", "Mastercard", "RuPay"];
 
 export default function Footer() {
   return (
@@ -115,16 +113,7 @@ export default function Footer() {
             <p className="mt-4 text-sm text-ink-muted">
               FSSAI Licensed &middot; LIC No: 21325250000413
             </p>
-            <div className="mt-4 flex flex-wrap gap-2">
-              {PAYMENT_METHODS.map((method) => (
-                <span
-                  key={method}
-                  className="rounded-md border border-ink/10 bg-white px-2.5 py-1 text-xs font-semibold text-ink-muted"
-                >
-                  {method}
-                </span>
-              ))}
-            </div>
+            <PaymentBadges className="mt-4" />
           </div>
         </Container>
       </div>

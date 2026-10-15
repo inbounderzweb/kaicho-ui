@@ -17,8 +17,7 @@ import { useRelatedProducts } from "@/lib/hooks/useRelatedProducts";
 import { trackEvent } from "@/lib/analytics/events";
 import { toEcommerceItem } from "@/lib/analytics/ecommerce";
 import type { PublicProductDetail } from "@/lib/api/publicProducts";
-
-const PAYMENT_METHODS = ["UPI", "Visa", "Mastercard", "RuPay"];
+import PaymentBadges from "../ui/PaymentBadges";
 
 export default function ProductDetailClient({ product }: { product: PublicProductDetail }) {
   const [quantity, setQuantity] = useState(1);
@@ -135,16 +134,7 @@ export default function ProductDetailClient({ product }: { product: PublicProduc
             <p className="text-center text-xs font-bold uppercase tracking-wider text-ink-faint">
               Guaranteed Safe Checkout
             </p>
-            <div className="mt-3 flex flex-wrap justify-center gap-2">
-              {PAYMENT_METHODS.map((method) => (
-                <span
-                  key={method}
-                  className="rounded-md border border-border bg-cream/60 px-2.5 py-1 text-xs font-semibold text-ink-muted"
-                >
-                  {method}
-                </span>
-              ))}
-            </div>
+            <PaymentBadges className="mt-3 justify-center" />
           </div>
         </div>
       </div>
@@ -156,7 +146,7 @@ export default function ProductDetailClient({ product }: { product: PublicProduc
         <p className="mt-4 max-w-3xl whitespace-pre-line text-sm leading-relaxed text-ink-muted sm:text-base">
           {product.description}
         </p>
-        <p className="mt-6 text-xs font-semibold uppercase tracking-wide text-ink-faint">SKU: {product.sku}</p>
+        {/* <p className="mt-6 text-xs font-semibold uppercase tracking-wide text-ink-faint">SKU: {product.sku}</p> */}
       </div>
 
       {!relatedLoading && relatedData && <RelatedProducts products={relatedData.products} />}
