@@ -155,7 +155,11 @@ export function useAdminOrderNotifications(enabled: boolean) {
     let retryTimer: ReturnType<typeof setTimeout> | undefined;
     const socket = io(BACKEND_ORIGIN, {
       autoConnect: false,
-      transports: ["websocket", "polling"],
+      // WebSocket only: HTTP long-polling needs every request of a session to
+      // hit the same server instance, which Cloud Run (multi-instance, no
+      // sticky routing by default) doesn't guarantee — the handshake then
+      // fails with "Session ID unknown" and the admin never connects.
+      transports: ["websocket"],
     });
     socketRef.current = socket;
 
@@ -180,7 +184,10 @@ export function useAdminOrderNotifications(enabled: boolean) {
       clearTimeout(retryTimer);
       retryTimer = setTimeout(connect, 5000);
     };
-    socket.on("connect_error", retry);
+    socket.on("connect_error", (err) => {
+      console.warn("[notifications] socket connect_error:", err.message);
+      retry();
+    });
     socket.on("disconnect", retry);
     void connect();
 
