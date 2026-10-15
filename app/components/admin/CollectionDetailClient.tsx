@@ -14,6 +14,8 @@ import { useProductList } from "@/lib/hooks/admin/useProductList";
 import { collectionFormSchema, type CollectionFormValues } from "@/lib/validation/collection.schema";
 import { ApiError } from "@/lib/api/ApiError";
 import ConfirmDialog from "./ConfirmDialog";
+import DraftBanner from "./DraftBanner";
+import { useFormDraft } from "@/lib/hooks/admin/useFormDraft";
 import CollectionImagePicker, { type PickedImage } from "./CollectionImagePicker";
 import { IconChevronLeft, IconSearch } from "../ui/icons";
 
@@ -35,10 +37,11 @@ export default function CollectionDetailClient({ id }: { id?: string }) {
 
   const { data: productData } = useProductList({ search: search || undefined, pageSize: 8, status: "ACTIVE" });
 
-  const { register, handleSubmit, reset, setValue, formState: { errors } } = useForm<CollectionFormValues>({
+  const form = useForm<CollectionFormValues>({
     resolver: zodResolver(collectionFormSchema),
     defaultValues: { name: "", slug: "", description: "", imageMediaId: "", isActive: true, sortOrder: 0 },
   });
+  const { register, handleSubmit, reset, setValue, formState: { errors } } = form;
 
   const applyImage = (next: PickedImage | null) => {
     setImage(next);
@@ -65,6 +68,17 @@ export default function CollectionDetailClient({ id }: { id?: string }) {
     return () => clearTimeout(id);
   }, [data, reset]);
 
+  const draft = useFormDraft({
+    key: isEdit ? `collection:${id}` : "collection:new",
+    form,
+    ready: !isEdit || Boolean(data?.collection),
+    extra: { image, products },
+    onRestoreExtra: (x) => {
+      setImage(x.image);
+      setProducts(x.products);
+    },
+  });
+
   const selectedIds = useMemo(() => new Set(products.map((p) => p.productId)), [products]);
 
   const isSaving = updateMutation.isPending || updateProductsMutation.isPending || createMutation.isPending;
@@ -82,10 +96,10 @@ export default function CollectionDetailClient({ id }: { id?: string }) {
     };
     if (isEdit) {
       updateMutation.mutate(payload, {
-        onSuccess: () => updateProductsMutation.mutate(payload.products ?? [], { onSuccess: () => router.push(`/admin/collections/${id}`) }),
+        onSuccess: () => updateProductsMutation.mutate(payload.products ?? [], { onSuccess: () => { draft.clearDraft(); router.push(`/admin/collections/${id}`); } }),
       });
     } else {
-      createMutation.mutate(payload, { onSuccess: (res) => router.push(`/admin/collections/${res.collection.collectionId}`) });
+      createMutation.mutate(payload, { onSuccess: (res) => { draft.clearDraft(); router.push(`/admin/collections/${res.collection.collectionId}`); } });
     }
   };
 
@@ -108,6 +122,8 @@ export default function CollectionDetailClient({ id }: { id?: string }) {
           <button onClick={() => refetch()} className="mt-3 rounded-full bg-admin-primary px-4 py-1.5 text-xs font-semibold text-black">Retry</button>
         </div>
       ) : (
+        <>
+        <DraftBanner restoredAt={draft.restoredAt} onDiscard={draft.discardDraft} />
         <form onSubmit={handleSubmit(onSubmit)} className="grid gap-6 lg:grid-cols-3">
           <div className="space-y-4 rounded-2xl border border-admin-border bg-admin-card p-5 dark:border-admin-border-dark dark:bg-admin-card-dark lg:col-span-2">
             <div>
@@ -182,6 +198,7 @@ export default function CollectionDetailClient({ id }: { id?: string }) {
             )}
           </div>
         </form>
+        </>
       )}
 
       <ConfirmDialog

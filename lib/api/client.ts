@@ -120,7 +120,10 @@ export async function apiFetch<T>(
   // the caller never got the shape it expects. Surface it as a rejection
   // instead of silently resolving with `undefined`, which every call site
   // then destructures assuming a defined shape (see BlogSection.tsx).
-  if (res.status !== 204 && body?.data === undefined) {
+  // A proper envelope with success:true and no payload (e.g. DELETE endpoints
+  // replying { success: true, message: "Category deleted" }) is a legitimate
+  // success, not a malformed response.
+  if (res.status !== 204 && body?.data === undefined && body?.success !== true) {
     throw new ApiError(
       parseFailed ? "The server returned an unexpected response. Please try again." : (body?.message ?? "The server returned an unexpected response. Please try again."),
       res.status

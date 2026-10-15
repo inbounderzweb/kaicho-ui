@@ -81,6 +81,13 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "res.cloudinary.com",
       },
+      {
+        // Cloudflare R2 public dev URLs (pub-<id>.r2.dev). Allowed outright so
+        // media works without the frontend also needing R2_PUBLIC_URL set; a
+        // custom R2 domain is still covered by the env-driven entry below.
+        protocol: "https",
+        hostname: "*.r2.dev",
+      },
       ...(process.env.R2_PUBLIC_URL
         ? [
             {

@@ -19,6 +19,8 @@ import {
 import { parseYouTubeUrl } from "@/lib/utils/youtubeUrl";
 import { ApiError } from "@/lib/api/ApiError";
 import ConfirmDialog from "./ConfirmDialog";
+import DraftBanner from "./DraftBanner";
+import { useFormDraft } from "@/lib/hooks/admin/useFormDraft";
 import StatusBadge from "./StatusBadge";
 import YouTubeEmbed from "./YouTubeEmbed";
 import { IconChevronLeft } from "../ui/icons";
@@ -76,16 +78,17 @@ export default function YouTubeVideoDetailClient({ id }: { id?: string }) {
   const [archiveOpen, setArchiveOpen] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
 
+  const form = useForm<YouTubeVideoFormValues>({
+    resolver: zodResolver(youtubeVideoFormSchema),
+    defaultValues: { url: "", displayOrder: 0, status: "ACTIVE" },
+  });
   const {
     register,
     handleSubmit,
     watch,
     reset,
     formState: { errors },
-  } = useForm<YouTubeVideoFormValues>({
-    resolver: zodResolver(youtubeVideoFormSchema),
-    defaultValues: { url: "", displayOrder: 0, status: "ACTIVE" },
-  });
+  } = form;
 
   const video = data?.video;
   const isArchived = video?.status === "ARCHIVED";
@@ -99,6 +102,12 @@ export default function YouTubeVideoDetailClient({ id }: { id?: string }) {
     });
   }, [video, reset]);
 
+  const draft = useFormDraft({
+    key: isEdit ? `youtube-video:${id}` : "youtube-video:new",
+    form,
+    ready: !isEdit || Boolean(video),
+  });
+
   const urlValue = watch("url");
   const mutation = isEdit ? updateMutation : createMutation;
   const mutationError = mutation.error instanceof ApiError ? mutation.error.message : null;
@@ -109,13 +118,17 @@ export default function YouTubeVideoDetailClient({ id }: { id?: string }) {
     if (isEdit) {
       updateMutation.mutate(payload, {
         onSuccess: () => {
+          draft.clearDraft();
           setSavedFlash(true);
           setTimeout(() => setSavedFlash(false), 2500);
         },
       });
     } else {
       createMutation.mutate(payload, {
-        onSuccess: (res) => router.push(`/admin/youtube-videos/${res.video.id}`),
+        onSuccess: (res) => {
+          draft.clearDraft();
+          router.push(`/admin/youtube-videos/${res.video.id}`);
+        },
       });
     }
   };
@@ -215,6 +228,8 @@ export default function YouTubeVideoDetailClient({ id }: { id?: string }) {
           </button>
         </div>
       )}
+
+<DraftBanner restoredAt={draft.restoredAt} onDiscard={draft.discardDraft} />
 
       <form onSubmit={handleSubmit(onSubmit)} className="grid grid-cols-1 gap-6 lg:grid-cols-3" noValidate>
         <div className="lg:col-span-2">

@@ -36,9 +36,13 @@ export const productFormSchema = z
     lowStockThreshold: z.coerce.number().int().min(0, "Must be 0 or greater"),
     trackInventory: z.boolean(),
 
-    seoTitle: z.string().trim().min(10, "SEO title is too short").max(70, "SEO title is too long"),
-    seoDescription: z.string().trim().min(40, "SEO description is too short").max(200, "SEO description is too long"),
-    seoKeywords: z.array(z.string()).min(1, "At least one SEO keyword is required").max(20, "Maximum 20 SEO keywords"),
+    // SEO is optional: blank is fine, anything entered must be within bounds.
+    seoTitle: z.union([z.literal(""), z.string().trim().min(10, "SEO title is too short").max(70, "SEO title is too long")]),
+    seoDescription: z.union([
+      z.literal(""),
+      z.string().trim().min(40, "SEO description is too short").max(200, "SEO description is too long"),
+    ]),
+    seoKeywords: z.array(z.string()).max(20, "Maximum 20 SEO keywords"),
     canonicalUrl: z.string().trim().max(500).optional().or(z.literal("")),
     ogTitle: z.string().trim().max(70).optional().or(z.literal("")),
     ogDescription: z.string().trim().max(200).optional().or(z.literal("")),
