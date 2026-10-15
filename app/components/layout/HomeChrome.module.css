@@ -28,9 +28,6 @@
     max-width: none;
     height: clamp(75px, calc(4.6vw + 7px), 83px);
     padding-inline: clamp(24px, 2.9vw, 52px);
-    border-radius: 999px;
-    background: #fff;
-    box-shadow: 0 2px 22px rgb(36 64 44 / 4%);
   }
 
   .homeDesktopLogo img {
