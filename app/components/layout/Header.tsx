@@ -40,7 +40,9 @@ export default function Header() {
       <header
         data-scrolled={scrolled}
         className={`sticky top-0 z-40 w-full bg-white/95 backdrop-blur transition-shadow ${isHome ? styles.homeHeader : ""} ${
-          scrolled ? "shadow-[0_1px_0_0_rgba(0,0,0,0.06)]" : ""
+          scrolled
+            ? "shadow-[0_1px_0_0_rgba(0,0,0,0.08),0_4px_12px_-4px_rgba(0,0,0,0.12)]"
+            : "shadow-[0_1px_0_0_rgba(0,0,0,0.06),0_2px_6px_-3px_rgba(0,0,0,0.08)]"
         }`}
       >
         {/* Mobile top bar: hamburger — logo — search + cart */}

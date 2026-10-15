@@ -5,21 +5,25 @@ import { useEffect, useRef, useState } from "react";
 import Container from "../ui/Container";
 import SectionHeading from "../ui/SectionHeading";
 
-const BIG_IMAGE = "https://cdn.shopify.com/s/files/1/0768/7979/0338/files/bigslide.jpg?v=1779453605";
+// Files in /public/everyday-moments (names contain a space, so the URL is encoded).
+const momentImage = (n: string) => `/everyday-moments/Everyday%20Moments-${n}.webp`;
+
+const BIG_IMAGE = momentImage("01");
 
 const MOMENTS = [
-  { title: "Road Trips", copy: "Easy to carry, perfect on the go." },
-  { title: "Running Late for Office?", copy: "Just heat and eat before you leave." },
-  { title: "Late Night Hunger?", copy: "Warm, filling meals anytime." },
-  { title: "During Fever or Recovery", copy: "Light, comforting, and easy to eat." },
-  { title: "Hostel & PG Life", copy: "Simple meals without cooking hassle." },
-  { title: "Travel & Staycations", copy: "Easy to store and carry anywhere." },
-  { title: "Busy Family Days", copy: "Simple meals for packed routines." },
-  { title: "Work From Home", copy: "Quick meals between meetings." },
+  { title: "Road Trips", copy: "Easy to carry, perfect on the go.", image: "02" },
+  { title: "Running Late for Office?", copy: "Just heat and eat before you leave.", image: "03" },
+  { title: "Late Night Hunger?", copy: "Warm, filling meals anytime.", image: "04" },
+  { title: "During Fever or Recovery", copy: "Light, comforting, and easy to eat.", image: "05" },
+  { title: "Hostel & PG Life", copy: "Simple meals without cooking hassle.", image: "09" },
+  { title: "Travel & Staycations", copy: "Easy to store and carry anywhere.", image: "06" },
+  { title: "Busy Family Days", copy: "Simple meals for packed routines.", image: "10" },
+  { title: "Work From Home", copy: "Quick meals between meetings.", image: "07" },
 ].map((m, i) => ({
-  ...m,
+  title: m.title,
+  copy: m.copy,
   number: String(i + 1).padStart(2, "0"),
-  src: `https://cdn.shopify.com/s/files/1/0768/7979/0338/files/card${i + 1}_1.png?v=1779454715`,
+  src: momentImage(m.image),
 }));
 
 function MomentCard({
