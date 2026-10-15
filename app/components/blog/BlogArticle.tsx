@@ -25,7 +25,7 @@ export interface BlogArticleData {
 
 function fmt(iso: string | null): string | null {
   if (!iso) return null;
-  return new Date(iso).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" });
+  return new Date(iso).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric", timeZone: "Asia/Kolkata" });
 }
 
 export default function BlogArticle({
