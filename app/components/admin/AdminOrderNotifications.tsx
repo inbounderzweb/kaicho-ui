@@ -19,7 +19,7 @@ const TOAST_LIFETIME_MS = 6000;
 // every /admin/** page, matching the shell's own "gate the whole section
 // once" approach.
 export default function AdminOrderNotifications({ enabled }: { enabled: boolean }) {
-  const { notifications, toasts, unreadCount, loadError, dismissToast, markAllRead } = useAdminOrderNotifications(enabled);
+  const { notifications, toasts, unreadCount, loadError, soundReady, needsConfirm, enableAlerts, dismissConfirm, dismissToast, markAllRead } = useAdminOrderNotifications(enabled);
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -36,6 +36,35 @@ export default function AdminOrderNotifications({ enabled }: { enabled: boolean 
 
   return (
     <>
+      {needsConfirm && !soundReady && (
+        <div role="dialog" aria-modal="true" aria-label="Enable order alerts" className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 px-4">
+          <div className="w-full max-w-sm rounded-2xl bg-admin-card p-6 text-center shadow-xl dark:bg-admin-card-dark">
+            <h2 className="font-display text-base font-bold">Enable live order alerts</h2>
+            <p className="mt-2 text-sm text-black/60 dark:text-white/60">
+              Browsers need your permission to play sound and show notifications. Confirm once and you&apos;ll
+              be alerted for every new order, even with the browser minimized, until you log out.
+            </p>
+            <div className="mt-5 flex gap-3">
+              <button type="button" onClick={dismissConfirm} className="flex-1 rounded-full border border-admin-border px-4 py-2 text-sm font-semibold dark:border-admin-border-dark">
+                Not now
+              </button>
+              <button type="button" onClick={enableAlerts} className="flex-1 rounded-full bg-admin-primary px-4 py-2 text-sm font-semibold text-black hover:opacity-90">
+                Enable alerts
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {!soundReady && (
+        <button
+          type="button"
+          onClick={enableAlerts}
+          title="Browsers block sound until you interact with the page. Click to enable order alerts."
+          className="rounded-full border border-amber-500/60 bg-amber-500/10 px-3 py-1 text-xs font-semibold text-amber-700 dark:text-amber-300"
+        >
+          Enable order sound
+        </button>
+      )}
       <div ref={containerRef} className="relative">
         <button
           type="button"
