@@ -37,10 +37,10 @@ export default function MobileTabBar() {
             key={label}
             href={href}
             aria-current={isNavLinkActive(pathname, href) ? "page" : undefined}
-            className={`flex h-14 min-w-0 flex-col items-center justify-center gap-1 border-t-2 px-1 transition-colors active:text-brand ${isNavLinkActive(pathname, href) ? "border-brand text-brand-dark" : "border-transparent text-ink-muted"}`}
+            className={`flex h-[4.25rem] min-w-0 flex-col items-center justify-center gap-1.5 border-t-2 px-1 transition-colors active:text-brand ${isNavLinkActive(pathname, href) ? "border-brand text-brand-dark" : "border-transparent text-ink-muted"}`}
           >
-            <Icon className="h-[clamp(16px,calc(5.4vw-4px),20px)] w-[clamp(16px,calc(5.4vw-4px),20px)] shrink-0" />
-            <span className="max-w-full truncate text-[clamp(7px,calc(2.9vw-4px),8.5px)] font-semibold leading-none">{label}</span>
+            <Icon className="h-6 w-6 shrink-0" />
+            <span className="max-w-full truncate text-xs font-semibold leading-none">{label}</span>
           </Link>
         ))}
       </div>

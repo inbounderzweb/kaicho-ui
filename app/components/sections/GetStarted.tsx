@@ -49,17 +49,15 @@ export default function GetStarted() {
           </div>
         </div>
 
-        <div className="relative mx-auto aspect-square w-full max-w-sm lg:max-w-[22rem] xl:max-w-md">
-          <div aria-hidden className="absolute inset-[6%] rounded-full bg-brand-soft" />
-          <div className="absolute inset-[10%] overflow-hidden rounded-full shadow-[0_30px_60px_-30px_rgba(0,0,0,0.35)]">
-            <Image
-              src="/kaicho-lifestyle-banner.jpg"
-              alt="Kaicho customer enjoying a warm bowl of porridge at home"
-              fill
-              sizes="(min-width: 1024px) 480px, 90vw"
-              className="object-cover"
-            />
-          </div>
+        <div className="relative mx-auto w-full max-w-xl lg:max-w-none">
+          <Image
+            src="/home-page/Get-Started-Today.webp"
+            alt="Kaicho porridge range: Navadhanya, Mixed Millet, Broccoli & Mushroom Oats and Chicken Oats, served in wooden bowls"
+            width={2716}
+            height={2436}
+            sizes="(min-width: 1024px) 560px, 90vw"
+            className="h-auto w-full rounded-3xl object-cover shadow-[0_30px_60px_-30px_rgba(0,0,0,0.35)]"
+          />
         </div>
       </Container>
     </section>

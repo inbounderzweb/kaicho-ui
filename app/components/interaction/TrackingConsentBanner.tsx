@@ -26,7 +26,7 @@ export default function TrackingConsentBanner() {
     <div
       role="dialog"
       aria-label="Personalisation preferences"
-      className="fixed inset-x-3 bottom-20 z-40 mx-auto max-w-lg rounded-2xl border border-border bg-white p-4 shadow-xl lg:bottom-4 lg:left-auto lg:right-4 lg:mx-0"
+      className="fixed inset-x-3 bottom-24 z-40 mx-auto max-w-lg rounded-2xl border border-border bg-white p-4 shadow-xl lg:bottom-4 lg:left-auto lg:right-4 lg:mx-0"
     >
       <p className="text-sm font-bold text-ink">Make Kaicho work better for you?</p>
       <p className="mt-1 text-xs leading-5 text-ink-muted">

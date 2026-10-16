@@ -3,14 +3,13 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
-import { FiArrowLeft, FiArrowRight, FiPause, FiPlay } from "react-icons/fi";
+import { FiArrowLeft, FiArrowRight } from "react-icons/fi";
 
 type Product = { name: string; image: string };
 
 export default function ProductRangeSlider({ products }: { products: Product[] }) {
   const [offset, setOffset] = useState(0);
   const [direction, setDirection] = useState(0);
-  const [paused, setPaused] = useState(false);
   const [interacting, setInteracting] = useState(false);
   const [focused, setFocused] = useState(false);
   const [reducedMotion, setReducedMotion] = useState(true);
@@ -50,23 +49,10 @@ export default function ProductRangeSlider({ products }: { products: Product[] }
   }, [count, direction]);
 
   useEffect(() => {
-    if (paused || interacting || focused || reducedMotion || !visible || direction || count < 2) return;
+    if (interacting || focused || reducedMotion || !visible || direction || count < 2) return;
     const timer = window.setTimeout(() => advance(1), 4000);
     return () => window.clearTimeout(timer);
-  }, [advance, paused, interacting, focused, reducedMotion, visible, direction, count]);
-
-  const togglePlayback = () => {
-    if (paused) {
-      // Explicit Play overrides the hover/focus that activated this button.
-      // A new hover or focus interaction can still pause autoplay afterward.
-      setInteracting(false);
-      setFocused(false);
-      setPaused(false);
-      advance(1);
-    } else {
-      setPaused(true);
-    }
-  };
+  }, [advance, interacting, focused, reducedMotion, visible, direction, count]);
 
   if (!count) return null;
 
@@ -122,7 +108,6 @@ export default function ProductRangeSlider({ products }: { products: Product[] }
       {count > 1 && (
         <div className="mt-5 flex items-center justify-end gap-2">
           <button type="button" aria-label="Previous products" disabled={!!direction} onClick={() => advance(-1)} className={controlClass}><FiArrowLeft aria-hidden="true" /></button>
-          {!reducedMotion && <button type="button" aria-label={paused ? "Play product slideshow" : "Pause product slideshow"} onClick={togglePlayback} className={controlClass}>{paused ? <FiPlay aria-hidden="true" /> : <FiPause aria-hidden="true" />}</button>}
           <button type="button" aria-label="Next products" disabled={!!direction} onClick={() => advance(1)} className={controlClass}><FiArrowRight aria-hidden="true" /></button>
         </div>
       )}

@@ -39,7 +39,7 @@ export default function WhatsAppButton() {
   return (
     <div
       ref={rootRef}
-      className={`fixed bottom-24 right-4 z-50 flex flex-col items-end gap-3 sm:bottom-6 sm:right-6 `}
+      className={`fixed bottom-28 right-4 z-50 flex flex-col items-end gap-3 sm:bottom-6 sm:right-6 `}
     >
       {/* Speed-dial actions */}
       <div

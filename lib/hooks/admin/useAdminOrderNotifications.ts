@@ -115,18 +115,47 @@ function playAlert(): boolean {
     }
     const base = ctx.currentTime;
     const repeats = Math.ceil(ALERT_DURATION_MS / ALERT_REPEAT_MS);
-    for (let r = 0; r < repeats; r++) {
-      // C5–E5–G5: a gentle rising major chord with a bell-like decay.
-      [523.25, 659.25, 783.99].forEach((freq, i) => {
+
+    // Shared output chain: soft compressor (keeps overlapping bells clean) and
+    // a short feedback echo for an airy, "shop bell" shimmer.
+    const master = ctx.createGain();
+    master.gain.value = 0.9;
+    const comp = ctx.createDynamicsCompressor();
+    const echo = ctx.createDelay(0.5);
+    echo.delayTime.value = 0.18;
+    const echoGain = ctx.createGain();
+    echoGain.gain.value = 0.28;
+    master.connect(comp);
+    master.connect(echo);
+    echo.connect(echoGain).connect(echo);
+    echoGain.connect(comp);
+    comp.connect(ctx.destination);
+    const tail = base + ALERT_DURATION_MS / 1000 + 3;
+    const cleanup = ctx.createOscillator();
+    cleanup.frequency.value = 0;
+    cleanup.connect(ctx.createGain());
+    cleanup.onended = () => { [master, comp, echo, echoGain].forEach((n) => n.disconnect()); };
+    cleanup.start(base);
+    cleanup.stop(tail);
+    activeTones.add(cleanup);
+
+    // Bell-like voice: fundamental + inharmonic partials (2.76x, 5.4x) with
+    // faster decay on the upper ones, the classic struck-bell spectrum.
+    const bell = (freq: number, start: number, level: number) => {
+      const partials: Array<[number, number, number]> = [
+        [1, 1, 1.4],
+        [2.76, 0.35, 0.7],
+        [5.4, 0.12, 0.35],
+      ];
+      for (const [ratio, amp, decay] of partials) {
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
         osc.type = "sine";
-        osc.frequency.value = freq;
-        const start = base + (r * ALERT_REPEAT_MS) / 1000 + i * 0.22;
+        osc.frequency.value = freq * ratio;
         gain.gain.setValueAtTime(0, start);
-        gain.gain.linearRampToValueAtTime(0.14, start + 0.015);
-        gain.gain.exponentialRampToValueAtTime(0.001, start + 0.9);
-        osc.connect(gain).connect(ctx.destination);
+        gain.gain.linearRampToValueAtTime(level * amp, start + 0.008);
+        gain.gain.exponentialRampToValueAtTime(0.0001, start + decay);
+        osc.connect(gain).connect(master);
         activeTones.add(osc);
         osc.onended = () => {
           activeTones.delete(osc);
@@ -134,8 +163,21 @@ function playAlert(): boolean {
           gain.disconnect();
         };
         osc.start(start);
-        osc.stop(start + 0.92);
-      });
+        osc.stop(start + decay + 0.05);
+      }
+    };
+
+    // Cheerful ascending phrase: E5 – G#5 – B5 – E6 (E major arpeggio) with the
+    // last note held longer, once per repeat.
+    const phrase: Array<[number, number, number]> = [
+      [659.25, 0, 0.16],
+      [830.61, 0.14, 0.16],
+      [987.77, 0.28, 0.16],
+      [1318.51, 0.44, 0.22],
+    ];
+    for (let r = 0; r < repeats; r++) {
+      const t0 = base + (r * ALERT_REPEAT_MS) / 1000;
+      for (const [freq, offset, level] of phrase) bell(freq, t0 + offset, level);
     }
     return true;
   } catch {

@@ -165,24 +165,21 @@ export default function StorySection() {
               className="
                 relative overflow-hidden
                 rounded-[2rem]
-                bg-[#e8e7df]
-                p-6
-                sm:p-10
               "
             >
               {/* Image */}
               <Image
-                src="/hero-page/product-images/desktop-Mixed-Millet.png"
-                alt="Kaicho ready-to-eat meal"
-                width={1254}
-                height={1254}
+                src="/home-page/Our-Story.png"
+                alt="Four bowls of Kaicho millet porridge served on banana leaf"
+                width={1448}
+                height={1086}
                 sizes="(min-width: 1024px) 620px, 90vw"
                 className="
                   relative z-10
                   mx-auto
                   h-auto
                   w-full
-                  max-w-[620px]
+                  max-w-[720px]
                   object-contain
                   drop-shadow-[0_30px_40px_rgba(0,0,0,0.14)]
                   transition-transform
