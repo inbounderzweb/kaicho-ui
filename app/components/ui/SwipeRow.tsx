@@ -1,25 +1,12 @@
 "use client";
 
-import { useEffect, useRef, type ReactNode } from "react";
+import { useRef, type ReactNode } from "react";
 
-// Horizontal card row that can be dragged from ANY pixel — card padding, the
-// white gaps between cards, text, buttons — with a finger or a mouse.
-//
-// Native scrolling alone proved unreliable here: a swipe that starts on a
-// non-link part of a card (plain white space) is sometimes not turned into a
-// scroll by the browser, and a mouse can't drag-scroll at all. So once the
-// page has hydrated, horizontal panning is handled here (the browser keeps
-// vertical page scrolling via `touch-action: pan-y`), and on release the row
-// glides to the nearest card with the CSS scroll-snap/scroll-smooth it already
-// has. Before hydration (or if JS fails) native horizontal scrolling still
-// works, because `touch-action` is only restricted from the effect below.
-//
-// Cards below the sm breakpoint scroll; at sm+ the same element is a static
-// grid (no overflow), where this does nothing.
-// A fingertip pressing a button routinely drifts several pixels, so the slop
-// before a press counts as a drag must be generous (browsers use ~8-10px for
-// touch), and the movement has to be clearly sideways. Too small a value turned
-// ordinary taps on "Add" into drags, which then swallowed the click.
+// Touch/pen panning belongs to the browser: it handles momentum, axis locking,
+// pinch zoom and cancelling clicks after a swipe without waiting for React.
+// Only a mouse needs custom drag scrolling. Restricting the row to pan-y and
+// writing scrollLeft on every touch move caused mobile swipes to hesitate.
+// At sm+ these rows become static grids, so mouse dragging does nothing there.
 const DRAG_THRESHOLD_PX = 12;
 const MOMENTUM_MS = 140;
 
@@ -38,13 +25,6 @@ export default function SwipeRow({ className = "", children }: { className?: str
   const ref = useRef<HTMLDivElement>(null);
   const drag = useRef<DragState | null>(null);
   const swallowClick = useRef(false);
-
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    el.style.touchAction = "pan-y";
-    return () => { el.style.touchAction = ""; };
-  }, []);
 
   const settle = (el: HTMLDivElement, state: DragState) => {
     el.style.scrollSnapType = "";
@@ -68,7 +48,7 @@ export default function SwipeRow({ className = "", children }: { className?: str
 
   const onPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
     const el = ref.current;
-    if (!el || (e.pointerType === "mouse" && e.button !== 0)) return;
+    if (!el || e.pointerType !== "mouse" || e.button !== 0 || !e.isPrimary) return;
     if (el.scrollWidth <= el.clientWidth + 1) return; // not scrollable at this breakpoint
     drag.current = {
       pointerId: e.pointerId,
@@ -88,7 +68,7 @@ export default function SwipeRow({ className = "", children }: { className?: str
     if (!el || !state || e.pointerId !== state.pointerId) return;
     const dx = e.clientX - state.startX;
     if (!state.dragging) {
-      // Not a drag yet: too short, or more up/down than sideways (that's a page scroll or a tap that wobbled).
+      // Leave clicks and vertical movement alone until this is a clear drag.
       if (Math.abs(dx) < DRAG_THRESHOLD_PX || Math.abs(dx) <= Math.abs(e.clientY - state.startY)) return;
       state.dragging = true;
       // Only capture once it's clearly a drag, so plain taps keep their normal

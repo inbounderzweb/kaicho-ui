@@ -34,16 +34,14 @@ export default async function CategoryShowcase() {
               {collection.products?.length ? (
                 // pr-[...] on the mobile snap row: without trailing space the
                 // last card's snap-start point sits past the container's max
-                // scrollLeft (unreachable), and with snap-mandatory that
-                // makes the carousel fight/rubber-band near the end instead
-                // of settling on the last card. The padding equals one
+                // scrollLeft (unreachable). The padding equals one
                 // card's own width (min(68vw,16.25rem) — same formula as the
                 // card itself below) subtracted from 100%, so the last card
                 // can flush-align at max scroll. Reset on sm: since that
                 // breakpoint switches to a static, non-scrolling grid.
-                <SwipeRow className="max-sm:select-none max-sm:[-webkit-touch-callout:none] no-scrollbar mt-7 flex snap-x snap-mandatory scroll-smooth transform-gpu gap-4 overflow-x-auto overscroll-x-contain pb-1 pr-[calc(100%-min(68vw,16.25rem))] sm:grid sm:grid-cols-2 sm:gap-6 sm:overflow-visible sm:pb-0 sm:pr-0 sm:snap-none lg:grid-cols-4">
+                <SwipeRow className="max-sm:select-none max-sm:[-webkit-touch-callout:none] no-scrollbar mt-7 flex snap-x snap-proximity transform-gpu gap-4 overflow-x-auto overscroll-x-contain pb-1 pr-[calc(100%-min(68vw,16.25rem))] sm:grid sm:grid-cols-2 sm:gap-6 sm:overflow-visible sm:pb-0 sm:pr-0 sm:snap-none lg:grid-cols-4">
                   {collection.products.map((product) => (
-                    <div key={product.productId} className="w-[68vw] max-w-65 shrink-0 snap-start snap-always sm:w-auto sm:max-w-none sm:shrink">
+                    <div key={product.productId} className="w-[68vw] max-w-65 shrink-0 snap-start sm:w-auto sm:max-w-none sm:shrink">
                       <ProductCard product={product} />
                     </div>
                   ))}

@@ -1,7 +1,8 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { monitorCarouselInteraction } from "@/lib/carousels/interaction";
 import Container from "../ui/Container";
 import SectionHeading from "../ui/SectionHeading";
 
@@ -84,25 +85,44 @@ function BigImageCaption({ mobileHidden = false }: { mobileHidden?: boolean }) {
 export default function UseCaseGrid() {
   const [active, setActive] = useState(0);
   const trackRef = useRef<HTMLDivElement>(null);
+  const activeRef = useRef(0);
+  const interaction = useRef<ReturnType<typeof monitorCarouselInteraction> | null>(null);
 
-  useEffect(() => {
-    const id = setInterval(() => {
-      setActive((a) => (a + 1) % MOMENTS.length);
-    }, 3000);
-    return () => clearInterval(id);
-  }, []);
-
-  useEffect(() => {
+  const showMoment = useCallback((index: number) => {
     // Scroll only the horizontal track itself (never scrollIntoView) — that
     // API can also nudge the page's vertical scroll position even with
     // block: "nearest", which was yanking the whole section into view every
     // time the slide auto-advanced.
     const track = trackRef.current;
-    const item = track?.children[active] as HTMLElement | undefined;
+    const item = track?.children[index] as HTMLElement | undefined;
     if (track && item) {
-      track.scrollTo({ left: item.offsetLeft - track.offsetLeft, behavior: "smooth" });
+      activeRef.current = index;
+      setActive(index);
+      track.scrollTo({
+        left: item.offsetLeft - track.offsetLeft,
+        behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth",
+      });
     }
-  }, [active]);
+  }, []);
+
+  useEffect(() => {
+    const track = trackRef.current;
+    if (!track) return;
+    const activity = monitorCarouselInteraction(track, {
+      pauseMs: 3000,
+      onInterrupt: () => track.scrollTo({ left: track.scrollLeft, behavior: "instant" }),
+    });
+    interaction.current = activity;
+    const id = window.matchMedia("(prefers-reduced-motion: reduce)").matches ? undefined : window.setInterval(() => {
+      if (!track.clientWidth || document.hidden || !activity.canAutoplay()) return;
+      showMoment((activeRef.current + 1) % MOMENTS.length);
+    }, 3000);
+    return () => {
+      window.clearInterval(id);
+      activity.dispose();
+      interaction.current = null;
+    };
+  }, [showMoment]);
 
   return (
     <section className="bg-cream py-20 sm:py-24 md:py-12">
@@ -144,6 +164,16 @@ export default function UseCaseGrid() {
           <div
             ref={trackRef}
             className="no-scrollbar mt-3 flex snap-x snap-mandatory gap-4 overflow-x-auto scroll-px-5 pb-1 sm:hidden"
+            onScroll={(event) => {
+              const track = event.currentTarget;
+              const positions = Array.from(track.children, (item) => Math.abs((item as HTMLElement).offsetLeft - track.offsetLeft - track.scrollLeft));
+              const atEnd = track.scrollLeft >= track.scrollWidth - track.clientWidth - 2;
+              const index = atEnd ? MOMENTS.length - 1 : positions.indexOf(Math.min(...positions));
+              if (index >= 0 && index !== activeRef.current) {
+                activeRef.current = index;
+                setActive(index);
+              }
+            }}
           >
             {MOMENTS.map((moment) => (
               <MomentCard
@@ -163,7 +193,7 @@ export default function UseCaseGrid() {
                 key={i}
                 type="button"
                 aria-label={`Show moment ${i + 1}`}
-                onClick={() => setActive(i)}
+                onClick={() => { interaction.current?.markActivity(); showMoment(i); }}
                 className={`h-1.5 rounded-full transition-all duration-300 ${
                   i === active ? "w-5 bg-brand" : "w-1.5 bg-border"
                 }`}

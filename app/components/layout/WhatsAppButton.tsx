@@ -39,11 +39,14 @@ export default function WhatsAppButton() {
   return (
     <div
       ref={rootRef}
-      className={`fixed bottom-28 right-4 z-50 flex flex-col items-end gap-3 sm:bottom-6 sm:right-6 `}
+      // The collapsed actions still occupy space. Let touches pass through
+      // their transparent wrapper to the product rows underneath.
+      className="pointer-events-none fixed bottom-28 right-4 z-50 flex flex-col items-end gap-3 sm:bottom-6 sm:right-6"
     >
       {/* Speed-dial actions */}
       <div
         id="contact-options"
+        aria-hidden={!open}
         className={`flex flex-col items-end gap-3 transition-all duration-200 ${
           open
             ? "pointer-events-auto translate-y-0 opacity-100"
@@ -86,7 +89,7 @@ export default function WhatsAppButton() {
         aria-expanded={open}
         aria-controls="contact-options"
         aria-label={open ? "Close contact options" : "Contact us on WhatsApp or by phone"}
-        className={`flex h-14 w-14 items-center justify-center rounded-full bg-[#25D366] text-white shadow-lg shadow-black/20 transition-transform hover:scale-105 active:scale-95`}
+        className="pointer-events-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#25D366] text-white shadow-lg shadow-black/20 transition-transform hover:scale-105 active:scale-95"
       >
         <span className={`transition-transform duration-200 ${open ? "rotate-90" : ""}`}>
           {open ? (

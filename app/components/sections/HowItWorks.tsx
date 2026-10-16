@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
+import { monitorCarouselInteraction } from "@/lib/carousels/interaction";
 import Container from "../ui/Container";
 import { IconBowl, IconChevronRight, IconFlame, IconPackage } from "../ui/icons";
 
@@ -17,17 +18,27 @@ const SLIDE_MS = 400;
 
 export default function HowItWorks() {
   const trackRef = useRef<HTMLDivElement>(null);
-  const lastTouch = useRef(0);
-  const hovering = useRef(false);
+  const interaction = useRef<ReturnType<typeof monitorCarouselInteraction> | null>(null);
+  const animating = useRef(false);
   const frame = useRef(0);
   const settle = useRef(0);
 
   // Fast eased slide. scroll-snap is switched off while it runs, otherwise the
   // browser fights every frame and the motion stutters.
-  function slideTo(index: number) {
+  const slideTo = useCallback((index: number) => {
     const track = trackRef.current;
     if (!track) return;
     cancelAnimationFrame(frame.current);
+    window.clearTimeout(settle.current);
+    animating.current = true;
+    // A touch may cancel the clone's pending rewind without producing another
+    // scroll event on release. Start the next advance from its identical real
+    // slide instead of animating beyond the track's maximum scroll position.
+    if (index > STEPS.length) {
+      track.style.scrollSnapType = "none";
+      track.scrollLeft = 0;
+      index %= STEPS.length;
+    }
     const from = track.scrollLeft;
     const to = index * track.clientWidth;
     const start = performance.now();
@@ -39,33 +50,44 @@ export default function HowItWorks() {
       if (t < 1) {
         frame.current = requestAnimationFrame(step);
       } else {
+        animating.current = false;
         track.style.scrollSnapType = "";
       }
     };
     frame.current = requestAnimationFrame(step);
-  }
+  }, []);
 
-  function stopSlide() {
+  const stopSlide = useCallback(() => {
     cancelAnimationFrame(frame.current);
+    window.clearTimeout(settle.current);
+    animating.current = false;
     if (trackRef.current) trackRef.current.style.scrollSnapType = "";
-  }
+  }, []);
 
   useEffect(() => {
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    const timer = window.setInterval(() => {
-      const track = trackRef.current;
-      if (!track || hovering.current || document.hidden) return;
-      if (Date.now() - lastTouch.current < HOLD_MS) return;
+    const track = trackRef.current;
+    if (!track) return;
+    const activity = monitorCarouselInteraction(track, {
+      pauseMs: HOLD_MS,
+      onInterrupt: stopSlide,
+      isAnimating: () => animating.current,
+    });
+    interaction.current = activity;
+    const timer = window.matchMedia("(prefers-reduced-motion: reduce)").matches ? undefined : window.setInterval(() => {
+      if (!track.clientWidth || document.hidden) return;
+      if (!activity.canAutoplay()) return;
       slideTo(Math.round(track.scrollLeft / track.clientWidth) + 1);
     }, HOLD_MS);
     return () => {
       window.clearInterval(timer);
+      activity.dispose();
+      interaction.current = null;
       cancelAnimationFrame(frame.current);
       window.clearTimeout(settle.current);
     };
-  }, []);
+  }, [slideTo, stopSlide]);
 
-  const markTouched = () => { lastTouch.current = Date.now(); };
+  const markTouched = () => { interaction.current?.markActivity(); };
   function move(direction: 1 | -1) {
     const track = trackRef.current;
     if (!track) return;
@@ -80,7 +102,6 @@ export default function HowItWorks() {
     }
     slideTo(index + direction);
   }
-  const interrupt = () => { markTouched(); stopSlide(); };
 
   return (
     <section className="py-16 sm:py-20 bg-fixed">
@@ -101,11 +122,7 @@ export default function HowItWorks() {
             </h2>
           </div>
 
-          <div
-            className="relative z-10 flex min-w-0 flex-1 flex-col justify-center py-7 sm:py-0"
-            onMouseEnter={() => { hovering.current = true; }}
-            onMouseLeave={() => { hovering.current = false; markTouched(); }}
-          >
+          <div className="relative z-10 flex min-w-0 flex-1 flex-col justify-center py-7 sm:py-0">
             {/* One step per view; native scroll + snap gives swipe / trackpad / drag-scroll */}
             <div
               ref={trackRef}
@@ -118,9 +135,9 @@ export default function HowItWorks() {
                 const index = Math.round(track.scrollLeft / track.clientWidth);
                 // Resting on the trailing copy of step 1 → silently rewind to the real one.
                 window.clearTimeout(settle.current);
-                if (index === STEPS.length) {
+                if (index === STEPS.length && !interaction.current?.isActive()) {
                   settle.current = window.setTimeout(() => {
-                    if (Math.abs(track.scrollLeft - STEPS.length * track.clientWidth) < 2) {
+                    if (!interaction.current?.isActive() && Math.abs(track.scrollLeft - STEPS.length * track.clientWidth) < 2) {
                       track.style.scrollSnapType = "none";
                       track.scrollLeft = 0;
                       track.style.scrollSnapType = "";
@@ -128,10 +145,6 @@ export default function HowItWorks() {
                   }, 120);
                 }
               }}
-              onPointerDown={interrupt}
-              onWheel={interrupt}
-              onTouchStart={interrupt}
-              onKeyDown={markTouched}
               tabIndex={0}
             >
               {[...STEPS, STEPS[0]].map(({ step, title, Icon }, position) => (
