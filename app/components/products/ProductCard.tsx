@@ -172,7 +172,9 @@ export default function ProductCard({
           onClick={handleAddToCart}
           disabled={outOfStock}
           aria-busy={smartCart.busy}
-          className={`inline-flex h-11 w-full min-w-0 touch-manipulation items-center justify-center gap-1 rounded-full px-2 text-sm font-bold transition-colors disabled:cursor-not-allowed ${
+          // The ::before is an invisible 8px ring around the green pill that belongs
+          // to the button, so a tap on its edge or just outside it still adds.
+          className={`relative inline-flex h-11 w-full min-w-0 touch-manipulation items-center justify-center gap-1 rounded-full px-2 text-sm font-bold transition-colors before:absolute before:-inset-2 before:content-[''] disabled:cursor-not-allowed ${
             smartCart.busy
               ? "bg-brand-darker text-white"
               : outOfStock

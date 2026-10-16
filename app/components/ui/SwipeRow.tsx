@@ -16,12 +16,17 @@ import { useEffect, useRef, type ReactNode } from "react";
 //
 // Cards below the sm breakpoint scroll; at sm+ the same element is a static
 // grid (no overflow), where this does nothing.
-const DRAG_THRESHOLD_PX = 6;
+// A fingertip pressing a button routinely drifts several pixels, so the slop
+// before a press counts as a drag must be generous (browsers use ~8-10px for
+// touch), and the movement has to be clearly sideways. Too small a value turned
+// ordinary taps on "Add" into drags, which then swallowed the click.
+const DRAG_THRESHOLD_PX = 12;
 const MOMENTUM_MS = 140;
 
 interface DragState {
   pointerId: number;
   startX: number;
+  startY: number;
   startLeft: number;
   lastX: number;
   lastT: number;
@@ -68,6 +73,7 @@ export default function SwipeRow({ className = "", children }: { className?: str
     drag.current = {
       pointerId: e.pointerId,
       startX: e.clientX,
+      startY: e.clientY,
       startLeft: el.scrollLeft,
       lastX: e.clientX,
       lastT: e.timeStamp,
@@ -82,7 +88,8 @@ export default function SwipeRow({ className = "", children }: { className?: str
     if (!el || !state || e.pointerId !== state.pointerId) return;
     const dx = e.clientX - state.startX;
     if (!state.dragging) {
-      if (Math.abs(dx) < DRAG_THRESHOLD_PX) return;
+      // Not a drag yet: too short, or more up/down than sideways (that's a page scroll or a tap that wobbled).
+      if (Math.abs(dx) < DRAG_THRESHOLD_PX || Math.abs(dx) <= Math.abs(e.clientY - state.startY)) return;
       state.dragging = true;
       // Only capture once it's clearly a drag, so plain taps keep their normal
       // click target (a captured pointer would redirect the click to the row).
