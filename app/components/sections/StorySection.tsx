@@ -84,7 +84,7 @@ export default function StorySection() {
   return (
     <section
       id="story"
-      className="relative overflow-hidden py-24 md:py-12 sm:py-32"
+      className="relative overflow-hidden py-10 md:py-12 sm:py-32"
     >
       <Container fluid>
         {/* Header */}
