@@ -106,7 +106,7 @@ export default function ProductCard({
               loading={priority ? undefined : "lazy"}
               priority={priority}
               sizes="(min-width: 1024px) 24vw, (min-width: 640px) 32vw, 46vw"
-              className="object-cover transition-transform duration-500 group-hover:scale-105"
+              className="pointer-events-none object-cover transition-transform duration-500 group-hover:scale-105"
             />
           ) : (
             <div className="flex h-full w-full items-center justify-center text-xs font-semibold text-ink-faint">

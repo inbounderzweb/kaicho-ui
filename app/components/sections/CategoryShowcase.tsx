@@ -40,7 +40,7 @@ export default async function CategoryShowcase() {
                 // card itself below) subtracted from 100%, so the last card
                 // can flush-align at max scroll. Reset on sm: since that
                 // breakpoint switches to a static, non-scrolling grid.
-                <div className="no-scrollbar mt-7 flex snap-x snap-mandatory gap-4 overflow-x-auto overscroll-x-contain pb-1 pr-[calc(100%-min(68vw,16.25rem))] sm:grid sm:grid-cols-2 sm:gap-6 sm:overflow-visible sm:pb-0 sm:pr-0 sm:snap-none lg:grid-cols-4">
+                <div className="max-sm:select-none max-sm:[-webkit-touch-callout:none] no-scrollbar mt-7 flex snap-x snap-mandatory scroll-smooth transform-gpu gap-4 overflow-x-auto overscroll-x-contain pb-1 pr-[calc(100%-min(68vw,16.25rem))] sm:grid sm:grid-cols-2 sm:gap-6 sm:overflow-visible sm:pb-0 sm:pr-0 sm:snap-none lg:grid-cols-4">
                   {collection.products.map((product) => (
                     <div key={product.productId} className="w-[68vw] max-w-65 shrink-0 snap-start snap-always sm:w-auto sm:max-w-none sm:shrink">
                       <ProductCard product={product} />
