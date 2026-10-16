@@ -1,3 +1,4 @@
+import SwipeRow from "../ui/SwipeRow";
 import ProductCard from "./ProductCard";
 import type { PublicProductListItem } from "@/lib/api/publicProducts";
 
@@ -17,7 +18,7 @@ export default function RelatedProducts({ products }: { products: PublicProductL
           Without it, snap-mandatory has no valid point to settle on near the
           end and the carousel feels like it gets stuck instead of reaching
           the last card. Reset on sm: since that breakpoint is a static grid. */}
-      <div className="max-sm:select-none max-sm:[-webkit-touch-callout:none] no-scrollbar mt-6 flex snap-x snap-mandatory scroll-smooth transform-gpu gap-3 overflow-x-auto overscroll-x-contain pb-1 pr-[calc(100%-min(42vw,10rem))] sm:grid sm:grid-cols-2 sm:gap-6 sm:overflow-visible sm:pb-0 sm:pr-0 sm:snap-none lg:grid-cols-4">
+      <SwipeRow className="max-sm:select-none max-sm:[-webkit-touch-callout:none] no-scrollbar mt-6 flex snap-x snap-mandatory scroll-smooth transform-gpu gap-3 overflow-x-auto overscroll-x-contain pb-1 pr-[calc(100%-min(42vw,10rem))] sm:grid sm:grid-cols-2 sm:gap-6 sm:overflow-visible sm:pb-0 sm:pr-0 sm:snap-none lg:grid-cols-4">
         {products.map((product) => (
           <div
             key={product.productId}
@@ -26,7 +27,7 @@ export default function RelatedProducts({ products }: { products: PublicProductL
             <ProductCard product={product} />
           </div>
         ))}
-      </div>
+      </SwipeRow>
     </div>
   );
 }

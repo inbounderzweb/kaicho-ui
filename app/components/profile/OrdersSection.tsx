@@ -64,13 +64,13 @@ export default function OrdersSection() {
 
   return (
     <div>
-      <div className="flex gap-1 rounded-full bg-cream p-1 text-sm font-semibold">
+      <div className="flex gap-0.5 rounded-full bg-cream p-0.5 text-xs font-semibold">
         {TABS.map(({ id, label }) => (
           <button
             key={id}
             type="button"
             onClick={() => setTab(id)}
-            className={`flex-1 rounded-full px-4 py-2.5 transition-colors ${
+            className={`flex-1 rounded-full px-3 py-1.5 transition-colors ${
               tab === id ? "bg-white text-ink shadow-sm" : "text-ink-muted hover:text-ink"
             }`}
           >
