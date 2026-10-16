@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { fetchRelatedCombo, updateRelatedCombo, type RelatedComboMode } from "../../api/adminRelatedCombo";
+import { fetchRelatedCombo, updateRelatedCombo, type RelatedComboPatch } from "../../api/adminRelatedCombo";
 import { relatedComboKeys } from "../query-keys";
 
 export function useRelatedCombo(productId: string | null) {
@@ -14,7 +14,7 @@ export function useRelatedCombo(productId: string | null) {
 export function useUpdateRelatedCombo(productId: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (patch: { mode?: RelatedComboMode; comboProductId?: string | null }) =>
+    mutationFn: (patch: RelatedComboPatch) =>
       updateRelatedCombo(productId, patch),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: relatedComboKeys.detail(productId) }),
   });

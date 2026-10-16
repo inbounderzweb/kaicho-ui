@@ -3,12 +3,12 @@
 import { useState } from "react";
 import { useProductList } from "@/lib/hooks/admin/useProductList";
 import { useRelatedCombo, useUpdateRelatedCombo } from "@/lib/hooks/admin/useRelatedCombo";
-import { RELATED_COMBO_MODES, type RelatedComboMode, type AdminRelatedCombo } from "@/lib/api/adminRelatedCombo";
+import { RELATED_COMBO_MODES, MAX_PINNED_COMBOS, type RelatedComboMode, type AdminRelatedCombo } from "@/lib/api/adminRelatedCombo";
 import { ApiError } from "@/lib/api/ApiError";
 
 const MODE_LABELS: Record<RelatedComboMode, string> = {
   AUTO: "Auto — find a combo that lists this product as a component",
-  MANUAL: "Manual — pin a specific bundle",
+  MANUAL: "Manual — pin specific bundles (up to 4)",
   NONE: "None — never suggest a bundle for this product",
 };
 
@@ -30,21 +30,30 @@ function RelatedComboForm({ productId, initial }: { productId: string; initial: 
   const updateRelatedCombo = useUpdateRelatedCombo(productId);
 
   const [mode, setMode] = useState<RelatedComboMode>(initial.mode);
-  const [comboProductId, setComboProductId] = useState<string | null>(initial.comboProductId ?? null);
-  const [comboProductName, setComboProductName] = useState<string | null>(initial.comboProductName ?? null);
+  const [pinned, setPinned] = useState<{ id: string; name: string; issue?: string }[]>(
+    initial.combos.map((c) => ({ id: c.comboProductId, name: c.comboProductName ?? c.comboProductId, issue: c.issue }))
+  );
   const [search, setSearch] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [dirty, setDirty] = useState(false);
 
   const { data: searchResults } = useProductList({ search: search || undefined, pageSize: 8, status: "ACTIVE" });
-  const results = (searchResults?.items ?? []).filter((p) => p.productId !== productId);
+  const results = (searchResults?.items ?? []).filter((p) => p.productId !== productId && !pinned.some((c) => c.id === p.productId));
 
   function handleSave() {
     setError(null);
+    if (mode === "MANUAL" && !pinned.length) {
+      setError("Select at least one bundle to pin, or choose Auto instead.");
+      return;
+    }
     updateRelatedCombo.mutate(
-      { mode, comboProductId: mode === "MANUAL" ? comboProductId : null },
+      { mode, comboProductIds: mode === "MANUAL" ? pinned.map((c) => c.id) : [] },
       {
-        onSuccess: () => setDirty(false),
+        onSuccess: (res) => {
+          // Re-sync from the server so each row shows its current availability note.
+          setPinned(res.relatedCombo.combos.map((c) => ({ id: c.comboProductId, name: c.comboProductName ?? c.comboProductId, issue: c.issue })));
+          setDirty(false);
+        },
         onError: (err) => setError(err instanceof ApiError ? err.message : "Couldn't save related combo."),
       }
     );
@@ -79,27 +88,30 @@ function RelatedComboForm({ productId, initial }: { productId: string; initial: 
 
       {mode === "MANUAL" && (
         <div className="space-y-2">
-          {comboProductId && (
-            <div className="flex items-center justify-between rounded-xl border border-admin-border bg-admin-surface p-2.5 text-sm dark:border-admin-border-dark dark:bg-admin-surface-dark">
-              <span className="font-semibold">{comboProductName ?? comboProductId}</span>
-              <button
-                type="button"
-                onClick={() => {
-                  setComboProductId(null);
-                  setComboProductName(null);
-                  setDirty(true);
-                }}
-                className="text-xs font-semibold text-red-600 dark:text-red-400"
-              >
-                Remove
-              </button>
+          {pinned.map((c) => (
+            <div key={c.id} className="rounded-xl border border-admin-border bg-admin-surface p-2.5 text-sm dark:border-admin-border-dark dark:bg-admin-surface-dark">
+              <div className="flex items-center justify-between gap-2">
+                <span className="font-semibold">{c.name}</span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPinned((list) => list.filter((x) => x.id !== c.id));
+                    setDirty(true);
+                  }}
+                  className="text-xs font-semibold text-red-600 dark:text-red-400"
+                >
+                  Remove
+                </button>
+              </div>
+              {!dirty && c.issue && <p role="status" className="mt-1 text-xs font-semibold text-amber-700 dark:text-amber-300">{c.issue}</p>}
             </div>
-          )}
+          ))}
+          {pinned.length < MAX_PINNED_COMBOS ? (
           <div className="relative">
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search products to pin as the suggested bundle..."
+              placeholder={pinned.length ? "Search to pin another bundle..." : "Search products to pin as the suggested bundle..."}
               className="w-full rounded-xl border border-admin-border bg-admin-surface px-3 py-2 text-sm outline-none focus:border-admin-primary-dark dark:border-admin-border-dark dark:bg-admin-surface-dark"
             />
             {search && results.length > 0 && (
@@ -109,8 +121,7 @@ function RelatedComboForm({ productId, initial }: { productId: string; initial: 
                     <button
                       type="button"
                       onClick={() => {
-                        setComboProductId(p.productId);
-                        setComboProductName(p.name);
+                        setPinned((list) => [...list, { id: p.productId, name: p.name }]);
                         setSearch("");
                         setDirty(true);
                       }}
@@ -123,7 +134,16 @@ function RelatedComboForm({ productId, initial }: { productId: string; initial: 
               </ul>
             )}
           </div>
+          ) : (
+            <p className="text-xs text-black/50 dark:text-white/50">Maximum of {MAX_PINNED_COMBOS} bundles pinned — remove one to add another.</p>
+          )}
         </div>
+      )}
+
+      {mode === "MANUAL" && !dirty && !pinned.length && initial.pinnedIssue && (
+        <p role="status" className="rounded-xl bg-amber-50 p-3 text-xs font-semibold text-amber-800 dark:bg-amber-500/10 dark:text-amber-300">
+          {initial.pinnedIssue}
+        </p>
       )}
 
       {error && <p className="text-xs font-semibold text-red-600 dark:text-red-400">{error}</p>}

@@ -143,8 +143,8 @@ const keyFor = (selection: Selection) =>
 // a pack means whole packs, not base units: a "Combo of 3" added twice is 6
 // units in the cart but reads "2" here, and stepping it moves in whole packs
 // (see decrementItem in cart.store.ts).
-function CartControl({ selection, busy, pending, onAdd, onRemove }: {
-  selection: Selection; busy: boolean; pending: boolean; onAdd: () => void; onRemove: () => void;
+function CartControl({ selection, busy, pending, blocked = false, onAdd, onRemove }: {
+  selection: Selection; busy: boolean; pending: boolean; blocked?: boolean; onAdd: () => void; onRemove: () => void;
 }) {
   const line = useCartStore(state => state.items.find(item => cartLineKey(item) === cartLineKey(selection)));
   const perSelection = Math.max(1, selection.quantity);
@@ -153,7 +153,7 @@ function CartControl({ selection, busy, pending, onAdd, onRemove }: {
 
   if (count === 0) {
     return (
-      <button type="button" disabled={busy} onClick={onAdd} className="inline-flex h-11 shrink-0 items-center gap-1.5 rounded-full border border-brand bg-white px-5 text-sm font-semibold text-brand-dark transition hover:bg-brand-soft active:scale-95 disabled:opacity-60">
+      <button type="button" disabled={busy || blocked} onClick={onAdd} title={blocked ? "Remove the combo you already added to choose this one" : undefined} className="inline-flex h-11 shrink-0 items-center gap-1.5 rounded-full border border-brand bg-white px-5 text-sm font-semibold text-brand-dark transition hover:bg-brand-soft active:scale-95 disabled:opacity-60">
         {pending ? "Adding…" : <><span className="text-lg leading-none">+</span> Add</>}
       </button>
     );
@@ -167,8 +167,8 @@ function CartControl({ selection, busy, pending, onAdd, onRemove }: {
   );
 }
 
-function ComboCard({ selection, busy, pending, onAdd, onRemove }: {
-  selection: Selection; busy: boolean; pending: boolean; onAdd: () => void; onRemove: () => void;
+function ComboCard({ selection, busy, pending, blocked, onAdd, onRemove }: {
+  selection: Selection; busy: boolean; pending: boolean; blocked: boolean; onAdd: () => void; onRemove: () => void;
 }) {
   const image = selection.image ? resolveMediaUrl(selection.image) : null;
   const packLine = selection.packBreakdown?.length
@@ -184,7 +184,7 @@ function ComboCard({ selection, busy, pending, onAdd, onRemove }: {
         {packLine && <p className="truncate text-[11px] text-ink-faint">{packLine}</p>}
         <div className="mt-0.5 flex flex-wrap items-center justify-between gap-2">
           <p className="text-lg font-bold text-brand-dark sm:text-xl">{money(selection.totalPrice)}</p>
-          <CartControl selection={selection} busy={busy} pending={pending} onAdd={onAdd} onRemove={onRemove} />
+          <CartControl selection={selection} busy={busy} pending={pending} blocked={blocked} onAdd={onAdd} onRemove={onRemove} />
         </div>
       </div>
     </div>
@@ -198,6 +198,11 @@ function SmartCartDialog({ current, recommendations, busy, error, onAdd, onRemov
   const dialog = useRef<HTMLDialogElement>(null);
   const currentImage = current.image ? resolveMediaUrl(current.image) : null;
   const [pendingKey, setPendingKey] = useState<string | null>(null);
+  // Only one combo can be chosen at a time: once one of the recommendations is
+  // in the cart, the others are locked until it is removed. Derived from the
+  // cart itself so it can never drift from what was actually added.
+  const cartItems = useCartStore(state => state.items);
+  const chosenCombo = recommendations.find(item => cartItems.some(line => cartLineKey(line) === cartLineKey(item)));
   useEffect(() => {
     const previous = document.activeElement as HTMLElement | null;
     const overflow = document.body.style.overflow;
@@ -239,14 +244,14 @@ function SmartCartDialog({ current, recommendations, busy, error, onAdd, onRemov
         <>
           <div className="mt-5">
             <h3 className="font-display text-base font-bold sm:text-lg">Complete your combo</h3>
-            <p className="mt-0.5 text-xs text-ink-muted sm:text-sm">Add this recommended combo with your selection.</p>
+            <p className="mt-0.5 text-xs text-ink-muted sm:text-sm">Add this recommended combo with your selection. You can choose one combo at a time.</p>
           </div>
           <div className="mt-2.5 flex flex-col gap-2.5">
             {recommendations.map(item => {
               const key = keyFor(item);
               // Only meaningful while a request is in flight, so a leftover
               // key from a finished attempt never shows a stale spinner.
-              return <ComboCard key={key} selection={item} busy={busy} pending={busy && pendingKey === key} onAdd={addHandler(item)} onRemove={() => onRemove(item)} />;
+              return <ComboCard key={key} selection={item} busy={busy} pending={busy && pendingKey === key} blocked={!!chosenCombo && keyFor(chosenCombo) !== key} onAdd={addHandler(item)} onRemove={() => onRemove(item)} />;
             })}
           </div>
         </>

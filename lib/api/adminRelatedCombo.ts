@@ -5,12 +5,24 @@ import { apiFetch } from "./client";
 export const RELATED_COMBO_MODES = ["AUTO", "MANUAL", "NONE"] as const;
 export type RelatedComboMode = (typeof RELATED_COMBO_MODES)[number];
 
+export interface AdminPinnedCombo {
+  comboProductId: string;
+  comboProductName?: string;
+  /** Why customers are not being offered this pinned bundle, if they aren't. */
+  issue?: string;
+}
+
 export interface AdminRelatedCombo {
   mode: RelatedComboMode;
-  comboProductId?: string;
-  /** Display convenience only. */
-  comboProductName?: string;
+  /** Every pinned bundle, in order. */
+  combos: AdminPinnedCombo[];
+  /** Set when MANUAL has nothing pinned. */
+  pinnedIssue?: string;
 }
+
+export const MAX_PINNED_COMBOS = 4;
+
+export type RelatedComboPatch = { mode?: RelatedComboMode; comboProductIds?: string[] };
 
 function base(productId: string): string {
   return `/admin/products/${encodeURIComponent(productId)}/related-combo`;
@@ -22,7 +34,7 @@ export function fetchRelatedCombo(productId: string): Promise<{ relatedCombo: Ad
 
 export function updateRelatedCombo(
   productId: string,
-  patch: { mode?: RelatedComboMode; comboProductId?: string | null }
+  patch: RelatedComboPatch
 ): Promise<{ relatedCombo: AdminRelatedCombo }> {
   return apiFetch(base(productId), {
     method: "PATCH",
