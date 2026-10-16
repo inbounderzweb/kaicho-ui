@@ -9,6 +9,7 @@ import { resolveMediaUrl } from "@/lib/api/client";
 import type { Order } from "@/lib/api/order";
 import { IconArrowRight, IconTruck } from "../ui/icons";
 import Button from "../ui/Button";
+import PayNowControl from "../orders/PayNowControl";
 
 const PAGE_SIZE = 10;
 
@@ -176,7 +177,9 @@ function OrderCard({ order }: { order: Order }) {
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <OrderStatusBadge status={order.status} />
-          <PaymentStatusBadge status={order.paymentStatus} />
+          {!(order.status === "PENDING_PAYMENT" && order.paymentStatus === "PENDING") && (
+            <PaymentStatusBadge status={order.paymentStatus} />
+          )}
         </div>
       </div>
 
@@ -242,7 +245,7 @@ function OrderCard({ order }: { order: Order }) {
         ))}
       </div>
 
-      <div className="border-t border-border px-5 py-4">
+      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3 border-t border-border px-5 py-4">
         <Link
           href={href}
           className="inline-flex items-center gap-1.5 text-sm font-semibold text-brand hover:text-brand-dark"
@@ -250,6 +253,7 @@ function OrderCard({ order }: { order: Order }) {
           View order details
           <IconArrowRight className="h-4 w-4" />
         </Link>
+        <PayNowControl order={order} />
       </div>
     </div>
   );

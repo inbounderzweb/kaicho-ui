@@ -7,7 +7,7 @@ import CustomerSupportSection from "./CustomerSupportSection";
 import OrdersSection from "./OrdersSection";
 import PrivacySection from "./PrivacySection";
 // import SavedItemsSection from "./SavedItemsSection";
-import ProfileSidebar, { type ProfileSectionId } from "./ProfileSidebar";
+import ProfileSidebar, { ProfileMobileFooter, type ProfileSectionId } from "./ProfileSidebar";
 import { IconChevronRight } from "../ui/icons";
 import { useRequireAuth } from "@/lib/auth/useRequireAuth";
 
@@ -106,6 +106,7 @@ export default function ProfilePageClient() {
           {/* {section === "saved" && <SavedItemsSection />} */}
           {section === "privacy" && <PrivacySection />}
           {section === "support" && <CustomerSupportSection />}
+          <ProfileMobileFooter />
         </div>
       </div>
     </section>

@@ -208,8 +208,17 @@ export interface AdminOrderDetail extends Order {
     name?: string;
     phone?: string | null;
     email?: string | null;
+    /** Status emails are only sent to a verified address. */
+    emailVerified?: boolean;
   } | null;
   allowedNextStatuses?: OrderStatus[];
+  /** Present on the response to a status/shipment change: was the customer emailed? */
+  emailNotification?: EmailNotification;
+}
+
+export interface EmailNotification {
+  state: "sent" | "skipped" | "failed" | "not_applicable";
+  message?: string;
 }
 
 // adminOrder.controller.ts wraps these as {order}, matching every other

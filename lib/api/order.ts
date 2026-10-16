@@ -179,6 +179,8 @@ export interface OrderPayment {
   razorpayOrderId: string | null;
   paidAt: string | null;
   refundedAmount: number;
+  /** Gateway's reason for the latest failed attempt, if any. */
+  lastFailureReason?: string | null;
 }
 
 export interface Order {
@@ -196,6 +198,8 @@ export interface Order {
   paymentStatus: PaymentStatus;
   /** Recorded payment details; optional for older cached order responses. */
   payment?: OrderPayment;
+  /** ISO deadline for paying this order; null/absent once it can no longer be paid online. */
+  payBy?: string | null;
   statusHistory: OrderStatusHistoryEntry[];
   /** Courier / tracking record — null until an admin creates a shipment. */
   shipment: OrderShipment | null;
@@ -271,4 +275,16 @@ export async function cancelOrder(orderNumber: string, reason?: string): Promise
     body: JSON.stringify({ reason }),
   });
   return order;
+}
+
+export interface RetryPaymentResult {
+  order: Order;
+  /** What Checkout.js needs to open; null when the order turned out to be paid already. */
+  razorpayOrder: { id: string; amount: number; currency: string } | null;
+  alreadyPaid: boolean;
+}
+
+/** Re-opens payment for a pending online order (same Razorpay order, server re-checks eligibility). */
+export function startOrderPayment(orderNumber: string): Promise<RetryPaymentResult> {
+  return apiFetch<RetryPaymentResult>(`/orders/${encodeURIComponent(orderNumber)}/pay`, { method: "POST" });
 }

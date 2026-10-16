@@ -5,7 +5,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { useAdminOrderDetail } from "@/lib/hooks/admin/useAdminOrderDetail";
 import { useUpdateOrderStatus } from "@/lib/hooks/admin/useUpdateOrderStatus";
-import { useRefundOrder } from "@/lib/hooks/admin/useRefundOrder";
 import { useSaveOrderShipment } from "@/lib/hooks/admin/useSaveOrderShipment";
 import { useUpdateOrderShipmentStatus } from "@/lib/hooks/admin/useUpdateOrderShipmentStatus";
 import { resolveMediaUrl } from "@/lib/api/client";
@@ -17,10 +16,9 @@ import {
   type OrderStatus,
   type ShipmentStatus,
 } from "@/lib/api/order";
-import type { AdminOrderDetail, SaveShipmentInput } from "@/lib/api/admin";
+import type { AdminOrderDetail, EmailNotification, SaveShipmentInput } from "@/lib/api/admin";
 import { nextStatuses } from "@/lib/api/orderTransitions";
 import { OrderStatusBadge, PaymentStatusBadge, ShipmentStatusBadge } from "./OrderStatusBadge";
-import ConfirmDialog from "./ConfirmDialog";
 import { IconChevronLeft } from "../ui/icons";
 
 const currency = new Intl.NumberFormat("en-IN", {
@@ -48,6 +46,26 @@ function formatDateTime(value: string): string {
   });
 }
 
+// Shown right after an admin changes a status: tells them whether the customer
+// was actually emailed, and why not if they weren't.
+function EmailOutcomeNote({ outcome }: { outcome?: EmailNotification }) {
+  if (!outcome || outcome.state === "not_applicable") return null;
+  const ok = outcome.state === "sent";
+  return (
+    <p
+      role="status"
+      className={`rounded-xl p-3 text-xs font-semibold ${
+        ok
+          ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
+          : "bg-amber-500/10 text-amber-700 dark:text-amber-400"
+      }`}
+    >
+      {ok ? "✓ " : "⚠ "}
+      {outcome.message}
+    </p>
+  );
+}
+
 function messageOf(error: unknown, fallback: string): string {
   return error instanceof ApiError ? error.message : fallback;
 }
@@ -55,13 +73,10 @@ function messageOf(error: unknown, fallback: string): string {
 export default function OrderDetailClient({ id }: { id: string }) {
   const { data: order, isLoading, isError, error, refetch } = useAdminOrderDetail(id);
   const statusMutation = useUpdateOrderStatus(id);
-  const refundMutation = useRefundOrder(id);
 
+  // "" = nothing chosen yet → the dropdown shows the order's current status.
   const [nextStatus, setNextStatus] = useState<OrderStatus | "">("");
   const [statusNote, setStatusNote] = useState("");
-  const [refundAmount, setRefundAmount] = useState("");
-  const [refundOpen, setRefundOpen] = useState(false);
-  const [refundError, setRefundError] = useState<string | null>(null);
 
   if (isLoading) {
     return (
@@ -105,18 +120,9 @@ export default function OrderDetailClient({ id }: { id: string }) {
   }
 
   const allowedNext = nextStatuses(order.status);
+  const selectedStatus: OrderStatus = nextStatus || order.status;
+  const statusChanged = selectedStatus !== order.status;
   const customerName = order.customer?.name || order.customer?.phone || order.customer?.userId || "—";
-  // Only a captured online payment can be refunded through Razorpay; COD
-  // and unpaid orders have nothing to send back.
-  const canRefund =
-    order.paymentMethod === "RAZORPAY" &&
-    (order.paymentStatus === "PAID" || order.paymentStatus === "PARTIALLY_REFUNDED");
-
-  const parsedRefund = refundAmount.trim() === "" ? undefined : Number(refundAmount);
-  const refundAmountInvalid =
-    parsedRefund !== undefined &&
-    (Number.isNaN(parsedRefund) || parsedRefund <= 0 || parsedRefund > order.pricing.grandTotal);
-
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-2 text-sm">
@@ -253,8 +259,21 @@ export default function OrderDetailClient({ id }: { id: string }) {
             {order.customer?.phone && (
               <p className="text-sm text-black/60 dark:text-white/60">{order.customer.phone}</p>
             )}
-            {order.customer?.email && (
-              <p className="text-sm text-black/60 dark:text-white/60">{order.customer.email}</p>
+            {order.customer?.email ? (
+              <p className="text-sm text-black/60 dark:text-white/60">
+                {order.customer.email}{" "}
+                <span
+                  className={`text-xs font-semibold ${
+                    order.customer.emailVerified ? "text-emerald-700 dark:text-emerald-400" : "text-amber-700 dark:text-amber-400"
+                  }`}
+                >
+                  {order.customer.emailVerified ? "· Verified" : "· Not verified — status emails won't be sent"}
+                </span>
+              </p>
+            ) : (
+              <p className="text-xs font-semibold text-amber-700 dark:text-amber-400">
+                No email on file — status emails can&apos;t be sent to this customer.
+              </p>
             )}
             {order.customer?.userId && (
               <Link
@@ -302,24 +321,31 @@ export default function OrderDetailClient({ id }: { id: string }) {
           {/* Status update */}
           <section className={`space-y-3 ${cardClass}`}>
             <h2 className={sectionTitleClass}>Update status</h2>
+            <select
+              value={selectedStatus}
+              onChange={(e) => {
+                setNextStatus(e.target.value as OrderStatus);
+                statusMutation.reset();
+              }}
+              disabled={allowedNext.length === 0}
+              aria-label="Order status"
+              className={inputClass}
+            >
+              {/* The current status is always shown first, so the admin sees
+                  where the order is before choosing where it goes next. */}
+              <option value={order.status}>{ORDER_STATUS_LABELS[order.status]} (current)</option>
+              {allowedNext.map((s) => (
+                <option key={s} value={s}>
+                  {ORDER_STATUS_LABELS[s]}
+                </option>
+              ))}
+            </select>
             {allowedNext.length === 0 ? (
               <p className="text-sm text-black/55 dark:text-white/55">
                 {ORDER_STATUS_LABELS[order.status]} is a final state — no further transitions.
               </p>
             ) : (
               <>
-                <select
-                  value={nextStatus}
-                  onChange={(e) => setNextStatus(e.target.value as OrderStatus | "")}
-                  className={inputClass}
-                >
-                  <option value="">Select new status…</option>
-                  {allowedNext.map((s) => (
-                    <option key={s} value={s}>
-                      {ORDER_STATUS_LABELS[s]}
-                    </option>
-                  ))}
-                </select>
                 <input
                   value={statusNote}
                   onChange={(e) => setStatusNote(e.target.value)}
@@ -332,13 +358,14 @@ export default function OrderDetailClient({ id }: { id: string }) {
                     {messageOf(statusMutation.error, "Couldn't update the status. Please try again.")}
                   </p>
                 )}
+                {statusMutation.isSuccess && <EmailOutcomeNote outcome={statusMutation.data?.emailNotification} />}
                 <button
                   type="button"
-                  disabled={!nextStatus || statusMutation.isPending}
+                  disabled={!statusChanged || statusMutation.isPending}
                   onClick={() => {
-                    if (!nextStatus) return;
+                    if (!statusChanged) return;
                     statusMutation.mutate(
-                      { status: nextStatus, note: statusNote.trim() || undefined },
+                      { status: selectedStatus, note: statusNote.trim() || undefined },
                       {
                         onSuccess: () => {
                           setNextStatus("");
@@ -361,84 +388,8 @@ export default function OrderDetailClient({ id }: { id: string }) {
 
           {/* Shipment */}
           <ShipmentSection id={id} order={order} />
-
-          {/* Refund */}
-          <section className={`space-y-3 ${cardClass}`}>
-            <h2 className={sectionTitleClass}>Refund</h2>
-            {!canRefund ? (
-              <p className="text-sm text-black/55 dark:text-white/55">
-                {order.paymentMethod === "COD"
-                  ? "Cash-on-delivery orders aren't refundable through the payment gateway."
-                  : "Only a captured online payment can be refunded."}
-              </p>
-            ) : (
-              <>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-black/50 dark:text-white/50">
-                  Amount
-                </label>
-                <input
-                  type="number"
-                  min={0}
-                  step="0.01"
-                  value={refundAmount}
-                  onChange={(e) => setRefundAmount(e.target.value)}
-                  placeholder={`Full refund (${currency.format(order.pricing.grandTotal)})`}
-                  className={inputClass}
-                />
-                <p className="text-[11px] text-black/45 dark:text-white/45">
-                  Leave blank for a full refund — the refundable amount is computed server-side.
-                </p>
-                {refundAmountInvalid && (
-                  <p className="text-xs font-semibold text-red-600 dark:text-red-400">
-                    Enter an amount between 0 and {currency.format(order.pricing.grandTotal)}.
-                  </p>
-                )}
-                <button
-                  type="button"
-                  disabled={refundMutation.isPending || refundAmountInvalid}
-                  onClick={() => {
-                    setRefundError(null);
-                    setRefundOpen(true);
-                  }}
-                  className="w-full rounded-full border border-red-500/30 px-5 py-2.5 text-sm font-semibold text-red-600 hover:bg-red-500/10 disabled:opacity-50 dark:text-red-400"
-                >
-                  {parsedRefund === undefined ? "Refund in full" : `Refund ${currency.format(parsedRefund)}`}
-                </button>
-              </>
-            )}
-          </section>
         </div>
       </div>
-
-      <ConfirmDialog
-        open={refundOpen}
-        title="Issue refund?"
-        description={
-          refundError ??
-          `${
-            parsedRefund === undefined
-              ? `A full refund of ${currency.format(order.pricing.grandTotal)}`
-              : `A refund of ${currency.format(parsedRefund)}`
-          } will be sent back through Razorpay for order ${order.orderNumber}. This can't be undone.`
-        }
-        confirmLabel="Refund"
-        destructive
-        isConfirming={refundMutation.isPending}
-        onConfirm={() => {
-          setRefundError(null);
-          refundMutation.mutate(parsedRefund, {
-            onSuccess: () => {
-              setRefundOpen(false);
-              setRefundAmount("");
-            },
-            onError: (err) => setRefundError(messageOf(err, "Couldn't issue the refund. Please try again.")),
-          });
-        }}
-        onCancel={() => {
-          setRefundOpen(false);
-          setRefundError(null);
-        }}
-      />
     </div>
   );
 }
@@ -499,11 +450,15 @@ function ShipmentSection({ id, order }: { id: string; order: AdminOrderDetail })
     trackingNumber: shipment?.trackingNumber ?? "",
     status: (shipment?.status ?? "SHIPPED") as ShipmentStatus,
   }));
+  // "" = nothing chosen yet → the dropdown shows the shipment's current status.
   const [quickStatus, setQuickStatus] = useState<ShipmentStatus | "">("");
   const [quickNote, setQuickNote] = useState("");
 
   const set = <K extends keyof typeof form>(key: K, value: (typeof form)[K]) =>
     setForm((f) => ({ ...f, [key]: value }));
+
+  const selectedShipmentStatus: ShipmentStatus | "" = quickStatus || shipment?.status || "";
+  const shipmentStatusChanged = Boolean(quickStatus) && quickStatus !== shipment?.status;
 
   const trackingValid = TRACKING_NUMBER_RE.test(form.trackingNumber.trim());
   const carrierValid = form.carrier.trim().length >= 2;
@@ -539,6 +494,7 @@ function ShipmentSection({ id, order }: { id: string; order: AdminOrderDetail })
 
       {shipment && !editing ? (
         <>
+          {saveMutation.isSuccess && <EmailOutcomeNote outcome={saveMutation.data?.emailNotification} />}
           <dl className="space-y-1.5 text-sm">
             <ShipmentRow label="Courier" value={shipment.carrier} />
             <ShipmentRow label="AWB / Tracking" value={shipment.trackingNumber} />
@@ -564,14 +520,18 @@ function ShipmentSection({ id, order }: { id: string; order: AdminOrderDetail })
 
           <div className="space-y-2 border-t border-admin-border pt-3 dark:border-admin-border-dark">
             <select
-              value={quickStatus}
-              onChange={(e) => setQuickStatus(e.target.value as ShipmentStatus | "")}
+              value={selectedShipmentStatus}
+              onChange={(e) => {
+                setQuickStatus(e.target.value as ShipmentStatus);
+                statusMutation.reset();
+              }}
+              aria-label="Shipping status"
               className={inputClass}
             >
-              <option value="">Update shipping status…</option>
               {SHIPMENT_STATUSES.map((s) => (
                 <option key={s} value={s}>
                   {SHIPMENT_STATUS_LABELS[s]}
+                  {s === shipment.status ? " (current)" : ""}
                 </option>
               ))}
             </select>
@@ -587,11 +547,12 @@ function ShipmentSection({ id, order }: { id: string; order: AdminOrderDetail })
                 {messageOf(statusMutation.error, "Couldn't update the shipping status.")}
               </p>
             )}
+            {statusMutation.isSuccess && <EmailOutcomeNote outcome={statusMutation.data?.emailNotification} />}
             <button
               type="button"
-              disabled={!quickStatus || statusMutation.isPending}
+              disabled={!shipmentStatusChanged || statusMutation.isPending}
               onClick={() => {
-                if (!quickStatus) return;
+                if (!quickStatus || !shipmentStatusChanged) return;
                 statusMutation.mutate(
                   { status: quickStatus, note: quickNote.trim() || undefined },
                   {

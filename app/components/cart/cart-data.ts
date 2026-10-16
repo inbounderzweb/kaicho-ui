@@ -17,11 +17,9 @@ import { DEFAULT_STORE_SETTINGS } from "@/lib/api/settings";
 // Settings, persisted in StoreSettings, served at GET /settings). These
 // constants are only the fallback the storefront renders with until that
 // fetch resolves — components should read the live values via
-// useShippingPolicy(). CASHBACK_* stay storefront-only display values.
+// useShippingPolicy().
 export const FREE_SHIPPING_THRESHOLD = DEFAULT_STORE_SETTINGS.freeShippingThreshold;
 export const FLAT_SHIPPING_FEE = DEFAULT_STORE_SETTINGS.flatShippingFee;
-export const CASHBACK_THRESHOLD = 999;
-export const CASHBACK_PERCENT = 3;
 
 /** Display-only pack breakdown snapshot — re-validated/re-priced server-side at checkout, never trusted. */
 export interface CartPackBreakdownLine {

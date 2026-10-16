@@ -11,6 +11,8 @@ import { OrderStatusBadge, PaymentStatusBadge, ShipmentStatusBadge } from "./Ord
 import ShipmentTimeline from "./ShipmentTimeline";
 import { useOrder } from "@/lib/hooks/useOrder";
 import { useCancelOrder } from "@/lib/hooks/useCancelOrder";
+import PayNowControl from "./PayNowControl";
+import { formatCountdown, useSecondsLeft } from "@/lib/hooks/useSecondsLeft";
 import { useRequireAuth } from "@/lib/auth/useRequireAuth";
 import { resolveMediaUrl } from "@/lib/api/client";
 import { ApiError } from "@/lib/api/ApiError";
@@ -72,6 +74,8 @@ export default function OrderDetailClient({ orderNumber }: { orderNumber: string
   const { isAuthorized, authState, refetch: refetchUser } = useRequireAuth();
   const { data: order, isLoading, isError, error, refetch } = useOrder(isAuthorized ? orderNumber : "");
   const cancelMutation = useCancelOrder();
+  const [paying, setPaying] = useState(false);
+  const secondsLeft = useSecondsLeft(order?.payBy);
 
   const [cancelOpen, setCancelOpen] = useState(false);
   const [cancelError, setCancelError] = useState<string | null>(null);
@@ -88,6 +92,12 @@ export default function OrderDetailClient({ orderNumber }: { orderNumber: string
       ),
     });
   }, [order]);
+
+  const payWindowOpen = Boolean(order?.payBy) && secondsLeft > 0;
+  const expired = Boolean(order?.payBy) && secondsLeft === 0;
+  useEffect(() => {
+    if (expired) void refetch();
+  }, [expired, refetch]);
 
   const breadcrumbs = [
     { label: "Home", href: "/" },
@@ -184,15 +194,34 @@ export default function OrderDetailClient({ orderNumber }: { orderNumber: string
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <OrderStatusBadge status={order.status} />
-          <PaymentStatusBadge status={order.paymentStatus} />
+          {/* "Payment pending" would show twice (order + payment pill) */}
+          {!(order.status === "PENDING_PAYMENT" && order.paymentStatus === "PENDING") && (
+            <PaymentStatusBadge status={order.paymentStatus} />
+          )}
         </div>
       </div>
 
       {order.status === "PENDING_PAYMENT" && (
-        <p className="mt-4 rounded-xl bg-gold/10 p-4 text-sm font-semibold text-gold">
-          We haven&apos;t received your payment yet. Unpaid orders are cancelled automatically after a
-          short while and the items released back into stock.
-        </p>
+        <div role="status" className="mt-4 rounded-xl bg-gold/10 p-4 text-sm text-gold">
+          {order.paymentMethod === "RAZORPAY" && payWindowOpen ? (
+            <>
+              <p className="font-semibold">
+                Your payment is incomplete. Pay within{" "}
+                <span className="tabular-nums">{formatCountdown(secondsLeft)}</span> to confirm your order —
+                after that it is cancelled automatically and the items are released.
+              </p>
+              {order.payment?.lastFailureReason && (
+                <p className="mt-1.5 font-normal">Last attempt failed: {order.payment.lastFailureReason}</p>
+              )}
+            </>
+          ) : (
+            <p className="font-semibold">
+              {order.paymentMethod === "RAZORPAY"
+                ? "The payment window for this order has closed, so it can't be paid any more. It will be cancelled automatically and the items released — please place a new order."
+                : "We haven't received your payment yet. Unpaid orders are cancelled automatically after a short while and the items released back into stock."}
+            </p>
+          )}
+        </div>
       )}
 
       {order.status === "CANCELLED" && order.cancelReason && (
@@ -327,7 +356,11 @@ export default function OrderDetailClient({ orderNumber }: { orderNumber: string
               </span>
             </div>
             <p className="mt-3 text-xs text-ink-muted">
-              {order.paymentMethod === "COD" ? "Cash on delivery" : "Paid online (Razorpay)"}
+              {order.paymentMethod === "COD"
+                ? "Cash on delivery"
+                : order.paymentStatus === "PENDING"
+                  ? "Online payment (Razorpay) — awaiting payment"
+                  : "Paid online (Razorpay)"}
             </p>
           </section>
 
@@ -394,14 +427,19 @@ export default function OrderDetailClient({ orderNumber }: { orderNumber: string
             <AddressLines address={order.shippingAddress} className="mt-1" />
           </section>
 
+          {order.status === "PENDING_PAYMENT" && order.paymentMethod === "RAZORPAY" && payWindowOpen && (
+            <PayNowControl order={order} showAmount showTimer={false} block onBusyChange={setPaying} />
+          )}
+
           {canCancel && (
             <button
               type="button"
+              disabled={paying}
               onClick={() => {
                 setCancelError(null);
                 setCancelOpen(true);
               }}
-              className="w-full rounded-full border border-sale/30 px-5 py-2.5 text-sm font-semibold text-sale transition-colors hover:bg-sale/10"
+              className="w-full rounded-full border border-sale/30 px-5 py-2.5 text-sm font-semibold text-sale transition-colors hover:bg-sale/10 disabled:opacity-50"
             >
               Cancel order
             </button>

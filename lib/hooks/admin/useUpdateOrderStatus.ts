@@ -13,6 +13,9 @@ export function useUpdateOrderStatus(id: string) {
     mutationFn: (input: { status: OrderStatus; note?: string }) => updateAdminOrderStatus(id, input),
     onSuccess: (order) => {
       queryClient.setQueryData(adminKeys.orderDetail(id), order);
+      // The status endpoint returns the plain order (no joined customer), so
+      // refetch the full admin detail rather than leave the customer card blank.
+      queryClient.invalidateQueries({ queryKey: adminKeys.orderDetail(id) });
       queryClient.invalidateQueries({ queryKey: ["admin", "orders", "list"] });
       // A status change moves revenue/order counts on the dashboard too.
       queryClient.invalidateQueries({ queryKey: adminKeys.dashboard });

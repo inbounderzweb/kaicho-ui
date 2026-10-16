@@ -1,36 +1,16 @@
-import { CASHBACK_PERCENT, CASHBACK_THRESHOLD } from "./cart-data";
 import { useShippingPolicy } from "@/lib/hooks/useShippingPolicy";
 
 export default function ShippingProgress({ subtotal }: { subtotal: number }) {
   const { freeShippingThreshold } = useShippingPolicy();
   const reachedFreeShipping = subtotal >= freeShippingThreshold;
-  const reachedCashback = subtotal >= CASHBACK_THRESHOLD;
-  const progress = Math.min((subtotal / CASHBACK_THRESHOLD) * 100, 100);
-  const freeShippingMark = (freeShippingThreshold / CASHBACK_THRESHOLD) * 100;
+  const progress = freeShippingThreshold > 0 ? Math.min((subtotal / freeShippingThreshold) * 100, 100) : 100;
 
   return (
     <div className="rounded-2xl border border-border bg-white p-5 shadow-sm sm:p-6">
       <p className="text-center text-sm leading-relaxed text-ink sm:text-base">
-        {reachedCashback ? (
+        {reachedFreeShipping ? (
           <>
-            You&apos;ve unlocked <span className="font-bold text-brand">FREE SHIPPING</span>{" "}
-            and{" "}
-            <span className="font-bold text-terracotta">
-              {CASHBACK_PERCENT}% EXTRA CASHBACK
-            </span>
-            !
-          </>
-        ) : reachedFreeShipping ? (
-          <>
-            Great! You&apos;ve unlocked{" "}
-            <span className="font-bold text-brand">FREE SHIPPING</span>. Only{" "}
-            <span className="font-bold text-terracotta">
-              Rs. {(CASHBACK_THRESHOLD - subtotal).toFixed(2)}
-            </span>{" "}
-            away from{" "}
-            <span className="font-bold text-terracotta">
-              {CASHBACK_PERCENT}% EXTRA CASHBACK
-            </span>
+            You&apos;ve unlocked <span className="font-bold text-brand">FREE SHIPPING</span>!
           </>
         ) : (
           <>
@@ -52,18 +32,12 @@ export default function ShippingProgress({ subtotal }: { subtotal: number }) {
               style={{ width: `${progress}%` }}
             />
           </div>
-          <div
-            className="absolute top-1/2 h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white bg-brand shadow"
-            style={{ left: `${freeShippingMark}%` }}
-            aria-hidden
-          />
-          <div className="mt-2 flex items-center justify-between gap-2 text-[10px] font-bold uppercase tracking-wider sm:text-[11px]">
+          <div className="mt-2 flex items-center justify-end text-[10px] font-bold uppercase tracking-wider sm:text-[11px]">
             <span className="text-brand">Free Shipping</span>
-            <span className="text-terracotta">{CASHBACK_PERCENT}% Cashback</span>
           </div>
         </div>
         <span className="shrink-0 text-xs font-semibold text-ink-faint">
-          Rs. {CASHBACK_THRESHOLD}
+          Rs. {freeShippingThreshold}
         </span>
       </div>
     </div>

@@ -41,9 +41,11 @@ export function useSmartCart(productId: string) {
   const [error, setError] = useState("");
   const [offer, setOffer] = useState<{ current: Selection; recommendations: Selection[] } | null>(null);
   const lock = useRef(false);
+  const draining = useRef(false);
+  const queue = useRef<({ kind: "add"; selection: Selection; initial: boolean } | { kind: "remove"; selection: Selection })[]>([]);
   const generation = useRef(0);
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
-  useEffect(() => () => { generation.current++; clearTimeout(timer.current); }, [productId]);
+  useEffect(() => () => { generation.current++; queue.current = []; clearTimeout(timer.current); }, [productId]);
 
   const commit = (selection: Selection) => {
     useCartStore.getState().addItem(toCartItem(selection));
@@ -52,42 +54,58 @@ export function useSmartCart(productId: string) {
     clearTimeout(timer.current);
     timer.current = setTimeout(() => setAdded(false), 2000);
   };
-  // Adds ONE more of `selection` to the cart — the dialog's "Add" and its
-  // "+" are the same operation, because adding a second of something is
-  // exactly what has to be re-checked against live stock. The dialog stays
-  // open either way: the customer may want several of these cards.
-  // Deliberately still goes through validate-selection first, so a stale
+  // Dialog taps (+, −, Add) go through ONE serial queue instead of a lock that
+  // drops/blocks them: each tap is applied in order, so rapid clicking works
+  // and the controls never need to be disabled while a request is in flight
+  // (disabling them is what made the buttons flash on every tap).
+  //
+  // An add is still validated against live stock/price first, so a stale
   // price or a since-sold-out combo is caught BEFORE it reaches the cart
-  // (requirement: never show it as added if the request failed).
-  async function addSelection(selection: Selection) {
-    if (lock.current) return;
-    lock.current = true; setBusy(true); setError("");
+  // (requirement: never show it as added if the request failed). Removing
+  // can never violate stock, so it needs no round-trip.
+  // `initial` marks the first "Add" press of a card: if an earlier queued tap
+  // already put it in the cart, a double-click must not add a second unit.
+  async function drain() {
+    if (draining.current) return;
+    draining.current = true; lock.current = true;
     const version = generation.current;
     try {
-      const cart = currentCart();
-      const fresh = await apiFetch<Selection>("/cart/validate-selection", { method: "POST", body: JSON.stringify({ selection: inputFor(selection), cart }) });
-      if (version !== generation.current) return;
-      if (JSON.stringify(cart) !== JSON.stringify(currentCart())) throw new Error("Your cart changed. Please try again to recheck availability.");
-      if (fresh.totalPrice !== selection.totalPrice || fresh.quantity !== selection.quantity) {
-        // Re-priced under us: show the new numbers and add nothing, so the
-        // customer confirms the price they're actually paying.
-        setOffer(previous => !previous ? null : previous.current === selection
-          ? { ...previous, current: fresh }
-          : { ...previous, recommendations: previous.recommendations.map(item => item === selection ? fresh : item) });
-        setError("This selection has changed. Review the updated price and add again.");
-        return;
+      while (queue.current.length) {
+        const op = queue.current.shift()!;
+        if (version !== generation.current) return;
+        const { selection } = op;
+        if (op.kind === "remove") { useCartStore.getState().decrementItem(toCartItem(selection)); continue; }
+        if (op.initial && useCartStore.getState().items.some(item => cartLineKey(item) === cartLineKey(selection))) continue;
+        const cart = currentCart();
+        const fresh = await apiFetch<Selection>("/cart/validate-selection", { method: "POST", body: JSON.stringify({ selection: inputFor(selection), cart }) });
+        if (version !== generation.current) return;
+        if (JSON.stringify(cart) !== JSON.stringify(currentCart())) throw new Error("Your cart changed. Please try again to recheck availability.");
+        if (fresh.totalPrice !== selection.totalPrice || fresh.quantity !== selection.quantity) {
+          // Re-priced under us: show the new numbers and add nothing, so the
+          // customer confirms the price they're actually paying.
+          queue.current = [];
+          setOffer(previous => !previous ? null : previous.current === selection
+            ? { ...previous, current: fresh }
+            : { ...previous, recommendations: previous.recommendations.map(item => item === selection ? fresh : item) });
+          setError("This selection has changed. Review the updated price and add again.");
+          return;
+        }
+        useCartStore.getState().addItem(toCartItem(fresh));
       }
-      useCartStore.getState().addItem(toCartItem(fresh));
-    } catch (err) { if (version === generation.current) setError(err instanceof Error ? err.message : "Could not add this to your cart. Please try again."); }
-    finally { lock.current = false; if (version === generation.current) setBusy(false); }
+    } catch (err) {
+      queue.current = [];
+      if (version === generation.current) setError(err instanceof Error ? err.message : "Could not add this to your cart. Please try again.");
+    } finally { draining.current = false; lock.current = false; }
   }
-  // Takes one back out. No server round-trip: removing can never violate
-  // stock, so the stepper stays instant on the way down, and the store drops
-  // the row entirely once nothing is left.
-  function removeSelection(selection: Selection) {
-    if (lock.current) return;
+  function addSelection(selection: Selection, initial: boolean) {
     setError("");
-    useCartStore.getState().decrementItem(toCartItem(selection));
+    queue.current.push({ kind: "add", selection, initial });
+    void drain();
+  }
+  function removeSelection(selection: Selection) {
+    setError("");
+    queue.current.push({ kind: "remove", selection });
+    void drain();
   }
   async function add(quantity: number) {
     if (lock.current) return;
@@ -108,7 +126,7 @@ export function useSmartCart(productId: string) {
   }
   return {
     add, busy, added, error,
-    modal: offer ? <SmartCartDialog current={offer.current} recommendations={offer.recommendations} busy={busy} error={error} onAdd={addSelection} onRemove={removeSelection} onClose={() => { if (!lock.current) setOffer(null); }} /> : null,
+    modal: offer ? <SmartCartDialog current={offer.current} recommendations={offer.recommendations} error={error} onAdd={addSelection} onRemove={removeSelection} onClose={() => setOffer(null)} /> : null,
   };
 }
 
@@ -143,32 +161,34 @@ const keyFor = (selection: Selection) =>
 // a pack means whole packs, not base units: a "Combo of 3" added twice is 6
 // units in the cart but reads "2" here, and stepping it moves in whole packs
 // (see decrementItem in cart.store.ts).
-function CartControl({ selection, busy, pending, blocked = false, onAdd, onRemove }: {
-  selection: Selection; busy: boolean; pending: boolean; blocked?: boolean; onAdd: () => void; onRemove: () => void;
+function CartControl({ selection, blocked = false, onAdd, onRemove }: {
+  selection: Selection; blocked?: boolean; onAdd: (initial: boolean) => void; onRemove: () => void;
 }) {
   const line = useCartStore(state => state.items.find(item => cartLineKey(item) === cartLineKey(selection)));
   const perSelection = Math.max(1, selection.quantity);
   const count = line ? Math.max(1, Math.round(line.quantity / perSelection)) : 0;
-  const stepper = "flex h-8 w-8 items-center justify-center rounded-full text-lg leading-none text-brand-dark transition-colors hover:bg-brand-soft disabled:opacity-40";
+  const stepper = "flex h-8 w-8 items-center justify-center rounded-full text-lg leading-none text-brand-dark transition-colors hover:bg-brand-soft";
 
+  // Never disabled/relabelled while a request is in flight — taps are queued
+  // by the hook, and the count only changes when the cart really does.
   if (count === 0) {
     return (
-      <button type="button" disabled={busy || blocked} onClick={onAdd} title={blocked ? "Remove the combo you already added to choose this one" : undefined} className="inline-flex h-11 shrink-0 items-center gap-1.5 rounded-full border border-brand bg-white px-5 text-sm font-semibold text-brand-dark transition hover:bg-brand-soft active:scale-95 disabled:opacity-60">
-        {pending ? "Adding…" : <><span className="text-lg leading-none">+</span> Add</>}
+      <button type="button" disabled={blocked} onClick={() => onAdd(true)} title={blocked ? "Remove the combo you already added to choose this one" : undefined} className="inline-flex h-11 shrink-0 items-center gap-1.5 rounded-full border border-brand bg-white px-5 text-sm font-semibold text-brand-dark transition hover:bg-brand-soft active:scale-95 disabled:opacity-60">
+        <span className="text-lg leading-none">+</span> Add
       </button>
     );
   }
   return (
     <div className="inline-flex h-11 shrink-0 items-center rounded-full border border-brand bg-white px-1">
-      <button type="button" disabled={busy} onClick={onRemove} aria-label={`Remove one ${selection.name}`} className={stepper}>−</button>
-      <span aria-live="polite" className="min-w-8 text-center text-sm font-bold text-brand-dark">{pending ? "…" : count}</span>
-      <button type="button" disabled={busy} onClick={onAdd} aria-label={`Add one more ${selection.name}`} className={stepper}>+</button>
+      <button type="button" onClick={onRemove} aria-label={`Remove one ${selection.name}`} className={stepper}>−</button>
+      <span aria-live="polite" className="min-w-8 text-center text-sm font-bold tabular-nums text-brand-dark">{count}</span>
+      <button type="button" onClick={() => onAdd(false)} aria-label={`Add one more ${selection.name}`} className={stepper}>+</button>
     </div>
   );
 }
 
-function ComboCard({ selection, busy, pending, blocked, onAdd, onRemove }: {
-  selection: Selection; busy: boolean; pending: boolean; blocked: boolean; onAdd: () => void; onRemove: () => void;
+function ComboCard({ selection, blocked, onAdd, onRemove }: {
+  selection: Selection; blocked: boolean; onAdd: (initial: boolean) => void; onRemove: () => void;
 }) {
   const image = selection.image ? resolveMediaUrl(selection.image) : null;
   const packLine = selection.packBreakdown?.length
@@ -184,20 +204,19 @@ function ComboCard({ selection, busy, pending, blocked, onAdd, onRemove }: {
         {packLine && <p className="truncate text-[11px] text-ink-faint">{packLine}</p>}
         <div className="mt-0.5 flex flex-wrap items-center justify-between gap-2">
           <p className="text-lg font-bold text-brand-dark sm:text-xl">{money(selection.totalPrice)}</p>
-          <CartControl selection={selection} busy={busy} pending={pending} blocked={blocked} onAdd={onAdd} onRemove={onRemove} />
+          <CartControl selection={selection} blocked={blocked} onAdd={onAdd} onRemove={onRemove} />
         </div>
       </div>
     </div>
   );
 }
 
-function SmartCartDialog({ current, recommendations, busy, error, onAdd, onRemove, onClose }: {
-  current: Selection; recommendations: Selection[]; busy: boolean; error: string;
-  onAdd: (selection: Selection) => void; onRemove: (selection: Selection) => void; onClose: () => void;
+function SmartCartDialog({ current, recommendations, error, onAdd, onRemove, onClose }: {
+  current: Selection; recommendations: Selection[]; error: string;
+  onAdd: (selection: Selection, initial: boolean) => void; onRemove: (selection: Selection) => void; onClose: () => void;
 }) {
   const dialog = useRef<HTMLDialogElement>(null);
   const currentImage = current.image ? resolveMediaUrl(current.image) : null;
-  const [pendingKey, setPendingKey] = useState<string | null>(null);
   // Only one combo can be chosen at a time: once one of the recommendations is
   // in the cart, the others are locked until it is removed. Derived from the
   // cart itself so it can never drift from what was actually added.
@@ -209,9 +228,6 @@ function SmartCartDialog({ current, recommendations, busy, error, onAdd, onRemov
     dialog.current?.showModal(); document.body.style.overflow = "hidden";
     return () => { document.body.style.overflow = overflow; previous?.focus(); };
   }, []);
-  // One in-flight add at a time (the hook's own lock enforces it), so the
-  // spinner belongs to whichever card started it.
-  const addHandler = (selection: Selection) => () => { setPendingKey(keyFor(selection)); onAdd(selection); };
   return createPortal(
     <dialog ref={dialog} aria-labelledby="smart-cart-title" onCancel={event => { event.preventDefault(); onClose(); }} className="fixed inset-0 m-auto max-h-[88dvh] w-[calc(100%-1.5rem)] max-w-lg overflow-y-auto rounded-3xl border border-border bg-white p-4 text-ink shadow-2xl backdrop:bg-black/50 sm:p-5">
       <div className="flex items-start justify-between gap-4">
@@ -219,7 +235,7 @@ function SmartCartDialog({ current, recommendations, busy, error, onAdd, onRemov
           <h2 id="smart-cart-title" className="font-display text-xl font-bold leading-tight sm:text-2xl">Recommended for you</h2>
           <p className="mt-1 text-sm text-ink-muted">Add this combo to save more, or keep what you already have.</p>
         </div>
-        <button type="button" disabled={busy} onClick={onClose} aria-label="Close recommendation" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-cream text-lg leading-none text-ink-muted transition-colors hover:bg-cream-deep disabled:opacity-50">×</button>
+        <button type="button" onClick={onClose} aria-label="Close recommendation" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-cream text-lg leading-none text-ink-muted transition-colors hover:bg-cream-deep">×</button>
       </div>
 
       {/* The product this dialog was opened from — same add/step control as
@@ -235,7 +251,7 @@ function SmartCartDialog({ current, recommendations, busy, error, onAdd, onRemov
           <p className="mt-0.5 text-xs text-ink-muted sm:text-sm">Qty {current.quantity}</p>
           <div className="mt-1.5 flex flex-wrap items-center justify-between gap-2">
             <p className="text-lg font-bold sm:text-xl">{money(current.totalPrice)}</p>
-            <CartControl selection={current} busy={busy} pending={pendingKey === keyFor(current) && busy} onAdd={addHandler(current)} onRemove={() => onRemove(current)} />
+            <CartControl selection={current} onAdd={initial => onAdd(current, initial)} onRemove={() => onRemove(current)} />
           </div>
         </div>
       </div>
@@ -249,9 +265,7 @@ function SmartCartDialog({ current, recommendations, busy, error, onAdd, onRemov
           <div className="mt-2.5 flex flex-col gap-2.5">
             {recommendations.map(item => {
               const key = keyFor(item);
-              // Only meaningful while a request is in flight, so a leftover
-              // key from a finished attempt never shows a stale spinner.
-              return <ComboCard key={key} selection={item} busy={busy} pending={busy && pendingKey === key} blocked={!!chosenCombo && keyFor(chosenCombo) !== key} onAdd={addHandler(item)} onRemove={() => onRemove(item)} />;
+              return <ComboCard key={key} selection={item} blocked={!!chosenCombo && keyFor(chosenCombo) !== key} onAdd={initial => onAdd(item, initial)} onRemove={() => onRemove(item)} />;
             })}
           </div>
         </>

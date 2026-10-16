@@ -78,7 +78,7 @@ export default function CartPageClient() {
         {itemCount} {itemCount === 1 ? "item" : "items"} in your cart
       </p>
 
-      {/* Free shipping / cashback progress */}
+      {/* Free shipping progress */}
       <div className="mt-6">
         <ShippingProgress subtotal={subtotal} />
       </div>
