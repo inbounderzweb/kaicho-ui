@@ -194,7 +194,16 @@
 }
 
 html {
-  scroll-behavior: smooth;
+  /* Reserve the scrollbar's space: when a dialog locks scrolling (overflow:
+     hidden) the page used to widen by the scrollbar's width and every card
+     visibly shifted sideways. */
+  scrollbar-gutter: stable;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
 }
 
 body {

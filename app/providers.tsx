@@ -38,6 +38,17 @@ export default function Providers({ children }: { children: React.ReactNode }) {
     useAuthStore.persist.rehydrate();
   }, []);
 
+  // The cart lives in localStorage. Without this, a second tab keeps showing
+  // (and adding to) a stale copy until it is reloaded, and the last tab to
+  // write silently overwrites the other's items.
+  useEffect(() => {
+    const onStorage = (event: StorageEvent) => {
+      if (event.key === "kaicho-cart") void useCartStore.persist.rehydrate();
+    };
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
       {children}

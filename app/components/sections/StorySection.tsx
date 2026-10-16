@@ -164,7 +164,7 @@ export default function StorySection() {
             <div
               className="
                 relative overflow-hidden
-                rounded-[2rem]
+                rounded-4xl
               "
             >
               {/* Image */}
@@ -179,7 +179,7 @@ export default function StorySection() {
                   mx-auto
                   h-auto
                   w-full
-                  max-w-[720px]
+                  max-w-180
                   object-contain
                   drop-shadow-[0_30px_40px_rgba(0,0,0,0.14)]
                   transition-transform
@@ -289,7 +289,7 @@ export default function StorySection() {
                     alt=""
                     width={186}
                     height={180}
-                    className="h-[75px] w-auto"
+                    className="h-18.75 w-auto"
                   />
                   <h3
                     id={`our-${title.toLowerCase()}`}

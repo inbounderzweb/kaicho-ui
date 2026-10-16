@@ -46,6 +46,13 @@ export function useSmartCart(productId: string) {
   const queue = useRef<({ kind: "add"; selection: Selection; initial: boolean } | { kind: "remove"; selection: Selection })[]>([]);
   const generation = useRef(0);
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  // A failed add shows its message, then goes away by itself — a stale error
+  // left on a card forever reads as "this product is broken".
+  useEffect(() => {
+    if (!error) return;
+    const clear = setTimeout(() => setError(""), 8000);
+    return () => clearTimeout(clear);
+  }, [error]);
   useEffect(() => () => { generation.current++; queue.current = []; pendingAdds.current = 0; clearTimeout(timer.current); }, [productId]);
 
   const commit = (selection: Selection) => {
@@ -241,7 +248,7 @@ function SmartCartDialog({ current, recommendations, error, onAdd, onRemove, onC
     const previous = document.activeElement as HTMLElement | null;
     const overflow = document.body.style.overflow;
     dialog.current?.showModal(); document.body.style.overflow = "hidden";
-    return () => { document.body.style.overflow = overflow; previous?.focus(); };
+    return () => { document.body.style.overflow = overflow; previous?.focus({ preventScroll: true }); };
   }, []);
   return createPortal(
     <dialog ref={dialog} aria-labelledby="smart-cart-title" onCancel={event => { event.preventDefault(); onClose(); }} className="fixed inset-0 m-auto max-h-[88dvh] w-[calc(100%-1.5rem)] max-w-lg overflow-y-auto rounded-3xl border border-border bg-white p-4 text-ink shadow-2xl backdrop:bg-black/50 sm:p-5">

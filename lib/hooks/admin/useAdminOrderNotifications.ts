@@ -250,13 +250,17 @@ export function useAdminOrderNotifications(enabled: boolean) {
   // running.
   useEffect(() => {
     if (!enabled) return;
+    // Show the "confirm alerts" prompt once per login if audio isn't unlocked.
+    let promptShown = false;
     const sync = () => {
       const running = sharedCtx?.state === "running";
       setSoundReady(running);
       if (running) startKeepAlive();
+      else if (!promptShown) {
+        promptShown = true;
+        setNeedsConfirm(true);
+      }
     };
-    // Show the "confirm alerts" prompt once per login if audio isn't unlocked.
-    if (sharedCtx?.state !== "running") setNeedsConfirm(true);
     const poll = setInterval(sync, 1000);
     sync();
     const events = ["pointerdown", "touchend", "click", "keydown"] as const;

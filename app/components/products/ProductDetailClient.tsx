@@ -60,7 +60,7 @@ export default function ProductDetailClient({ product }: { product: PublicProduc
   ];
 
   return (
-    <section className="mx-auto max-w-[1280px] px-5 py-8 sm:px-6 sm:py-10 lg:px-8">
+    <section className="mx-auto max-w-7xl px-5 py-8 sm:px-6 sm:py-10 lg:px-8">
       <Breadcrumbs items={breadcrumbItems} className="mb-6" />
 
       <div className="grid grid-cols-1 gap-10 lg:grid-cols-2 lg:gap-14">
@@ -105,7 +105,7 @@ export default function ProductDetailClient({ product }: { product: PublicProduc
               {outOfStock
                 ? "Out of Stock"
                 : isCheckingPack
-                  ? "Checking…"
+                  ? "Adding…"
                   : justAdded
                     ? "Added to Cart"
                     : "Add to Cart"}
@@ -129,6 +129,12 @@ export default function ProductDetailClient({ product }: { product: PublicProduc
             </button>
           </div>
 
+          {smartCart.error && (
+            <p role="alert" className="mt-3 rounded-xl bg-red-50 p-3 text-sm font-semibold text-red-700">
+              {smartCart.error}
+            </p>
+          )}
+
           {/* Payment methods */}
           <div className="mt-8 rounded-2xl border border-border p-4">
             <p className="text-center text-xs font-bold uppercase tracking-wider text-ink-faint">
@@ -151,7 +157,6 @@ export default function ProductDetailClient({ product }: { product: PublicProduc
 
       {!relatedLoading && relatedData && <RelatedProducts products={relatedData.products} />}
 
-      {smartCart.error && <p role="alert" className="mt-4 text-sm text-red-700">{smartCart.error}</p>}
       {smartCart.modal}
 
     </section>

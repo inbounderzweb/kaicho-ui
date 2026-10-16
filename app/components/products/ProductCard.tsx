@@ -1,5 +1,6 @@
 "use client";
 
+import { memo } from "react";
 import { useSmartCart } from "@/lib/hooks/useSmartCart";
 import { useCartStore } from "@/lib/store/cart.store";
 import { cartLineKey } from "../cart/cart-data";
@@ -34,7 +35,7 @@ import type { PublicProductListItem } from "@/lib/api/publicProducts";
 // thumbnail/optimized for any older media doc that predates variants.
 // Lazy-loaded by default; only the above-the-fold first row passes
 // `priority`.
-export default function ProductCard({
+function ProductCard({
   product,
   priority = false,
 }: {
@@ -185,7 +186,7 @@ export default function ProductCard({
           {outOfStock ? (
             "Sold Out"
           ) : smartCart.busy ? (
-            "…"
+            "Adding…"
           ) : (
             <>
               <IconCart className="h-3.5 w-3.5" /> Add
@@ -195,8 +196,13 @@ export default function ProductCard({
 
         </div>
       </div>
+      {/* Overlaid, not in flow: an error must not grow this card (and with it
+          its whole grid row) or shift the page under the user's finger. */}
       {smartCart.error && (
-        <p role="alert" className="mt-1.5 text-xs text-red-700">
+        <p
+          role="alert"
+          className="absolute inset-x-3 bottom-[4.5rem] z-30 rounded-lg border border-red-200 bg-red-50 px-2 py-1.5 text-xs font-semibold leading-4 text-red-700 shadow-sm"
+        >
           {smartCart.error}
         </p>
       )}
@@ -204,3 +210,7 @@ export default function ProductCard({
     </div>
   );
 }
+
+// Cards sit in large lists; memo keeps a parent re-render (filters, pagination,
+// the cart badge) from re-rendering every card whose product didn't change.
+export default memo(ProductCard);

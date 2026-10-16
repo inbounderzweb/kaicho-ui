@@ -39,14 +39,14 @@ export default function Header() {
     <>
       <header
         data-scrolled={scrolled}
-        className={`sticky top-0 z-40 w-full bg-white/95 backdrop-blur transition-shadow ${isHome ? styles.homeHeader : ""} ${
+        className={`sticky top-0 z-40 w-full bg-white/95 transition-shadow ${isHome ? styles.homeHeader : ""} ${
           scrolled
             ? "shadow-[0_1px_0_0_rgba(0,0,0,0.08),0_4px_12px_-4px_rgba(0,0,0,0.12)]"
             : "shadow-[0_1px_0_0_rgba(0,0,0,0.06),0_2px_6px_-3px_rgba(0,0,0,0.08)]"
         }`}
       >
         {/* Mobile top bar: hamburger — logo — search + cart */}
-        <div className="mx-auto grid h-[74px] w-full max-w-[1280px] grid-cols-[1fr_auto_1fr] items-center px-4 sm:px-6 lg:hidden">
+        <div className="mx-auto grid h-18.5 w-full max-w-7xl grid-cols-[1fr_auto_1fr] items-center px-4 sm:px-6 lg:hidden">
           <div className="flex items-center justify-self-start gap-0.5">
             <button
               type="button"
@@ -95,7 +95,7 @@ export default function Header() {
         </div>
 
         {/* Desktop bar */}
-        <div className={`mx-auto hidden h-20 w-full max-w-[1280px] items-center justify-between px-5 sm:px-6 lg:flex lg:px-8 ${styles.homeDesktopBar}`}>
+        <div className={`mx-auto hidden h-20 w-full max-w-7xl items-center justify-between px-5 sm:px-6 lg:flex lg:px-8 ${styles.homeDesktopBar}`}>
           <Link href="/" className={`flex shrink-0 items-center ${styles.homeDesktopLogo}`} aria-label="Kaicho Foods home">
             <Image
               src="/icons/kaicho_logo.svg"

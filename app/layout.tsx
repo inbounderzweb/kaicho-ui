@@ -70,6 +70,11 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="en"
+      // Next 16 only forces instant scrolling during route changes (new page →
+      // top, back/forward → restored position) when this attribute is present
+      // and the page has `scroll-behavior: smooth`. Without it every navigation
+      // visibly glides across the whole page instead of landing instantly.
+      data-scroll-behavior="smooth"
       className={`${sora.variable} h-full antialiased`}
       suppressHydrationWarning
     >
