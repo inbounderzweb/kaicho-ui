@@ -5,7 +5,7 @@
 .image { object-fit: cover; object-position: center; }
 .content { display: flex; align-items: center; min-height: clamp(440px, 43vw, 660px); padding-top: 36px; padding-bottom: 70px; }
 .copy { width: 43%; max-width: 510px; }
-.eyebrow { margin-top: 30px; color: #08753f; font-size: 11px; font-weight: 700; letter-spacing: .2em; }
+.eyebrow { margin-top: 30px; color: #00A862; font-size: 11px; font-weight: 700; letter-spacing: .2em; }
 .copy h1 { margin-top: 12px; font-family: var(--font-sora), sans-serif; font-size: clamp(32px, 4vw, 56px); font-weight: 700; line-height: 1.15; letter-spacing: -.035em; }
 .description { margin-top: 18px; max-width: 380px; color: #51594e; font-size: 16px; line-height: 1.7; }
 .features { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 14px; margin-top: 28px; }
