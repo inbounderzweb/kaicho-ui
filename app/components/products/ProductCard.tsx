@@ -73,13 +73,18 @@ export default function ProductCard({
     e.preventDefault();
     e.stopPropagation();
     if (outOfStock) return;
-    void smartCart.add(1);
+    // First "Add" ignores a second press while its check is running (a
+    // double-click must not add two). Once in the cart, "+" presses made
+    // during a check are remembered and added right after, so quick taps all
+    // count instead of needing one tap per server round-trip.
+    if (quantity === 0 && smartCart.busy) return;
+    void smartCart.add(1, { queueIfBusy: quantity > 0 });
   }
 
   return (
     <div className={`${styles.card} group relative flex h-full min-w-0 flex-col rounded-2xl border border-border bg-white p-3 transition-all duration-300 hover:-translate-y-1 hover:border-brand/30 hover:shadow-[0_20px_40px_-24px_rgba(28,28,28,0.25)] sm:p-3.5`}>
       <div className="relative shrink-0">
-        <Link href={href} className="relative block aspect-square w-full overflow-hidden rounded-xl bg-cream">
+        <Link href={href} draggable={false} className="relative block aspect-square w-full overflow-hidden rounded-xl bg-cream">
           {outOfStock ? (
             <span className="absolute left-2 top-2 z-10 rounded-md bg-charcoal/80 px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-white">
               Out of stock
@@ -97,6 +102,7 @@ export default function ProductCard({
               src={resolveMediaUrl(imageUrl)}
               alt={product.image?.altText ?? product.name}
               fill
+              draggable={false}
               loading={priority ? undefined : "lazy"}
               priority={priority}
               sizes="(min-width: 1024px) 24vw, (min-width: 640px) 32vw, 46vw"
@@ -125,7 +131,7 @@ export default function ProductCard({
         <span className="block h-4 truncate text-[11px] font-semibold uppercase leading-4 tracking-wide text-ink-faint">
           {product.brand?.name ?? ""}
         </span>
-        <Link href={href}>
+        <Link href={href} draggable={false}>
           <h3 className="line-clamp-2 min-h-[2.75em] break-words font-display text-sm font-bold leading-snug text-ink hover:text-brand sm:text-base">
             {product.name}
           </h3>
@@ -146,26 +152,27 @@ export default function ProductCard({
             <button
               type="button"
               aria-label={`Remove one ${product.name}`}
-              disabled={smartCart.busy}
               onClick={() => {
                 if (cartLine) useCartStore.getState().decrementItem({ ...cartLine, quantity: 1 });
               }}
-              className="h-11 min-w-0 flex-1 text-xl transition-colors active:bg-brand-darker disabled:opacity-50"
+              className="h-11 min-w-0 flex-1 touch-manipulation text-xl transition-colors active:bg-brand-darker"
             >−</button>
             <span aria-live="polite" aria-atomic="true" className="min-w-5 text-center text-sm font-bold">{quantity}</span>
             <button
               type="button"
               aria-label={`Add one more ${product.name}`}
-              disabled={outOfStock || smartCart.busy || (product.inventory.trackInventory && quantity >= product.inventory.stockQuantity)}
+              disabled={outOfStock || (product.inventory.trackInventory && quantity >= product.inventory.stockQuantity)}
+              aria-busy={smartCart.busy}
               onClick={handleAddToCart}
-              className={`h-11 min-w-0 flex-1 text-xl transition-colors active:bg-brand-darker disabled:opacity-50 ${smartCart.busy ? "bg-brand-darker" : ""}`}
-            >{smartCart.busy ? "…" : "+"}</button>
+              className={`h-11 min-w-0 flex-1 touch-manipulation text-xl transition-colors active:bg-brand-darker disabled:opacity-50 ${smartCart.busy ? "bg-brand-darker" : ""}`}
+            >+</button>
           </div>
         ) : <button
           type="button"
           onClick={handleAddToCart}
-          disabled={outOfStock || smartCart.busy}
-          className={`inline-flex h-11 w-full min-w-0 items-center justify-center gap-1 rounded-full px-2 text-sm font-bold transition-colors disabled:cursor-not-allowed ${
+          disabled={outOfStock}
+          aria-busy={smartCart.busy}
+          className={`inline-flex h-11 w-full min-w-0 touch-manipulation items-center justify-center gap-1 rounded-full px-2 text-sm font-bold transition-colors disabled:cursor-not-allowed ${
             smartCart.busy
               ? "bg-brand-darker text-white"
               : outOfStock

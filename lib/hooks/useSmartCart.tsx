@@ -42,10 +42,11 @@ export function useSmartCart(productId: string) {
   const [offer, setOffer] = useState<{ current: Selection; recommendations: Selection[] } | null>(null);
   const lock = useRef(false);
   const draining = useRef(false);
+  const pendingAdds = useRef(0);
   const queue = useRef<({ kind: "add"; selection: Selection; initial: boolean } | { kind: "remove"; selection: Selection })[]>([]);
   const generation = useRef(0);
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
-  useEffect(() => () => { generation.current++; queue.current = []; clearTimeout(timer.current); }, [productId]);
+  useEffect(() => () => { generation.current++; queue.current = []; pendingAdds.current = 0; clearTimeout(timer.current); }, [productId]);
 
   const commit = (selection: Selection) => {
     useCartStore.getState().addItem(toCartItem(selection));
@@ -107,10 +108,19 @@ export function useSmartCart(productId: string) {
     queue.current.push({ kind: "remove", selection });
     void drain();
   }
-  async function add(quantity: number) {
-    if (lock.current) return;
+  // Presses that arrive while a check is already running are remembered, not
+  // dropped: they're added in ONE follow-up check right after the current one
+  // (so tapping "+" three times quickly adds three, instead of needing a tap
+  // per round-trip). If the current check opens the combo dialog or fails, the
+  // remembered presses are discarded — the customer is now looking at that.
+  async function add(quantity: number, { queueIfBusy = false }: { queueIfBusy?: boolean } = {}) {
+    if (lock.current) {
+      if (queueIfBusy && !draining.current) pendingAdds.current += quantity;
+      return;
+    }
     lock.current = true; setBusy(true); setError("");
     const version = generation.current;
+    let followUp = 0;
     try {
       const cart = currentCart();
       const result = await apiFetch<{ current: Selection; recommendation: Selection | null; recommendations?: Selection[] }>("/cart/recommend", { method: "POST", body: JSON.stringify({ selection: { productId, quantity }, cart }) });
@@ -120,9 +130,14 @@ export function useSmartCart(productId: string) {
       // same list's first entry, kept for older responses.
       const offered = result.recommendations?.length ? result.recommendations : result.recommendation ? [result.recommendation] : [];
       if (offered.length) setOffer({ current: result.current, recommendations: offered });
-      else commit(result.current);
+      else { commit(result.current); followUp = pendingAdds.current; }
     } catch (err) { if (version === generation.current) setError(err instanceof Error ? err.message : "Could not check availability. Please try again."); }
-    finally { lock.current = false; if (version === generation.current) setBusy(false); }
+    finally {
+      pendingAdds.current = 0;
+      lock.current = false;
+      if (version === generation.current) setBusy(false);
+    }
+    if (followUp > 0 && version === generation.current) void add(followUp, { queueIfBusy: true });
   }
   return {
     add, busy, added, error,

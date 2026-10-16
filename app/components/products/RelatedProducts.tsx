@@ -17,11 +17,11 @@ export default function RelatedProducts({ products }: { products: PublicProductL
           Without it, snap-mandatory has no valid point to settle on near the
           end and the carousel feels like it gets stuck instead of reaching
           the last card. Reset on sm: since that breakpoint is a static grid. */}
-      <div className="no-scrollbar mt-6 flex snap-x snap-mandatory gap-3 overflow-x-auto pb-1 pr-[calc(100%-min(42vw,10rem))] sm:grid sm:grid-cols-2 sm:gap-6 sm:overflow-visible sm:pb-0 sm:pr-0 sm:snap-none lg:grid-cols-4">
+      <div className="no-scrollbar mt-6 flex snap-x snap-mandatory gap-3 overflow-x-auto overscroll-x-contain pb-1 pr-[calc(100%-min(42vw,10rem))] sm:grid sm:grid-cols-2 sm:gap-6 sm:overflow-visible sm:pb-0 sm:pr-0 sm:snap-none lg:grid-cols-4">
         {products.map((product) => (
           <div
             key={product.productId}
-            className="w-[42vw] max-w-40 shrink-0 snap-start sm:w-auto sm:max-w-none sm:shrink"
+            className="w-[42vw] max-w-40 shrink-0 snap-start snap-always sm:w-auto sm:max-w-none sm:shrink"
           >
             <ProductCard product={product} />
           </div>
