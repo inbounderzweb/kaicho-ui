@@ -64,7 +64,7 @@ export default function OrdersSection() {
 
   return (
     <div>
-      <div className="flex gap-0.5 rounded-full bg-cream p-0.5 text-xs font-semibold">
+      <div className="flex gap-0.5 rounded-full bg-cream p-1.2 text-xs font-semibold">
         {TABS.map(({ id, label }) => (
           <button
             key={id}
