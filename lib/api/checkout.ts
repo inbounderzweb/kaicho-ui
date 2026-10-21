@@ -47,10 +47,16 @@ export interface CheckoutPreviewItem {
   availableQuantity?: number;
   /** A stale/no-longer-valid pack selection — same treatment as `unavailable`. */
   packError?: string;
+  /** BOGO: how many of `quantity` are FREE (0 when none). `lineTotal` stays the full pre-offer value. */
+  freeQuantity?: number;
+  /** BOGO: rupees taken off this line for its free units. */
+  offerDiscount?: number;
 }
 
 export interface CheckoutPreviewPricing {
   subtotal: number;
+  /** BOGO offer discount in rupees. 0 / absent when no offer applied. */
+  offerDiscountTotal?: number;
   /** Coupon discount on the subtotal, in rupees. 0 when no coupon or a
    *  free-delivery coupon (whose benefit is a zeroed shippingFee). */
   discountTotal: number;
@@ -67,6 +73,36 @@ export interface CheckoutPreviewCoupon {
   freeDelivery: boolean;
 }
 
+export type OfferRejectionReason =
+  | "PRICE_TOO_HIGH"
+  | "NOT_ENOUGH_PAID_ITEMS"
+  | "LIMIT_REACHED"
+  | "NOT_ELIGIBLE"
+  | "NOT_IN_CART";
+
+/** The server's verdict on the best live offer for this cart. */
+export interface CheckoutPreviewOffer {
+  id: string;
+  name: string;
+  description: string | null;
+  buyQuantity: number;
+  maxFreeUnitsPerOrder: number;
+  minPaidUnitPrice: number;
+  allowCouponStacking: boolean;
+  /** False when the offer is live but nothing qualifies yet (e.g. "add 1 more"). */
+  applied: boolean;
+  /** Cart products this offer covers — what the shopper may pick as free. */
+  eligibleProductIds: string[];
+  discountAmount: number;
+  freeUnits: number;
+  limitReached: boolean;
+  /** More eligible units needed before the next free one unlocks. */
+  unitsToNextFree: number;
+  freeByProduct: Record<string, number>;
+  /** Free picks that were NOT honoured (they stay paid) and why. */
+  rejected: { productId: string; quantity: number; reason: OfferRejectionReason; message: string }[];
+}
+
 export interface CheckoutPreviewResult {
   items: CheckoutPreviewItem[];
   pricing: CheckoutPreviewPricing;
@@ -75,6 +111,8 @@ export interface CheckoutPreviewResult {
   /** Why a sent coupon couldn't be applied — the cart is still priced
    *  without it so the page can render. */
   couponError: string | null;
+  /** Best live BOGO offer for this cart, or null when none is relevant. */
+  offer?: CheckoutPreviewOffer | null;
 }
 
 export interface PlaceOrderInput {
@@ -82,6 +120,11 @@ export interface PlaceOrderInput {
   addressId: string;
   paymentMethod: PaymentMethod;
   couponCode?: string;
+  /** The shopper's preferred free units — re-validated server-side. */
+  freeSelections?: { productId: string; quantity: number }[];
+  /** The offer discount the shopper was SHOWN. Never used to price anything:
+   *  if it no longer matches, the server answers 409 so they can re-review. */
+  expectedOfferDiscount?: number;
 }
 
 /** Razorpay's own order handle, echoed back so Checkout.js can be opened
@@ -99,11 +142,17 @@ export interface PlaceOrderResult {
 
 export function previewCheckout(
   items: CheckoutLineInput[],
-  couponCode?: string
+  couponCode?: string,
+  freeSelections?: { productId: string; quantity: number }[]
 ): Promise<CheckoutPreviewResult> {
   return apiFetch<CheckoutPreviewResult>("/checkout/preview", {
     method: "POST",
-    body: JSON.stringify(couponCode ? { items, couponCode } : { items }),
+    body: JSON.stringify({
+      items,
+      ...(couponCode ? { couponCode } : {}),
+      // [] is meaningful: the shopper chose "no free items" (manual mode).
+      ...(freeSelections ? { freeSelections } : {}),
+    }),
   });
 }
 

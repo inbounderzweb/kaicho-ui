@@ -9,13 +9,20 @@ export default function CartItemRow({
   itemKey,
   onQuantityChange,
   onRemove,
+  freeQuantity = 0,
+  offerDiscount = 0,
 }: {
   item: CartItem;
   itemKey: string;
   onQuantityChange: (itemKey: string, quantity: number) => void;
   onRemove: (itemKey: string) => void;
+  /** BOGO, from the server's cart evaluation: how many of `quantity` are free. */
+  freeQuantity?: number;
+  /** BOGO: rupees off this line for its free units. */
+  offerDiscount?: number;
 }) {
   const lineTotal = item.price * item.quantity;
+  const payable = Math.max(0, lineTotal - offerDiscount);
   const href = `/products/${item.slug}`;
   const atMax = typeof item.maxQuantity === "number" && item.quantity >= item.maxQuantity;
   // A pack is a fixed bundle — "quantity +/- 1" is meaningless on it. Pack
@@ -60,6 +67,12 @@ export default function CartItemRow({
                   {item.name}
                 </h3>
               </Link>
+              {freeQuantity > 0 && (
+                <p className="mt-1 inline-flex items-center gap-1 rounded-full bg-brand-soft px-2 py-0.5 text-[11px] font-bold text-brand">
+                  <span className="rounded bg-brand px-1 text-[10px] uppercase tracking-wide text-white">Free</span>
+                  {freeQuantity} × BOGO Offer
+                </p>
+              )}
               {isPack && (
                 <p className="mt-0.5 text-xs font-medium text-ink-muted">
                   {item.packBreakdown!.map((l) => `${l.packName} × ${l.packCount}`).join(" + ")}
@@ -139,7 +152,14 @@ export default function CartItemRow({
           )}
 
           <div className="w-16 text-right text-sm font-bold text-ink sm:w-20">
-            {lineTotal.toFixed(2)} ₹
+            {offerDiscount > 0 ? (
+              <>
+                <span className="block text-[11px] font-medium text-ink-faint line-through">{lineTotal.toFixed(2)} ₹</span>
+                <span>{payable.toFixed(2)} ₹</span>
+              </>
+            ) : (
+              <>{lineTotal.toFixed(2)} ₹</>
+            )}
           </div>
 
           {/* Desktop-only remove button, back at the end of the row. */}

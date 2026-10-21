@@ -7,6 +7,7 @@ import type { PublicProductListParams } from "../api/publicProducts";
 import type { CategoryProductsParams } from "../api/publicCategories";
 import type { AdminBlogQueryParams } from "../api/blog";
 import type { CouponQueryParams } from "../api/coupon";
+import type { OfferQueryParams } from "../api/offer";
 import type { InstagramPostQueryParams } from "../api/instagramPost";
 import type { YouTubeVideoQueryParams } from "../api/youtubeVideo";
 import type { PublicBlogListParams } from "../api/blogPublic";
@@ -47,6 +48,18 @@ export const couponKeys = {
   detail: (id: string) => ["admin", "coupons", "detail", id] as const,
   usages: (id: string, page: number, pageSize: number) =>
     ["admin", "coupons", "usages", id, page, pageSize] as const,
+};
+
+export const offerKeys = {
+  list: (params: OfferQueryParams) => ["admin", "offers", "list", params] as const,
+  detail: (id: string) => ["admin", "offers", "detail", id] as const,
+  usages: (id: string, page: number, pageSize: number) =>
+    ["admin", "offers", "usages", id, page, pageSize] as const,
+};
+
+export const publicOfferKeys = {
+  active: ["offers", "active"] as const,
+  evaluate: (key: string) => ["offers", "evaluate", key] as const,
 };
 
 export const instagramPostKeys = {

@@ -14,6 +14,13 @@ interface CartStoreState {
   getSubtotal: () => number;
   getTotalItems: () => number;
   getItemQuantity: (productId: string) => number;
+  // BOGO free-item preference. `null` = AUTO (the server picks the best valid
+  // pairing). A map = the shopper chose their free units manually (productId →
+  // free quantity). It is a HINT only: the server re-validates every pick and
+  // keeps any that don't qualify as paid. Never contains a price.
+  freeSelections: Record<string, number> | null;
+  setFreeSelection: (productId: string, quantity: number) => void;
+  setFreeSelectionMode: (mode: "AUTO" | "MANUAL", seed?: Record<string, number>) => void;
 }
 
 // A pack line and a plain unit line for the same product are two distinct
@@ -59,6 +66,16 @@ export const useCartStore = create<CartStoreState>()(
   persist(
     (set, get) => ({
       items: INITIAL_CART,
+      freeSelections: null,
+      setFreeSelection: (productId, quantity) =>
+        set((state) => {
+          const next = { ...(state.freeSelections ?? {}) };
+          if (quantity > 0) next[productId] = quantity;
+          else delete next[productId];
+          return { freeSelections: next };
+        }),
+      setFreeSelectionMode: (mode, seed) =>
+        set({ freeSelections: mode === "AUTO" ? null : { ...(seed ?? {}) } }),
       addItem: (item) => {
         set((state) => {
           const key = cartLineKey(item);
@@ -142,7 +159,16 @@ export const useCartStore = create<CartStoreState>()(
       },
       removeItem: (itemKey) => {
         const removed = get().items.find((i) => cartLineKey(i) === itemKey);
-        set((state) => ({ items: state.items.filter((i) => cartLineKey(i) !== itemKey) }));
+        set((state) => {
+          const items = state.items.filter((i) => cartLineKey(i) !== itemKey);
+          // Drop a manual free pick whose product just left the cart entirely.
+          let freeSelections = state.freeSelections;
+          if (freeSelections && removed && !items.some((i) => i.productId === removed.productId)) {
+            freeSelections = { ...freeSelections };
+            delete freeSelections[removed.productId];
+          }
+          return { items, freeSelections };
+        });
         if (removed) {
           trackEvent("remove_from_cart", {
             currency: "INR",
@@ -169,7 +195,7 @@ export const useCartStore = create<CartStoreState>()(
             ),
           };
         }),
-      clearCart: () => set({ items: [] }),
+      clearCart: () => set({ items: [], freeSelections: null }),
       getSubtotal: () =>
         get().items.reduce((sum, i) => sum + i.price * i.quantity, 0),
       getTotalItems: () =>

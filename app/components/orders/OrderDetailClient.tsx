@@ -267,9 +267,24 @@ export default function OrderDetailClient({ orderNumber }: { orderNumber: string
                         Qty {item.quantity} × Rs. {item.unitPrice.toFixed(2)}
                       </p>
                     )}
+                    {(item.freeQuantity ?? 0) > 0 && (
+                      <p className="mt-1 inline-flex items-center gap-1 rounded-full bg-brand-soft px-2 py-0.5 text-[11px] font-bold text-brand">
+                        <span className="rounded bg-brand px-1 text-[10px] uppercase tracking-wide text-white">Free</span>
+                        {item.freeQuantity} × BOGO Offer
+                      </p>
+                    )}
                   </div>
                   <div className="shrink-0 text-right text-sm font-bold text-ink">
-                    Rs. {item.lineTotal.toFixed(2)}
+                    {(item.offerDiscount ?? 0) > 0 ? (
+                      <>
+                        <span className="block text-[11px] font-medium text-ink-faint line-through">
+                          Rs. {item.lineTotal.toFixed(2)}
+                        </span>
+                        Rs. {(item.lineTotal - (item.offerDiscount ?? 0)).toFixed(2)}
+                      </>
+                    ) : (
+                      <>Rs. {item.lineTotal.toFixed(2)}</>
+                    )}
                   </div>
                 </li>
               ))}
@@ -326,6 +341,12 @@ export default function OrderDetailClient({ orderNumber }: { orderNumber: string
                 <span>Subtotal</span>
                 <span className="font-semibold text-ink">Rs. {order.pricing.subtotal.toFixed(2)}</span>
               </div>
+              {Number(order.pricing.offerDiscountTotal ?? 0) > 0 && (
+                <div className="flex justify-between text-brand">
+                  <span>{order.offer?.name ?? "BOGO Offer"} ({order.offer?.freeUnits ?? 0} free)</span>
+                  <span className="font-semibold">− Rs. {Number(order.pricing.offerDiscountTotal).toFixed(2)}</span>
+                </div>
+              )}
               {order.coupon && (Number(order.pricing.discountTotal) > 0 || order.coupon.freeDelivery) && (
                 <div className="flex justify-between text-brand">
                   <span>Coupon ({order.coupon.code})</span>

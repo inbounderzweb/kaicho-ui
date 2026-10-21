@@ -107,3 +107,48 @@ describe("cart store — removing and totals", () => {
     expect(useCartStore.getState().items[0].quantity).toBe(50);
   });
 });
+
+describe("cart store — BOGO free-item preference", () => {
+  beforeEach(() => {
+    useCartStore.setState({ items: [], freeSelections: null });
+  });
+
+  it("starts in AUTO (null) and switches to MANUAL with a seed", () => {
+    expect(useCartStore.getState().freeSelections).toBeNull();
+    useCartStore.getState().setFreeSelectionMode("MANUAL", { a: 1 });
+    expect(useCartStore.getState().freeSelections).toEqual({ a: 1 });
+    useCartStore.getState().setFreeSelectionMode("AUTO");
+    expect(useCartStore.getState().freeSelections).toBeNull();
+  });
+
+  it("setFreeSelection adds, updates and clears (0) a pick", () => {
+    const { setFreeSelectionMode, setFreeSelection } = useCartStore.getState();
+    setFreeSelectionMode("MANUAL");
+    setFreeSelection("a", 2);
+    expect(useCartStore.getState().freeSelections).toEqual({ a: 2 });
+    setFreeSelection("a", 0);
+    expect(useCartStore.getState().freeSelections).toEqual({});
+  });
+
+  it("removing a product from the cart drops its manual pick", () => {
+    const { addItem, setFreeSelectionMode, setFreeSelection, removeItem } = useCartStore.getState();
+    addItem(unit("a", 2));
+    addItem(unit("b", 1));
+    setFreeSelectionMode("MANUAL");
+    setFreeSelection("a", 1);
+    setFreeSelection("b", 1);
+    removeItem(cartLineKey(unit("a")));
+    expect(useCartStore.getState().freeSelections).toEqual({ b: 1 });
+  });
+
+  it("clearing the cart resets the preference to AUTO", () => {
+    useCartStore.getState().setFreeSelectionMode("MANUAL", { a: 1 });
+    useCartStore.getState().clearCart();
+    expect(useCartStore.getState().freeSelections).toBeNull();
+  });
+
+  it("never stores a price — the preference is productId → quantity only", () => {
+    useCartStore.getState().setFreeSelection("a", 1);
+    expect(Object.values(useCartStore.getState().freeSelections ?? {}).every((v) => Number.isInteger(v))).toBe(true);
+  });
+});

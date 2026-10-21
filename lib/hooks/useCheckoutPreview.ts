@@ -6,6 +6,8 @@ export interface CheckoutPreviewArgs {
   /** Optional — the server prices the cart with the coupon when valid, and
    *  returns `couponError` (never throws) when it isn't. */
   couponCode?: string;
+  /** The shopper's manual free picks (undefined = let the server choose). Re-validated server-side. */
+  freeSelections?: { productId: string; quantity: number }[];
 }
 
 // Deliberately a mutation, not a query: the preview must reflect the cart
@@ -16,7 +18,7 @@ export interface CheckoutPreviewArgs {
 // they commit.
 export function useCheckoutPreview() {
   return useMutation({
-    mutationFn: ({ items, couponCode }: CheckoutPreviewArgs): Promise<CheckoutPreviewResult> =>
-      previewCheckout(items, couponCode),
+    mutationFn: ({ items, couponCode, freeSelections }: CheckoutPreviewArgs): Promise<CheckoutPreviewResult> =>
+      previewCheckout(items, couponCode, freeSelections),
   });
 }

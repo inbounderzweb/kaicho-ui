@@ -131,10 +131,16 @@ export interface OrderItem {
   selectionType?: "UNIT" | "PACK";
   /** Frozen snapshot of exactly which packs made up this line — never re-derived from the live pack config. */
   packBreakdown?: OrderItemPackLine[];
+  /** BOGO: how many of `quantity` were free. Absent/0 without an offer. `lineTotal` is the FULL pre-offer value. */
+  freeQuantity?: number;
+  /** BOGO: rupees taken off this line for its free units. */
+  offerDiscount?: number;
 }
 
 export interface OrderPricing {
   subtotal: number;
+  /** BOGO offer discount in rupees. Absent (→ 0) on orders placed before offers existed. */
+  offerDiscountTotal?: number;
   /** Coupon discount applied to the subtotal, in rupees. Absent (→ 0) on
    *  orders placed before coupons existed. */
   discountTotal?: number;
@@ -150,6 +156,33 @@ export interface OrderCoupon {
   discountType: "PERCENTAGE" | "FIXED" | "FREE_DELIVERY";
   discountAmount: number;
   freeDelivery: boolean;
+}
+
+/** Frozen snapshot of the BOGO offer applied to this order — null when none. */
+export interface OrderOffer {
+  offerId: string;
+  name: string;
+  type: string;
+  buyQuantity: number;
+  maxFreeUnitsPerOrder: number;
+  minPaidUnitPrice: number;
+  allowCouponStacking: boolean;
+  freeUnits: number;
+  discountAmount: number;
+  freeItems: { productId: string; sku: string; name: string; quantity: number; unitPrice: number; discount: number }[];
+  pairs: {
+    freeProductId: string;
+    freeUnitPrice: number;
+    paid: { productId: string; unitPrice: number; quantity: number }[];
+    count: number;
+  }[];
+  rules: {
+    applyToAll: boolean;
+    eligibleProductIds: string[];
+    eligibleCategoryIds: string[];
+    excludedProductIds: string[];
+    excludedCategoryIds: string[];
+  };
 }
 
 export interface OrderAddress {
@@ -205,6 +238,8 @@ export interface Order {
   shipment: OrderShipment | null;
   /** Applied coupon snapshot — null when the order used no coupon. */
   coupon?: OrderCoupon | null;
+  /** Applied BOGO offer snapshot — null when the order used no offer. */
+  offer?: OrderOffer | null;
   cancelReason?: string;
   createdAt: string;
   updatedAt: string;

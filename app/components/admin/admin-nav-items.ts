@@ -50,7 +50,14 @@ export const ADMIN_NAV_ITEMS: AdminNavItem[] = [
     ],
   },
   { href: "/admin/orders", label: "Orders", Icon: IconTruck },
-  { href: "/admin/coupons", label: "Coupons", Icon: IconTicket },
+  {
+    label: "Coupons",
+    Icon: IconTicket,
+    children: [
+      { href: "/admin/coupons", label: "Coupons", Icon: IconTicket },
+      { href: "/admin/offers", label: "Offers & Promotions", Icon: IconTag },
+    ],
+  },
   {
     label: "Inquiries",
     Icon: IconMessageCircle,

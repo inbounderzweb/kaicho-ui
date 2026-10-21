@@ -7,6 +7,7 @@ import ProductGallery from "./ProductGallery";
 import ProductPrice from "./ProductPrice";
 import ProductPackDetails from "./ProductPackDetails";
 import ProductAvailability from "./ProductAvailability";
+import ProductOfferInfo from "../offers/ProductOfferInfo";
 import QuantitySelector from "./QuantitySelector";
 import RelatedProducts from "./RelatedProducts";
 import { IconCart, IconHeart } from "../ui/icons";
@@ -83,6 +84,10 @@ export default function ProductDetailClient({ product }: { product: PublicProduc
           <div className="mt-2">
             <ProductAvailability inventory={product.inventory} />
           </div>
+
+          {!outOfStock && (
+            <ProductOfferInfo productId={product.productId} categoryId={product.category?.categoryId} />
+          )}
 
           <p className="mt-4 text-sm leading-relaxed text-ink-muted sm:text-base">{product.shortDescription}</p>
 

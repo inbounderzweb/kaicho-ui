@@ -15,6 +15,7 @@ import ProductPrice from "./ProductPrice";
 import ProductPackDetails from "./ProductPackDetails";
 import styles from "./ProductCard.module.css";
 import ProductAvailability from "./ProductAvailability";
+import ProductOfferBadge from "../offers/ProductOfferBadge";
 import type { PublicProductListItem } from "@/lib/api/publicProducts";
 
 // The ONE reusable product card — every place a product summary is
@@ -96,6 +97,14 @@ function ProductCard({
                 -{Math.round(product.pricing.discountPercentage)}%
               </span>
             )
+          )}
+
+          {!outOfStock && (
+            <ProductOfferBadge
+              productId={product.productId}
+              categoryId={product.category?.categoryId}
+              className="absolute bottom-2 left-2 z-10"
+            />
           )}
 
           {imageUrl ? (

@@ -6,6 +6,8 @@ import { useRouter } from "next/navigation";
 import Button from "../ui/Button";
 import CartItemRow from "./CartItemRow";
 import ShippingProgress from "./ShippingProgress";
+import CartOfferPanel from "./CartOfferPanel";
+import { useCartOffer } from "@/lib/hooks/useCartOffer";
 import { useShippingPolicy } from "@/lib/hooks/useShippingPolicy";
 import { useCartStore } from "@/lib/store/cart.store";
 import { cartLineKey } from "./cart-data";
@@ -26,6 +28,19 @@ export default function CartPageClient() {
     () => items.reduce((sum, item) => sum + item.price * item.quantity, 0),
     [items]
   );
+
+  // Server-side evaluation of this cart with the live BOGO offer (guest-safe).
+  // The local snapshot prices above stay the fallback until it answers; once
+  // it has, the discount and totals shown are the server's.
+  const { data: evaluated, isFetching: isEvaluating } = useCartOffer();
+  const offer = evaluated?.offer ?? null;
+  const offerDiscount = offer?.applied ? offer.discountAmount : 0;
+  const payableTotal = Math.max(0, subtotal - offerDiscount);
+  const freeFor = (item: { productId: string; selectionType?: "UNIT" | "PACK" }) =>
+    evaluated?.items.find(
+      (e) => e.productId === item.productId && (e.selectionType ?? "UNIT") === (item.selectionType ?? "UNIT")
+    );
+
   const itemCount = useMemo(
     () => items.reduce((sum, item) => sum + item.quantity, 0),
     [items]
@@ -98,7 +113,8 @@ export default function CartPageClient() {
       ) : (
         <div className="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-3">
           {/* Items list */}
-          <div className="lg:col-span-2">
+          <div className="space-y-4 lg:col-span-2">
+            {offer && <CartOfferPanel offer={offer} items={items} isRefreshing={isEvaluating} />}
             <div className="rounded-2xl border border-border bg-white p-4 sm:p-6">
               <div className="hidden border-b border-border pb-3 text-xs font-bold uppercase tracking-wider text-ink-faint sm:flex sm:items-center sm:justify-between">
                 <span>Product</span>
@@ -119,6 +135,8 @@ export default function CartPageClient() {
                     item={item}
                     onQuantityChange={handleQuantityChange}
                     onRemove={handleRemove}
+                    freeQuantity={freeFor(item)?.freeQuantity ?? 0}
+                    offerDiscount={freeFor(item)?.offerDiscount ?? 0}
                   />
                 );
               })}
@@ -135,6 +153,12 @@ export default function CartPageClient() {
                   <span>Subtotal</span>
                   <span className="font-semibold text-ink">Rs. {subtotal.toFixed(2)}</span>
                 </div>
+                {offerDiscount > 0 && (
+                  <div className="flex justify-between text-brand">
+                    <span>BOGO Offer ({offer?.freeUnits} free)</span>
+                    <span className="font-semibold">− Rs. {offerDiscount.toFixed(2)}</span>
+                  </div>
+                )}
                 <div className="flex justify-between text-ink-muted">
                   <span>Shipping</span>
                   <span
@@ -150,7 +174,7 @@ export default function CartPageClient() {
               <div className="mt-4 flex items-center justify-between">
                 <span className="text-base font-bold text-ink">Total</span>
                 <span className="text-xl font-extrabold text-brand">
-                  Rs. {subtotal.toFixed(2)}
+                  Rs. {payableTotal.toFixed(2)}
                 </span>
               </div>
 

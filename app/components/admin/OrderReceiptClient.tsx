@@ -84,6 +84,7 @@ function ReceiptEditor({ order }: { order: AdminOrderDetail }) {
   const customerPhone = order.shippingAddress.receiverPhone || order.customer?.phone;
   const receiptDate = order.payment?.paidAt ?? order.createdAt;
   const discount = Number(order.pricing.discountTotal ?? 0);
+  const offerDiscount = Number(order.pricing.offerDiscountTotal ?? 0);
 
   return (
     <div className={styles.page}>
@@ -189,6 +190,11 @@ function ReceiptEditor({ order }: { order: AdminOrderDetail }) {
                     <p className={styles.itemName}>{item.name}</p>
                     <p className={styles.itemDetail}>SKU: {item.sku || "—"}</p>
                     {item.detail && <p className={styles.itemDetail}>{item.detail}</p>}
+                    {(item.freeQuantity ?? 0) > 0 && (
+                      <p className={styles.itemDetail}>
+                        {item.freeQuantity} FREE · {order.offer?.name ?? "BOGO Offer"} (−{formatReceiptCurrency(item.offerDiscount ?? 0)})
+                      </p>
+                    )}
                   </td>
                   <td className={styles.numeric}>{item.quantity}</td>
                   <td className={styles.numeric}>{formatReceiptCurrency(item.unitPrice)}</td>
@@ -219,6 +225,12 @@ function ReceiptEditor({ order }: { order: AdminOrderDetail }) {
 
           <dl className={styles.totals} aria-label="Receipt totals">
             <div><dt>Subtotal</dt><dd>{formatReceiptCurrency(order.pricing.subtotal)}</dd></div>
+            {offerDiscount > 0 && (
+              <div>
+                <dt>{order.offer?.name ?? "BOGO Offer"} ({order.offer?.freeUnits ?? 0} free)</dt>
+                <dd>− {formatReceiptCurrency(offerDiscount)}</dd>
+              </div>
+            )}
             <div>
               <dt>Discount{order.coupon ? ` (${order.coupon.code})` : ""}</dt>
               <dd>{discount > 0 ? "− " : ""}{formatReceiptCurrency(discount)}</dd>

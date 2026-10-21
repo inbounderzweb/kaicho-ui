@@ -27,7 +27,8 @@ export default function OrderSummary({
     );
   }
 
-  const { items, pricing, coupon } = preview;
+  const { items, pricing, coupon, offer } = preview;
+  const offerDiscountTotal = pricing.offerDiscountTotal ?? 0;
   const showCouponLine = Boolean(coupon && (pricing.discountTotal > 0 || coupon.freeDelivery));
 
   return (
@@ -70,6 +71,13 @@ export default function OrderSummary({
                   </p>
                 )}
 
+                {(item.freeQuantity ?? 0) > 0 && (
+                  <p className="mt-1 inline-flex items-center gap-1 rounded-full bg-brand-soft px-2 py-0.5 text-[11px] font-bold text-brand">
+                    <span className="rounded bg-brand px-1 text-[10px] uppercase tracking-wide text-white">Free</span>
+                    {item.freeQuantity} × BOGO Offer (saves Rs. {(item.offerDiscount ?? 0).toFixed(2)})
+                  </p>
+                )}
+
                 {hasProblem && (
                   <p className="mt-1.5 inline-flex rounded-full bg-sale/10 px-2 py-0.5 text-[11px] font-bold text-sale">
                     {item.packError
@@ -84,7 +92,16 @@ export default function OrderSummary({
               </div>
 
               <div className="shrink-0 text-right text-sm font-bold text-ink">
-                Rs. {item.lineTotal.toFixed(2)}
+                {(item.offerDiscount ?? 0) > 0 ? (
+                  <>
+                    <span className="block text-[11px] font-medium text-ink-faint line-through">
+                      Rs. {item.lineTotal.toFixed(2)}
+                    </span>
+                    Rs. {(item.lineTotal - (item.offerDiscount ?? 0)).toFixed(2)}
+                  </>
+                ) : (
+                  <>Rs. {item.lineTotal.toFixed(2)}</>
+                )}
               </div>
             </li>
           );
@@ -96,6 +113,12 @@ export default function OrderSummary({
           <span>Subtotal</span>
           <span className="font-semibold text-ink">Rs. {pricing.subtotal.toFixed(2)}</span>
         </div>
+        {offerDiscountTotal > 0 && (
+          <div className="flex justify-between text-brand">
+            <span>{offer ? `${offer.name} (${offer.freeUnits} free)` : "BOGO Offer"}</span>
+            <span className="font-semibold">− Rs. {offerDiscountTotal.toFixed(2)}</span>
+          </div>
+        )}
         {showCouponLine && coupon && (
           <div className="flex justify-between text-brand">
             <span>Coupon ({coupon.code})</span>
@@ -119,6 +142,16 @@ export default function OrderSummary({
           </div>
         )}
       </div>
+
+      {offer && offer.rejected.length > 0 && (
+        <ul role="alert" className="mt-3 space-y-1">
+          {offer.rejected.map((r, i) => (
+            <li key={`${r.productId}-${i}`} className="rounded-lg bg-sale/10 px-3 py-2 text-xs font-semibold text-sale">
+              {items.find((it) => it.productId === r.productId)?.name ?? "An item"}: {r.message}
+            </li>
+          ))}
+        </ul>
+      )}
 
       <div className="mt-4 flex items-center justify-between border-t border-border pt-4">
         <span className="text-base font-bold text-ink">Total</span>

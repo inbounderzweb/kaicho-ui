@@ -187,6 +187,11 @@ export default function OrderDetailClient({ id }: { id: string }) {
                         {item.quantity} × {currency.format(item.unitPrice)}
                       </p>
                     )}
+                    {(item.freeQuantity ?? 0) > 0 && (
+                      <p className="mt-1 inline-flex items-center gap-1 rounded-full bg-emerald-500/15 px-2 py-0.5 text-[11px] font-bold text-emerald-700 dark:text-emerald-400">
+                        {item.freeQuantity} FREE · BOGO (−{currency.format(item.offerDiscount ?? 0)})
+                      </p>
+                    )}
                   </div>
                   <div className="shrink-0 text-right text-sm font-semibold tabular-nums">
                     {currency.format(item.lineTotal)}
@@ -200,6 +205,12 @@ export default function OrderDetailClient({ id }: { id: string }) {
                 <span>Subtotal</span>
                 <span className="tabular-nums">{currency.format(order.pricing.subtotal)}</span>
               </div>
+              {Number(order.pricing.offerDiscountTotal ?? 0) > 0 && (
+                <div className="flex justify-between text-emerald-700 dark:text-emerald-400">
+                  <span>{order.offer?.name ?? "BOGO Offer"} ({order.offer?.freeUnits ?? 0} free)</span>
+                  <span className="tabular-nums">− {currency.format(Number(order.pricing.offerDiscountTotal))}</span>
+                </div>
+              )}
               {order.coupon && (Number(order.pricing.discountTotal) > 0 || order.coupon.freeDelivery) && (
                 <div className="flex justify-between text-emerald-700 dark:text-emerald-400">
                   <span>Coupon ({order.coupon.code})</span>

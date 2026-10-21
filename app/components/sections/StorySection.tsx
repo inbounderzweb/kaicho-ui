@@ -43,7 +43,7 @@ const PURPOSES = [
     background: "bg-[#f7f2e3]",
     decoration: "text-[#8b9565]/20",
     description:
-      "To become a comprehensive food company that redefines healthy eating by offering a wide range of products and experiences — from packaged foods to cafes, restaurants, and cloud kitchens — all under one trusted brand, without ever compromising on health or taste.",
+      "To become a comprehensive brand that redefines healthy eating by offering a wide range of products and experiences. We aim to offer everything from packaged foods to cloud kitchens—all under one trusted brand, without ever compromising health or taste. ",
   },
 ];
 
@@ -51,32 +51,32 @@ const CORE_VALUES = [
   {
     title: "Transparency",
     Icon: IconLeaf,
-    description: "We believe in being open and honest about our ingredients, processes, and practices, so our customers can always trust what they consume.",
+    description: "Open and honest communication about our ingredients and practices, earning trust in every product.",
   },
   {
     title: "Quality",
     Icon: FiAward,
-    description: "From sourcing to packaging, we maintain the highest standards to ensure every product meets our commitment of excellence.",
+    description: "Maintaining high standards from sourcing to packaging, ensuring excellence in every product.",
   },
   {
     title: "Health-First",
     Icon: FiHeart,
-    description: "Our focus is on creating products that genuinely support a healthier lifestyle without compromising on flavor.",
+    description: "Creating wholesome products that support a healthier lifestyle without compromising on flavour.",
   },
   {
     title: "Innovation",
     Icon: FiSun,
-    description: "We embrace modern food technology and creative ideas to make healthy eating simple, convenient and enjoyable.",
+    description: "Using modern food technology and creative ideas to make healthy eating simple, convenient, and enjoyable.",
   },
   {
     title: "Sustainability",
     Icon: FiGlobe,
-    description: "We are committed to practices that respect our environment and community, ensuring a better tomorrow for generations to come.",
+    description: "Embracing responsible practices that respect our environment for a better tomorrow.",
   },
   {
     title: "Care",
     Icon: FiUsers,
-    description: "The spirit of Kaicho — ‘Did you eat?’ — reflects our care in every product, reminding us that food is love, warmth and connection.",
+    description: "Inspired by Kaicho — ‘Did you eat?’ — we bring warmth, love, and connection to every product.",
   },
 ];
 
@@ -273,7 +273,7 @@ export default function StorySection() {
             <article
               key={title}
               aria-labelledby={`our-${title.toLowerCase()}`}
-              className={`relative isolate overflow-hidden rounded-2xl p-7 sm:p-10 ${background}`}
+              className={`relative isolate overflow-hidden rounded-2xl p-7 sm:p-10 lg:p-12 ${background}`}
             >
               <div
                 aria-hidden="true"
@@ -282,8 +282,8 @@ export default function StorySection() {
                 <IconLeaf className="h-56 w-56 -rotate-12" />
                 <IconLeaf className="absolute bottom-4 left-16 h-40 w-40 rotate-35" />
               </div>
-              <div className="grid gap-6 sm:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)] sm:gap-8 lg:grid-cols-1 xl:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]">
-                <div className="flex items-center gap-4 sm:block">
+              <div className="grid gap-6 sm:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)] sm:gap-8 lg:grid-cols-1 lg:content-start lg:gap-6">
+                <div className="flex items-center gap-4 sm:block lg:flex lg:gap-5">
                   <Image
                     src="/icons/kaicho-touch-icon.png"
                     alt=""
@@ -293,7 +293,7 @@ export default function StorySection() {
                   />
                   <h3
                     id={`our-${title.toLowerCase()}`}
-                    className="font-display text-3xl font-semibold leading-tight tracking-tight text-ink sm:mt-5 sm:text-4xl"
+                    className="font-display text-3xl font-semibold leading-tight tracking-tight text-ink sm:mt-5 sm:text-4xl lg:mt-0"
                   >
                     <span className="mr-2 inline sm:mr-0 sm:block sm:text-2xl">Our</span>
                     {title}

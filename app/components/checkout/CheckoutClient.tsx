@@ -12,6 +12,7 @@ import CouponField from "./CouponField";
 import { useRequireAuth } from "@/lib/auth/useRequireAuth";
 import { useCartStore } from "@/lib/store/cart.store";
 import { useCheckoutPreview } from "@/lib/hooks/useCheckoutPreview";
+import { toFreeSelectionArray } from "@/lib/hooks/useCartOffer";
 import { useCreateOrder } from "@/lib/hooks/useCreateOrder";
 import { useVerifyPayment } from "@/lib/hooks/useVerifyPayment";
 import { useAddresses } from "@/lib/hooks/useAddresses";
@@ -49,6 +50,9 @@ export default function CheckoutClient() {
 
   const items = useCartStore((s) => s.items);
   const clearCart = useCartStore((s) => s.clearCart);
+  // BOGO: the shopper's manual free picks from the cart (null = server picks).
+  // A hint only — the server re-validates it on every preview and at order time.
+  const freeSelectionMap = useCartStore((s) => s.freeSelections);
 
   // The cart persists with skipHydration (see cart.store.ts) — Providers
   // rehydrates it after mount. Until that lands, `items` is the empty
@@ -117,16 +121,17 @@ export default function CheckoutClient() {
   );
   // Stable identity for "the cart lines actually changed", so editing an
   // unrelated part of the page doesn't re-run the preview.
-  const linesKey = useMemo(() => JSON.stringify(lines), [lines]);
+  const freeSelections = useMemo(() => toFreeSelectionArray(freeSelectionMap, items), [freeSelectionMap, items]);
+  const linesKey = useMemo(() => JSON.stringify({ lines, freeSelections }), [lines, freeSelections]);
 
   const { mutate: runPreview } = previewMutation;
   const rerunPreview = useCallback(
-    () => runPreview({ items: lines, couponCode: couponCode ?? undefined }),
-    [runPreview, lines, couponCode]
+    () => runPreview({ items: lines, couponCode: couponCode ?? undefined, freeSelections }),
+    [runPreview, lines, couponCode, freeSelections]
   );
   useEffect(() => {
     if (!cartHydrated || !isAuthorized || lines.length === 0) return;
-    runPreview({ items: lines, couponCode: couponCode ?? undefined });
+    runPreview({ items: lines, couponCode: couponCode ?? undefined, freeSelections });
     // `lines` is re-derived every render; linesKey + couponCode are the real
     // dependencies.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -209,6 +214,9 @@ export default function CheckoutClient() {
   const handlePlaceOrder = async () => {
     if (!effectiveAddressId || lines.length === 0) return;
     setFlowError(null);
+    // The offer discount the customer is looking at right now. Sent only so
+    // the server can refuse (409) if it has changed — never to price anything.
+    const shownOfferDiscount = preview ? (preview.offer?.applied ? preview.offer.discountAmount : 0) : undefined;
     setPendingOrderNumber(null);
 
     let result;
@@ -219,10 +227,21 @@ export default function CheckoutClient() {
           addressId: effectiveAddressId,
           paymentMethod,
           couponCode: couponCode ?? undefined,
+          freeSelections,
+          expectedOfferDiscount: shownOfferDiscount,
         },
         idempotencyKey: getIdempotencyKey(),
       });
     } catch (err) {
+      // The offer changed since the customer last saw a total (window closed,
+      // limit reached, a price moved…). Re-price and make them look again
+      // BEFORE any payment is taken.
+      if (err instanceof ApiError && err.status === 409 && (err.details as { offerChanged?: boolean } | undefined)?.offerChanged) {
+        idempotencyKeyRef.current = null;
+        rerunPreview();
+        setFlowError("The offer on your order has changed. Your total has been updated — please review it and try again.");
+        return;
+      }
       // The coupon was revalidated server-side and rejected (expired / limit
       // reached since preview). Drop it so the next attempt prices cleanly.
       if (err instanceof ApiError && err.status === 409 && /coupon/i.test(err.message)) {

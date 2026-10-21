@@ -53,10 +53,13 @@ export interface ReceiptItem {
   unitPrice: number;
   lineTotal: number;
   detail?: string;
+  /** BOGO: units of this line that were free, and the rupees taken off for them. Present only when > 0. */
+  freeQuantity?: number;
+  offerDiscount?: number;
 }
 
 export function getReceiptItems(items: OrderItem[]): ReceiptItem[] {
-  return items.flatMap((item, itemIndex) => {
+  return items.flatMap((item, itemIndex): ReceiptItem[] => {
     const packs = item.selectionType === "PACK" ? item.packBreakdown : undefined;
     const packTotalMinor = packs?.reduce(
       (total, pack) => total + Math.round(pack.packPrice * 100) * pack.packCount,
@@ -85,6 +88,9 @@ export function getReceiptItems(items: OrderItem[]): ReceiptItem[] {
       detail: packs?.length
         ? `${packs.map((pack) => `${pack.packName} × ${pack.packCount}`).join(" + ")} · average unit rate`
         : undefined,
+      ...((item.freeQuantity ?? 0) > 0
+        ? { freeQuantity: item.freeQuantity, offerDiscount: item.offerDiscount ?? 0 }
+        : {}),
     }];
   });
 }

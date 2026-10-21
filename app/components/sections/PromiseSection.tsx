@@ -31,9 +31,8 @@ export default function PromiseSection() {
               Committed to a Better Tomorrow
             </h2>
             <p className="mt-5 max-w-xl text-base leading-7 text-ink-muted">
-              We promise that every Kaicho product will always live up to that
-              promise with honest sourcing, clean ingredients and advanced
-              packaging technology to ensure freshness, safety and convenience.
+              We promise that every Kaicho product will always live up to the principles of honest sourcing, clean ingredients, and advanced packaging technology to ensure freshness, safety, and convenience.
+We remain transparent, responsible, and dedicated to building trust with every customer who chooses Kaicho Foods.
             </p>
             <p className="mt-4 max-w-xl text-base leading-7 text-ink-muted">
               We remain transparent, responsible, and dedicated to building trust
