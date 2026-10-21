@@ -38,6 +38,7 @@ export function defaultPopupForm(): PopupFormValues {
       sessionDisplayLimit: 1,
       repeatIntervalSeconds: 0,
       minReappearanceSeconds: 30,
+      showOnEveryLoad: false,
     },
     countdown: { enabled: false, endsAt: null, label: "⚡ Limited time offer. Sales ends in" },
     targeting: { includePaths: [] },

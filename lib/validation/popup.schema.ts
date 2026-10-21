@@ -70,6 +70,7 @@ export const popupFormSchema = z
       dismissalWaitSeconds: num("Dismissal wait", L.dismissalWaitSeconds.min, L.dismissalWaitSeconds.max),
       sessionDisplayLimit: num("Session display limit", L.sessionDisplayLimit.min, L.sessionDisplayLimit.max),
       repeatIntervalSeconds: num("Repeat interval", L.repeatIntervalSeconds.min, L.repeatIntervalSeconds.max),
+      showOnEveryLoad: z.boolean().optional(),
       minReappearanceSeconds: num("Minimum reappearance delay", L.minReappearanceSeconds.min, L.minReappearanceSeconds.max),
     }),
     countdown: z.object({

@@ -34,6 +34,8 @@ export interface ResolvedPopupRuntime {
   minReappearanceMs: number;
   dismissalPolicy: DismissalPolicy;
   dismissalWaitMs: number;
+  /** Fresh start on every page load and login: nothing is remembered. */
+  everyLoad: boolean;
 }
 
 /**
@@ -85,6 +87,7 @@ export function resolvePopupRuntime(popup: PublicPopup, device: PopupDevice): Re
     minReappearanceMs:
       clamp(d.minReappearanceSeconds, L.minReappearanceSeconds.min, L.minReappearanceSeconds.max, 30) * 1000,
     dismissalPolicy: d.dismissalPolicy ?? "SESSION_SUPPRESS",
+    everyLoad: d.showOnEveryLoad === true,
     dismissalWaitMs:
       clamp(d.dismissalWaitSeconds, L.dismissalWaitSeconds.min, L.dismissalWaitSeconds.max, 86_400) * 1000,
   };

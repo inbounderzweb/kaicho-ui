@@ -3,8 +3,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { usePathname } from "next/navigation";
 import { usePublicPopups } from "@/lib/hooks/usePublicPopups";
+import { useCurrentUser } from "@/lib/hooks/useCurrentUser";
 import { sendPopupEvent, type PopupDevice, type PublicPopup } from "@/lib/api/popup";
-import { PopupController, createBrowserStore, type CloseReason, type DismissAttempt } from "@/lib/popup/controller";
+import { PopupController, createBrowserStore, createMemoryStore, type CloseReason, type DismissAttempt } from "@/lib/popup/controller";
 import { isPopupAllowedOnPath, resolvePopupRuntime } from "@/lib/popup/timing";
 import { MOBILE_MEDIA_QUERY } from "@/lib/popup/limits";
 import PopupView from "./PopupView";
@@ -44,18 +45,33 @@ export default function StorefrontPopup() {
   const controllerRef = useRef<PopupController | null>(null);
   const [view, setView] = useState<OpenView | null>(null);
 
+  // Login detection for "show on every load": logged-out → logged-in without a
+  // page refresh bumps this, which restarts the popup with a clean slate.
+  // (A visitor who is ALREADY logged in at page load is covered by the page
+  // load itself, so the first resolved value never counts as a login.)
+  const { data: currentUser } = useCurrentUser();
+  const [loginEpoch, setLoginEpoch] = useState(0);
+  const prevUserRef = useRef<typeof currentUser>(undefined);
+  useEffect(() => {
+    if (prevUserRef.current === null && currentUser) setLoginEpoch((n) => n + 1);
+    prevUserRef.current = currentUser;
+  }, [currentUser]);
+
   useEffect(() => {
     pathAllowedRef.current = allowed;
   }, [allowed]);
 
   // One controller per (popup, revision, device). Re-renders, refetches that
   // return the same revision, and route changes never re-run this effect.
+  // Only every-load popups restart on login; others keep their timers.
+  const loginKey = runtime?.everyLoad ? loginEpoch : 0;
   const popupId = popup?.id;
   const revision = popup?.revision;
   useEffect(() => {
     if (!popup || !runtime || !device) return;
     const controller = new PopupController(runtime, {
-      store: createBrowserStore(popup.id),
+      // Every-load popups remember nothing: a refresh is a brand-new start.
+      store: runtime.everyLoad ? createMemoryStore() : createBrowserStore(popup.id),
       onOpen: ({ closesAt }) => {
         setView({ closesAt });
         void sendPopupEvent(popup.id, "IMPRESSION", device);
@@ -76,7 +92,7 @@ export default function StorefrontPopup() {
     // popup/runtime are derived from (popupId, revision, device); depending on
     // the objects themselves would restart timers on every refetch.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [popupId, revision, device]);
+  }, [popupId, revision, device, loginKey]);
 
   useEffect(() => {
     controllerRef.current?.setRouteAllowed(allowed);

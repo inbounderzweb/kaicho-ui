@@ -428,7 +428,12 @@ export default function PopupEditorClient({ id }: { id?: string }) {
 
               <NumberField name="display.maxDisplaySeconds" label="Maximum display time" hint={`Hard ceiling — the popup always closes by itself after this, whatever else is set (${L.maxDisplaySeconds.min}–${L.maxDisplaySeconds.max}).`} />
 
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+              <ToggleField
+                name="display.showOnEveryLoad"
+                label="Show on every page refresh and after login"
+                hint="The popup appears again each time the page is loaded or refreshed, and right after a visitor logs in. The per-session limit and any earlier dismissal are ignored (a dismissal only lasts until the next refresh)."
+              />
+              <div className={`grid grid-cols-1 gap-4 sm:grid-cols-3 ${values.display?.showOnEveryLoad ? "opacity-50" : ""}`}>
                 <NumberField name="display.sessionDisplayLimit" label="Per session" unit="times" hint="Max appearances per visitor session." />
                 <NumberField name="display.repeatIntervalSeconds" label="Repeat interval" hint="0 = don't repeat. Otherwise wait this long after it closes." />
                 <NumberField name="display.minReappearanceSeconds" label="Minimum gap" hint="Never reopen sooner than this after it closes." />

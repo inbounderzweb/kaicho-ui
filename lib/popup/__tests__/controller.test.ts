@@ -425,3 +425,26 @@ describe("defensive clamping", () => {
     expect(rt.minReappearanceMs).toBe(30_000);
   });
 });
+
+describe("show on every load / login", () => {
+  it("a refresh (new controller + fresh store) shows again even after a dismissal", () => {
+    const p = popup({ display: { showOnEveryLoad: true } });
+    expect(resolvePopupRuntime(p, "desktop")!.everyLoad).toBe(true);
+    for (let load = 0; load < 3; load++) {
+      const { c, opens } = make(p); // each load = fresh memory store, as StorefrontPopup does
+      c.start();
+      vi.advanceTimersByTime(3000);
+      expect(opens).toHaveLength(1);
+      c.dismiss("manual");
+      c.destroy();
+    }
+  });
+
+  it("is off by default, so a persisted session store still blocks a refresh", () => {
+    expect(resolvePopupRuntime(popup(), "desktop")!.everyLoad).toBe(false);
+    const { c, opens } = make(popup(), "desktop", { shown: 1 });
+    c.start();
+    vi.advanceTimersByTime(60_000);
+    expect(opens).toHaveLength(0);
+  });
+});

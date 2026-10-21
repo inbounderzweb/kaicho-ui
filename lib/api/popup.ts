@@ -48,6 +48,8 @@ export interface PopupDisplay {
   sessionDisplayLimit: number;
   repeatIntervalSeconds: number;
   minReappearanceSeconds: number;
+  /** Show on every refresh and after login (ignores session limit / dismissal memory). */
+  showOnEveryLoad?: boolean;
 }
 
 /** The editable configuration (also what a PATCH/POST body is built from). */
