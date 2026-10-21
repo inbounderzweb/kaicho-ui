@@ -89,7 +89,7 @@ function OfferCountdown({ endsAt, label }: { endsAt: string; label?: string }) {
     ["Minutes", parts.minutes],
     ["Seconds", parts.seconds],
   ];
-  const box = parts.urgent ? "bg-red-600" : "bg-[#1f4fff]";
+  const box = parts.urgent ? "bg-red-600" : "bg-brand";
   const headline = label?.trim() || DEFAULT_COUNTDOWN_LABEL;
   const spoken = `${parts.days ? `${parts.days} days ` : ""}${parts.hours} hours ${parts.minutes} minutes`;
 
