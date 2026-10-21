@@ -69,12 +69,10 @@ function useSecondsLeft(closesAt: number | null, enabled: boolean): number | nul
   return Math.max(0, Math.ceil((closesAt - now) / 1000));
 }
 
-const DEFAULT_COUNTDOWN_LABEL = "⚡ Limited time offer. Sales ends in";
-
 // Flip-clock style: each digit sits in its own box, the two digits of a unit
-// are joined, with the unit name underneath. Blue normally; red + pulsing in
-// the final hour.
-function OfferCountdown({ endsAt, label }: { endsAt: string; label?: string }) {
+// are joined, with the unit name underneath. Brand colour normally; red +
+// pulsing in the final hour. `overlay` = sits on the bottom of the image.
+function OfferCountdown({ endsAt, label, overlay = false }: { endsAt: string; label?: string; overlay?: boolean }) {
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
     const id = setInterval(() => setNow(Date.now()), 1000);
@@ -90,29 +88,37 @@ function OfferCountdown({ endsAt, label }: { endsAt: string; label?: string }) {
     ["Seconds", parts.seconds],
   ];
   const box = parts.urgent ? "bg-red-600" : "bg-brand";
-  const headline = label?.trim() || DEFAULT_COUNTDOWN_LABEL;
+  const headline = label?.trim();
   const spoken = `${parts.days ? `${parts.days} days ` : ""}${parts.hours} hours ${parts.minutes} minutes`;
 
   return (
-    <div className="mt-5 text-center">
-      <p className={`text-base font-bold leading-snug ${parts.urgent ? "text-red-600" : ""}`}>{headline}</p>
+    <div
+      className={
+        overlay
+          ? "absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 via-black/40 to-transparent px-3 pb-3 pt-10 text-center text-white"
+          : "mt-5 text-center"
+      }
+    >
+      {headline && <p className={`text-base font-bold leading-snug ${parts.urgent && !overlay ? "text-red-600" : ""}`}>{headline}</p>}
       {/* Digits tick every second, so they're hidden from screen readers; a
           calm static summary is announced instead. */}
       <span className="sr-only">Offer ends in about {spoken}</span>
-      <div aria-hidden="true" className="mt-3 flex flex-wrap justify-center gap-x-3 gap-y-2">
+      <div aria-hidden="true" className={`flex flex-wrap justify-center gap-x-3 gap-y-2 ${headline ? "mt-3" : ""}`}>
         {units.map(([unit, value]) => (
           <div key={unit} className="flex flex-col items-center">
             <div className={`flex gap-px ${parts.urgent ? "motion-safe:animate-pulse" : ""}`}>
               {String(value).padStart(2, "0").split("").map((d, i) => (
                 <span
                   key={i}
-                  className={`flex h-11 w-8 items-center justify-center text-2xl font-extrabold tabular-nums text-white first:rounded-l-md last:rounded-r-md ${box}`}
+                  className={`flex items-center justify-center font-extrabold tabular-nums text-white first:rounded-l-md last:rounded-r-md ${box} ${
+                    overlay ? "h-9 w-7 text-xl" : "h-11 w-8 text-2xl"
+                  }`}
                 >
                   {d}
                 </span>
               ))}
             </div>
-            <span className="mt-1 text-[11px] opacity-80">{unit}</span>
+            <span className={`mt-1 text-[11px] ${overlay ? "opacity-90" : "opacity-80"}`}>{unit}</span>
           </div>
         ))}
       </div>
@@ -200,6 +206,13 @@ export default function PopupView({
 
   const closeSide = runtime.closeButtonPosition === "TOP_LEFT" ? "left-2" : "right-2";
   const countdownOn = Boolean(popup.countdown?.enabled && popup.countdown.endsAt);
+  const hasText = Boolean(content.heading || content.body || (content.ctaLabel && content.ctaUrl));
+  // With an image, the countdown lives on the image; otherwise in the body.
+  const needsBody =
+    hasText ||
+    (countdownOn && !content.imageUrl) ||
+    !runtime.closeButtonEnabled ||
+    (runtime.countdownVisible && !content.imageUrl);
   const waitLabel = secondsLeft !== null ? `${secondsLeft}s` : "";
   const sheet = placement === "BOTTOM_SHEET";
 
@@ -265,14 +278,18 @@ export default function PopupView({
         )}
 
         {content.imageUrl && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={resolveMediaUrl(content.imageUrl)}
-            alt={content.imageAlt ?? ""}
-            className="aspect-[16/9] w-full object-cover"
-          />
+          <div className="relative">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={resolveMediaUrl(content.imageUrl)}
+              alt={content.imageAlt ?? ""}
+              className={`w-full object-cover ${hasText ? "aspect-[16/9]" : "h-auto"}`}
+            />
+            {countdownOn && <OfferCountdown overlay endsAt={popup.countdown!.endsAt!} label={popup.countdown?.label} />}
+          </div>
         )}
 
+        {needsBody && (
         <div className={`p-6 pt-8 ${countdownOn ? "text-center" : ""}`}>
           {content.heading && (
             <h2 id={titleId} className={`text-xl font-bold leading-snug ${countdownOn ? "" : "pr-8"}`}>
@@ -284,7 +301,7 @@ export default function PopupView({
               {content.body}
             </p>
           )}
-          {popup.countdown?.enabled && popup.countdown.endsAt && (
+          {countdownOn && !content.imageUrl && popup.countdown?.endsAt && (
             <OfferCountdown endsAt={popup.countdown.endsAt} label={popup.countdown.label} />
           )}
           {cta}
@@ -315,6 +332,7 @@ export default function PopupView({
             )}
           </div>
         </div>
+        )}
       </div>
     </div>
   );

@@ -40,7 +40,7 @@ export function defaultPopupForm(): PopupFormValues {
       minReappearanceSeconds: 30,
       showOnEveryLoad: false,
     },
-    countdown: { enabled: false, endsAt: null, label: "⚡ Limited time offer. Sales ends in" },
+    countdown: { enabled: false, endsAt: null, label: "" },
     targeting: { includePaths: [] },
     schedule: { startsAt: null, endsAt: null },
   };

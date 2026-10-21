@@ -327,7 +327,7 @@ export default function PopupEditorClient({ id }: { id?: string }) {
                 />
                 {values.countdown?.enabled && (
                   <div className="space-y-3">
-                    <TextField name="countdown.label" label="Countdown headline" maxLength={80} placeholder="⚡ Limited time offer. Sales ends in" />
+                    <TextField name="countdown.label" label="Countdown headline (optional)" maxLength={80} placeholder="Leave empty for numbers only" />
                     <label className={LABEL} htmlFor="countdownEndsAt">Countdown ends</label>
                     <input
                       id="countdownEndsAt"
