@@ -25,9 +25,12 @@ export interface PickedImage {
 export default function CollectionImagePicker({
   value,
   onChange,
+  label = "Collection Image",
 }: {
   value: PickedImage | null;
   onChange: (image: PickedImage | null) => void;
+  /** Heading shown above the picker (defaults to the collection wording). */
+  label?: string;
 }) {
   const uploadMutation = useUploadMedia();
   const upload = useUploadPhase();
@@ -75,7 +78,7 @@ export default function CollectionImagePicker({
 
   return (
     <div>
-      <p className="mb-1.5 text-xs font-semibold text-black/60 dark:text-white/60">Collection Image</p>
+      <p className="mb-1.5 text-xs font-semibold text-black/60 dark:text-white/60">{label}</p>
       <p className="mb-2 text-[11px] text-black/45 dark:text-white/45">
         Recommended size: <span className="font-semibold">{RECOMMENDED_DIMENSIONS}</span> — max {MAX_IMAGE_MB}MB
       </p>
@@ -84,7 +87,7 @@ export default function CollectionImagePicker({
         <div className="flex items-center gap-4">
           <div className="h-24 w-24 shrink-0 overflow-hidden rounded-xl border border-admin-border dark:border-admin-border-dark">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={resolveMediaUrl(previewUrl)} alt="Collection" className="h-full w-full object-cover" />
+            <img src={resolveMediaUrl(previewUrl)} alt={label} className="h-full w-full object-cover" />
           </div>
           <div className="flex flex-col gap-2">
             <MediaSourceMenu

@@ -525,3 +525,13 @@ export function IconSettings(props: IconProps) {
     </svg>
   );
 }
+
+export function IconMegaphone(props: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <path d="M3 11v2a1 1 0 0 0 1 1h2l8 4V6L6 10H4a1 1 0 0 0-1 1Z" />
+      <path d="M18 9a4 4 0 0 1 0 6" />
+      <path d="M7 14l1 5h2.5l-1-4.5" />
+    </svg>
+  );
+}

@@ -10,6 +10,7 @@ import type { CouponQueryParams } from "../api/coupon";
 import type { OfferQueryParams } from "../api/offer";
 import type { InstagramPostQueryParams } from "../api/instagramPost";
 import type { YouTubeVideoQueryParams } from "../api/youtubeVideo";
+import type { PopupQueryParams } from "../api/popup";
 import type { PublicBlogListParams } from "../api/blogPublic";
 import type { AdminInquiryQueryParams } from "../api/inquiry";
 
@@ -65,6 +66,13 @@ export const publicOfferKeys = {
 export const instagramPostKeys = {
   list: (params: InstagramPostQueryParams) => ["admin", "instagram-posts", "list", params] as const,
   detail: (id: string) => ["admin", "instagram-posts", "detail", id] as const,
+};
+
+export const popupKeys = {
+  list: (params: PopupQueryParams) => ["admin", "popups", "list", params] as const,
+  detail: (id: string) => ["admin", "popups", "detail", id] as const,
+  /** Storefront: live popups. Not under "admin" so admin invalidation is explicit. */
+  live: ["popups", "live"] as const,
 };
 
 export const youtubeVideoKeys = {

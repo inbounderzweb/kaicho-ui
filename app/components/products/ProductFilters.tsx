@@ -172,7 +172,7 @@ function FilterFields({ value, onChange, showCategoryFilter = true }: ProductFil
         </div>
       </fieldset>
 
-      <label className="flex items-center gap-2 text-sm text-ink">
+      {/* <label className="flex items-center gap-2 text-sm text-ink">
         <input
           type="checkbox"
           checked={value.inStock}
@@ -180,7 +180,7 @@ function FilterFields({ value, onChange, showCategoryFilter = true }: ProductFil
           className="h-4 w-4 rounded border-border text-brand focus:ring-brand"
         />
         In stock only
-      </label>
+      </label> */}
     </div>
   );
 }

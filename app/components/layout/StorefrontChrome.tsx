@@ -6,6 +6,7 @@ import Footer from "./Footer";
 import MobileTabBar from "./MobileTabBar";
 import WhatsAppButton from "./WhatsAppButton";
 import LocationBar from "../location/LocationBar";
+import StorefrontPopup from "../popup/StorefrontPopup";
 
 /**
  * The customer storefront's chrome (nav header, footer, mobile tab bar,
@@ -37,6 +38,7 @@ export default function StorefrontChrome({ children }: { children: React.ReactNo
       <Footer />
       <MobileTabBar />
       <WhatsAppButton />
+      <StorefrontPopup />
     </>
   );
 }

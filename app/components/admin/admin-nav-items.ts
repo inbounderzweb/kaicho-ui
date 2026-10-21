@@ -14,6 +14,7 @@ import {
   IconMessageCircle,
   IconMail,
   IconSettings,
+  IconMegaphone,
   type IconProps,
 } from "../ui/icons";
 
@@ -77,6 +78,11 @@ export const ADMIN_NAV_ITEMS: AdminNavItem[] = [
       { href: "/admin/instagram-posts", label: "Instagram Posts", Icon: IconInstagram },
       { href: "/admin/youtube-videos", label: "YouTube Videos", Icon: IconYoutube },
     ],
+  },
+  {
+    label: "Marketing",
+    Icon: IconMegaphone,
+    children: [{ href: "/admin/popups", label: "Popups", Icon: IconMegaphone }],
   },
   { href: "/admin/media", label: "Media", Icon: IconImages },
   { href: "/admin/settings", label: "Settings", Icon: IconSettings },
