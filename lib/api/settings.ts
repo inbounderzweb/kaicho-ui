@@ -1,9 +1,18 @@
 import { apiFetch, type PublicReadOptions } from "./client";
+import type { IndianState } from "./indianStates";
 
 export interface StoreSettings {
   freeShippingThreshold: number;
   flatShippingFee: number;
+  /** Off = every state is served; on = only `serviceableStates`. */
+  restrictDeliveryToStates?: boolean;
+  serviceableStates?: IndianState[];
   updatedAt: string;
+}
+
+export interface DeliveryAreasInput {
+  restrictDeliveryToStates: boolean;
+  serviceableStates: IndianState[];
 }
 
 export interface StoreSettingsFormInput {
@@ -26,7 +35,7 @@ export function fetchStoreSettings(): Promise<{ settings: StoreSettings }> {
 }
 
 export function updateStoreSettings(
-  patch: Partial<StoreSettingsFormInput>
+  patch: Partial<StoreSettingsFormInput & DeliveryAreasInput>
 ): Promise<{ settings: StoreSettings }> {
   return apiFetch<{ settings: StoreSettings }>("/admin/settings", {
     method: "PATCH",

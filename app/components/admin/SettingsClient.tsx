@@ -10,6 +10,7 @@ import {
   type StoreSettingsFormValues,
 } from "@/lib/validation/settings.schema";
 import { ApiError } from "@/lib/api/ApiError";
+import DeliveryAreasCard from "./DeliveryAreasCard";
 
 export default function SettingsClient() {
   const { data, isLoading, isError, error, refetch } = useStoreSettings();
@@ -155,6 +156,12 @@ export default function SettingsClient() {
           {updateMutation.isPending ? "Saving…" : "Save changes"}
         </button>
       </form>
+
+      {/* Keyed on the saved values so the card resets when fresh settings arrive. */}
+      <DeliveryAreasCard
+        key={`${data.settings.updatedAt}-${data.settings.restrictDeliveryToStates}-${(data.settings.serviceableStates ?? []).join("|")}`}
+        settings={data.settings}
+      />
 
       {data.settings.updatedAt && (
         <p className="text-xs text-black/40 dark:text-white/40">
