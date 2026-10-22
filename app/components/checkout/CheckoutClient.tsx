@@ -16,6 +16,7 @@ import { toFreeSelectionArray } from "@/lib/hooks/useCartOffer";
 import { useCreateOrder } from "@/lib/hooks/useCreateOrder";
 import { useVerifyPayment } from "@/lib/hooks/useVerifyPayment";
 import { useAddresses } from "@/lib/hooks/useAddresses";
+import { useDeliveryArea } from "@/lib/hooks/useDeliveryArea";
 import { loadRazorpayScript } from "@/lib/payments/loadRazorpayScript";
 import { ApiError } from "@/lib/api/ApiError";
 import type { CheckoutLineInput } from "@/lib/api/checkout";
@@ -81,6 +82,7 @@ export default function CheckoutClient() {
   const createOrderMutation = useCreateOrder();
   const verifyPaymentMutation = useVerifyPayment();
   const { data: addresses } = useAddresses();
+  const deliveryArea = useDeliveryArea();
 
   // One key for the whole checkout page, generated lazily on the first
   // place-order attempt and reused by every retry — a per-click key would
@@ -162,6 +164,11 @@ export default function CheckoutClient() {
   const fallbackAddressId = addresses?.find((address) => address.isDefault)?.id ?? addresses?.[0]?.id ?? null;
   const effectiveAddressId = selectedAddressId ?? fallbackAddressId;
   const isAddressReady = Boolean(effectiveAddressId);
+  // The admin can limit delivery to certain states; the server refuses
+  // anything else at checkout, this just says so before the customer pays.
+  const selectedAddress = addresses?.find((address) => address.id === effectiveAddressId);
+  const outsideDeliveryArea = Boolean(selectedAddress) && !deliveryArea.isServed(selectedAddress?.state);
+  const deliveryAreaMessage = outsideDeliveryArea ? deliveryArea.messageFor(selectedAddress?.state) : null;
 
   // add_shipping_info: once per distinct address the checkout actually
   // settles on (default auto-pick or an explicit AddressSelector choice) —
@@ -199,7 +206,9 @@ export default function CheckoutClient() {
         ? "Some items are unavailable or out of stock."
         : !isAddressReady
           ? "Select a delivery address to continue."
-          : createOrderMutation.isPending || isPaying
+          : outsideDeliveryArea
+            ? "Choose an address in an area we deliver to."
+            : createOrderMutation.isPending || isPaying
             ? "Please wait..."
             : null;
 
@@ -370,6 +379,7 @@ export default function CheckoutClient() {
       cartHydrated &&
       !isCartEmpty &&
       !hasBlockingIssue &&
+      !outsideDeliveryArea &&
       !createOrderMutation.isPending &&
       !isPaying
   );
@@ -397,6 +407,11 @@ export default function CheckoutClient() {
         <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-3">
           <div className="space-y-6 lg:col-span-2">
             <AddressSelector selectedId={effectiveAddressId} onSelect={setSelectedAddressId} />
+            {deliveryAreaMessage && (
+              <p role="alert" className="mt-3 rounded-xl bg-red-50 p-3 text-sm font-medium text-red-700">
+                {deliveryAreaMessage} Please choose or add an address in an area we deliver to.
+              </p>
+            )}
             <PaymentMethodSelector
               value={paymentMethod}
               onChange={handlePaymentMethodChange}
