@@ -130,26 +130,26 @@ function OfferCountdown({ endsAt, label, overlay = false, position = "BOTTOM_CEN
       {/* Digits tick every second, so they're hidden from screen readers; a
           calm static summary is announced instead. */}
       <span className="sr-only">Offer ends in about {spoken}</span>
-      <div aria-hidden="true" className={`flex flex-wrap justify-center gap-x-3 gap-y-2 ${headline ? "mt-3" : ""}`}>
+      <div aria-hidden="true" className={`flex flex-nowrap justify-center gap-x-2 ${headline ? "mt-3" : ""}`}>
         {units.map(([unit, value], index) => (
           <div
             key={unit}
             className={`${overlay ? styles.countdownUnit : ""} flex flex-col items-center`}
             style={overlay ? { animationDelay: `${320 + index * 90}ms` } : undefined}
           >
-            <div className={`flex gap-1.5 ${parts.urgent ? "motion-safe:animate-pulse" : ""}`}>
+            <div className={`flex gap-0.5 ${parts.urgent ? "motion-safe:animate-pulse" : ""}`}>
               {String(value).padStart(2, "0").split("").map((d, i) => (
                 <span
                   key={i}
                   className={`flex items-center justify-center font-semibold tabular-nums rounded-sm border ${box} ${
-                    overlay ? "h-9 w-7 text-xl md:h-12 md:w-9 md:text-2xl" : "h-10 w-8 text-xl"
+                    overlay ? "h-7 w-5 text-sm md:h-10 md:w-7 md:text-lg" : "h-8 w-6 text-base"
                   }`}
                 >
                   {d}
                 </span>
               ))}
             </div>
-            <span className={`mt-1 text-[11px] ${overlay ? "opacity-90" : "opacity-80"}`}>{unit}</span>
+            <span className={`mt-0.5 text-[9px] md:text-[10px] ${overlay ? "opacity-90" : "opacity-80"}`}>{unit}</span>
           </div>
         ))}
       </div>
