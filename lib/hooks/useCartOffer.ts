@@ -19,16 +19,22 @@ export function toCheckoutLines(items: ReturnType<typeof useCartStore.getState>[
   }));
 }
 
-/** The manual free picks as the wire array (undefined = AUTO), pruned to what's still in the cart. */
+/**
+ * The manual free picks as the wire array, pruned to what's still in the cart.
+ * undefined = AUTO: also returned when "I'll choose" is on but nothing is
+ * picked (or every pick has left the cart), so an empty choice never means
+ * "no free item".
+ */
 export function toFreeSelectionArray(
   freeSelections: Record<string, number> | null,
   items: { productId: string }[]
 ): { productId: string; quantity: number }[] | undefined {
   if (!freeSelections) return undefined;
   const inCart = new Set(items.map((i) => i.productId));
-  return Object.entries(freeSelections)
+  const picks = Object.entries(freeSelections)
     .filter(([productId, quantity]) => quantity > 0 && inCart.has(productId))
     .map(([productId, quantity]) => ({ productId, quantity }));
+  return picks.length > 0 ? picks : undefined;
 }
 
 /**

@@ -23,7 +23,9 @@ export default function CartOfferPanel({
   const setFreeSelection = useCartStore((s) => s.setFreeSelection);
   const setMode = useCartStore((s) => s.setFreeSelectionMode);
 
-  const manual = freeSelections !== null;
+  // "I'll choose" counts only while something is actually picked; an empty
+  // choice falls back to the automatic allocation (see toFreeSelectionArray).
+  const manual = freeSelections !== null && Object.values(freeSelections).some((q) => q > 0);
   const eligibleIds = new Set(offer.eligibleProductIds);
   // Only plain UNIT lines can be free (a pack's blended price isn't a unit price).
   const eligibleLines = items.filter(
@@ -124,7 +126,7 @@ export default function CartOfferPanel({
             </ul>
           ) : (
             <p className="mt-2 text-xs text-ink-muted">
-              We automatically pick the free items that save you the most. Switch to &ldquo;I&apos;ll choose&rdquo; to decide yourself.
+              We automatically choose the free items for you. Switch to &ldquo;I&apos;ll choose&rdquo; to decide yourself.
             </p>
           )}
         </div>
