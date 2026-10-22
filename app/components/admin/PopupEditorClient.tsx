@@ -302,12 +302,12 @@ export default function PopupEditorClient({ id }: { id?: string }) {
                 <BannerImageField
                   name="content.desktopImageUrl"
                   label="Desktop image"
-                  hint="Upload your desktop banner. Only shown on desktop."
+                  hint="Best size: 1200 × 1100 px (about 1:1, up to 1.1:1). Shown at half the screen width and 80% of its height on desktop, so keep key text away from the edges. JPG, PNG or WebP."
                 />
                 <BannerImageField
                   name="content.mobileImageUrl"
                   label="Mobile image"
-                  hint="Upload your mobile banner. Mobile alignment stays the same."
+                  hint="Best size: 1080 × 1440 px (3:4 portrait). Fills the phone width and grows in height with the image; stay under 1080 × 1620 so it fits the screen. JPG, PNG or WebP."
                 />
               </div>
               <details
