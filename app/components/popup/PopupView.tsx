@@ -106,13 +106,15 @@ function OfferCountdown({ endsAt, label, overlay = false, position = "BOTTOM_CEN
   const parts = countdownParts(endsAt, now);
   if (!parts) return null; // deadline passed — never show a dead timer
 
+  // Days only appear once there is a day to count; the usual last-24h state is
+  // three pairs (HH MM SS), matching the empty-slot banner artwork.
   const units: [string, number][] = [
-    ["Days", parts.days],
+    ...(parts.days > 0 ? ([["Days", parts.days]] as [string, number][]) : []),
     ["Hours", parts.hours],
     ["Minutes", parts.minutes],
     ["Seconds", parts.seconds],
   ];
-  const box = parts.urgent ? "text-red-600" : "text-black";
+  const box = parts.urgent ? "border-red-600 text-red-600" : "border-neutral-500/70 text-black";
   const headline = label?.trim();
   const spoken = `${parts.days ? `${parts.days} days ` : ""}${parts.hours} hours ${parts.minutes} minutes`;
 
@@ -136,12 +138,12 @@ function OfferCountdown({ endsAt, label, overlay = false, position = "BOTTOM_CEN
             className={`${overlay ? styles.countdownUnit : ""} flex flex-col items-center`}
             style={overlay ? { animationDelay: `${320 + index * 90}ms` } : undefined}
           >
-            <div className={`flex gap-px ${parts.urgent ? "motion-safe:animate-pulse" : ""}`}>
+            <div className={`flex gap-1.5 ${parts.urgent ? "motion-safe:animate-pulse" : ""}`}>
               {String(value).padStart(2, "0").split("").map((d, i) => (
                 <span
                   key={i}
-                  className={`flex items-center justify-center font-extrabold tabular-nums bg-white first:rounded-l-md last:rounded-r-md ${box} ${
-                    overlay ? "h-9 w-7 text-xl" : "h-11 w-8 text-2xl"
+                  className={`flex items-center justify-center font-semibold tabular-nums rounded-xl border ${box} ${
+                    overlay ? "h-11 w-9 text-2xl md:h-14 md:w-11 md:text-3xl" : "h-12 w-10 text-2xl"
                   }`}
                 >
                   {d}
