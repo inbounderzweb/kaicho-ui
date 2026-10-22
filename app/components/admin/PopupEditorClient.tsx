@@ -319,7 +319,7 @@ export default function PopupEditorClient({ id }: { id?: string }) {
                   <BannerImageField
                     name="content.imageUrl"
                     label="Fallback banner image"
-                    hint="Used only when a device has no image of its own. Existing banners remain here."
+                    hint="Legacy only: used when neither a desktop nor a mobile image is set. Ignored once either one is uploaded."
                   />
                 </div>
               </details>
