@@ -16,6 +16,7 @@ export function defaultPopupForm(): PopupFormValues {
   return {
     name: "",
     priority: 100,
+    offerIds: [],
     content: { heading: "", body: "", imageUrl: "", desktopImageUrl: "", mobileImageUrl: "", imageAlt: "", ctaLabel: "", ctaUrl: "" },
     design: { theme: "LIGHT", size: "MD", imageOnly: false },
     devices: {
@@ -50,6 +51,7 @@ export function popupToFormValues(p: Popup): PopupFormValues {
   return {
     name: p.name,
     priority: p.priority,
+    offerIds: p.offerIds ?? [],
     content: {
       heading: p.content.heading,
       body: p.content.body,
@@ -76,6 +78,7 @@ export function formValuesToPayload(v: PopupFormValues): PopupFormPayload {
   return {
     name: v.name.trim(),
     priority: v.priority,
+    offerIds: v.offerIds,
     content: {
       heading: v.content.heading.trim(),
       body: v.content.body.trim(),

@@ -43,6 +43,7 @@ export const popupFormSchema = z
   .object({
     name: z.string().trim().min(1, "Name is required").max(120, "Name must be at most 120 characters"),
     priority: num("Priority", 0, 1000),
+    offerIds: z.array(z.string()).max(25, "Link at most 25 offers"),
     content: z.object({
       heading: z.string().trim().max(120, "Heading must be at most 120 characters"),
       body: z.string().trim().max(500, "Body must be at most 500 characters"),
@@ -98,7 +99,8 @@ export const popupFormSchema = z
     if (v.design.imageOnly && !content.imageUrl && !content.desktopImageUrl && !content.mobileImageUrl) {
       add(["design", "imageOnly"], "Image-only needs an image — add one first");
     }
-    if (v.countdown.enabled && !v.countdown.endsAt) {
+    // Linked to offers: the timer runs to their end, so no end time is typed.
+    if (v.countdown.enabled && !v.countdown.endsAt && v.offerIds.length === 0) {
       add(["countdown", "endsAt"], "Set the countdown end time");
     }
     if (content.imageUrl && !isSafePopupHref(content.imageUrl)) {

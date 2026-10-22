@@ -7,6 +7,7 @@ import { useForm, FormProvider, useWatch, type FieldErrors } from "react-hook-fo
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryClient } from "@tanstack/react-query";
 import { usePopupDetail, useCreatePopup, useUpdatePopup, useSetPopupStatus } from "@/lib/hooks/admin/usePopups";
+import { useOfferList } from "@/lib/hooks/admin/useOffers";
 import { setPopupStatus, type PopupDevice, type PopupStatus } from "@/lib/api/popup";
 import { popupKeys } from "@/lib/hooks/query-keys";
 import { ApiError } from "@/lib/api/ApiError";
@@ -16,6 +17,7 @@ import { describeVisibleDuration } from "@/lib/popup/timing";
 import { POPUP_LIMITS as L } from "@/lib/popup/limits";
 import PopupStatusBadge from "./PopupStatusBadge";
 import BannerImageField from "./popup/BannerImageField";
+import OfferMultiSelect from "./popup/OfferMultiSelect";
 import DesktopPlacementField from "./popup/DesktopPlacementField";
 import PopupPreview, { type PopupPreviewHandle } from "./popup/PopupPreview";
 import { OpenCloseTimingFields, CloseControlFields, PerDeviceNote } from "./popup/TimingFields";
@@ -99,6 +101,23 @@ export default function PopupEditorClient({ id }: { id?: string }) {
   }, [popup, reset]);
 
   const values = useWatch({ control }) as PopupFormValues;
+
+  // Offers & Promotions: a popup can follow several offers (it shows while any
+  // is live; the timer runs to the soonest live end).
+  const { data: offerList, isLoading: offersLoading } = useOfferList({ pageSize: 100 });
+  const offers = offerList?.items ?? [];
+  const linkedOffers = offers.filter((o) => (values.offerIds ?? []).includes(o.id));
+  // The timer runs to the soonest end among the linked offers that are live.
+  const nextOfferEnd =
+    linkedOffers
+      .filter((o) => o.effectiveStatus === "ACTIVE" && o.endsAt)
+      .map((o) => o.endsAt as string)
+      .sort()[0] ?? null;
+  const isLinked = (values.offerIds ?? []).length > 0;
+  // The preview shows the timer the storefront will show.
+  const previewValues: PopupFormValues = isLinked
+    ? { ...values, countdown: { ...values.countdown, endsAt: nextOfferEnd } }
+    : values;
   const [tab, setTab] = useState<TabId>("general");
   const [previewDevice, setPreviewDevice] = useState<PopupDevice>("desktop");
   const previewRef = useRef<PopupPreviewHandle>(null);
@@ -336,6 +355,19 @@ export default function PopupEditorClient({ id }: { id?: string }) {
                 hint="Removes the white text area so just the image (and countdown, if on) is shown. Your text stays saved. Needs an image."
               />
               <div className="space-y-3 rounded-xl border border-admin-border p-3 dark:border-admin-border-dark">
+                <OfferMultiSelect
+                  offers={offers}
+                  loading={offersLoading}
+                  value={values.offerIds ?? []}
+                  onChange={(ids) => setValue("offerIds", ids, { shouldDirty: true, shouldValidate: true })}
+                />
+                {isLinked && (
+                  <p role="status" className="rounded-xl bg-black/5 p-3 text-xs dark:bg-white/10">
+                    {nextOfferEnd
+                      ? `Timer runs to ${new Date(nextOfferEnd).toLocaleString("en-IN")}, the soonest end among the linked live offers. It moves to the next one when that offer ends, and the popup stops when none is live.`
+                      : "None of the linked offers is live with an end date right now, so no timer shows. The popup shows only while a linked offer is live."}
+                  </p>
+                )}
                 <ToggleField
                   name="countdown.enabled"
                   label="Show an offer countdown timer"
@@ -357,6 +389,8 @@ export default function PopupEditorClient({ id }: { id?: string }) {
                         { value: "BOTTOM_RIGHT", label: "Bottom right" },
                       ]}
                     />
+                    {!isLinked && (
+                      <>
                     <label className={LABEL} htmlFor="countdownEndsAt">Countdown ends</label>
                     <input
                       id="countdownEndsAt"
@@ -388,7 +422,9 @@ export default function PopupEditorClient({ id }: { id?: string }) {
                       ))}
                     </div>
                     {errorAt(formState.errors, "countdown.endsAt") && <p className={ERR}>{errorAt(formState.errors, "countdown.endsAt")}</p>}
-                    <p className={HINT}>Once the deadline passes the timer hides itself. It does not unpublish the popup — use Schedule for that.</p>
+                      </>
+                    )}
+                    <p className={HINT}>{isLinked ? "The timer follows the linked offers." : "Once the deadline passes the timer hides itself. It does not unpublish the popup — use Schedule for that."}</p>
                   </div>
                 )}
               </div>
@@ -619,7 +655,7 @@ export default function PopupEditorClient({ id }: { id?: string }) {
                 )}
                 <Link href="/admin/popups" className={btnSecondary}>Cancel</Link>
               </div>
-              <PopupPreview ref={previewRef} values={values} device={previewDevice} onDeviceChange={setPreviewDevice} />
+              <PopupPreview ref={previewRef} values={previewValues} device={previewDevice} onDeviceChange={setPreviewDevice} />
             </div>
           </div>
         </form>

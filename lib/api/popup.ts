@@ -94,6 +94,8 @@ export interface Popup extends PopupConfig {
   status: PopupStatus;
   effectiveState: PopupEffectiveState;
   priority: number;
+  /** Linked Offers & Promotions offers (empty = not linked). */
+  offerIds: string[];
   schedule: { startsAt: string | null; endsAt: string | null };
   analytics: { desktop: PopupDeviceAnalytics; mobile: PopupDeviceAnalytics };
   publishedAt: string | null;
@@ -106,11 +108,15 @@ export interface PublicPopup extends PopupConfig {
   id: string;
   /** Changes whenever the admin edits the popup — the runtime restarts on it. */
   revision: string;
+  /** Tied to offers: the countdown runs to the soonest live end and the popup disappears when none is live. */
+  linkedToOffer?: boolean;
 }
 
 export interface PopupFormPayload extends PopupConfig {
   name: string;
   priority: number;
+  /** Offers to follow: the popup shows while any is live; the timer runs to the soonest end. */
+  offerIds: string[];
   schedule: { startsAt?: string | null; endsAt?: string | null };
 }
 

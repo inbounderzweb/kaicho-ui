@@ -106,10 +106,9 @@ function OfferCountdown({ endsAt, label, overlay = false, position = "BOTTOM_CEN
   const parts = countdownParts(endsAt, now);
   if (!parts) return null; // deadline passed — never show a dead timer
 
-  // Days only appear once there is a day to count; the usual last-24h state is
-  // three pairs (HH MM SS), matching the empty-slot banner artwork.
+  // Always days · hours · minutes · seconds (dd hh mm ss).
   const units: [string, number][] = [
-    ...(parts.days > 0 ? ([["Days", parts.days]] as [string, number][]) : []),
+    ["Days", parts.days],
     ["Hours", parts.hours],
     ["Minutes", parts.minutes],
     ["Seconds", parts.seconds],
