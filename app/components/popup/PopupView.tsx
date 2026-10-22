@@ -143,7 +143,7 @@ function OfferCountdown({ endsAt, label, overlay = false, position = "BOTTOM_CEN
                 <span
                   key={i}
                   className={`flex items-center justify-center font-semibold tabular-nums rounded-xl border ${box} ${
-                    overlay ? "h-11 w-9 text-2xl md:h-14 md:w-11 md:text-3xl" : "h-12 w-10 text-2xl"
+                    overlay ? "h-9 w-7 text-xl md:h-12 md:w-9 md:text-2xl" : "h-10 w-8 text-xl"
                   }`}
                 >
                   {d}
