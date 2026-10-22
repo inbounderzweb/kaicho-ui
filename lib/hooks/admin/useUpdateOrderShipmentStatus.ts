@@ -10,7 +10,7 @@ export function useUpdateOrderShipmentStatus(id: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (input: { status: ShipmentStatus; note?: string }) =>
+    mutationFn: (input: { status: ShipmentStatus; note?: string; sendEmail?: boolean }) =>
       updateAdminOrderShipmentStatus(id, input),
     onSuccess: (order) => {
       queryClient.setQueryData(adminKeys.orderDetail(id), order);

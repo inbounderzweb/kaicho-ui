@@ -7,6 +7,7 @@ import { useAdminOrderDetail } from "@/lib/hooks/admin/useAdminOrderDetail";
 import { useUpdateOrderStatus } from "@/lib/hooks/admin/useUpdateOrderStatus";
 import { useSaveOrderShipment } from "@/lib/hooks/admin/useSaveOrderShipment";
 import { useUpdateOrderShipmentStatus } from "@/lib/hooks/admin/useUpdateOrderShipmentStatus";
+import { useResendOrderStatusEmail } from "@/lib/hooks/admin/useResendOrderStatusEmail";
 import { resolveMediaUrl } from "@/lib/api/client";
 import { ApiError } from "@/lib/api/ApiError";
 import {
@@ -18,6 +19,8 @@ import {
 } from "@/lib/api/order";
 import type { AdminOrderDetail, EmailNotification, SaveShipmentInput } from "@/lib/api/admin";
 import { nextStatuses } from "@/lib/api/orderTransitions";
+import { canEmailCustomer, orderStatusAfterShipment, shipmentChangeEmails, statusChangeEmails } from "@/lib/api/orderEmail";
+import EmailConsentModal from "./EmailConsentModal";
 import { OrderStatusBadge, PaymentStatusBadge, ShipmentStatusBadge } from "./OrderStatusBadge";
 import { IconChevronLeft } from "../ui/icons";
 
@@ -46,23 +49,49 @@ function formatDateTime(value: string): string {
   });
 }
 
-// Shown right after an admin changes a status: tells them whether the customer
-// was actually emailed, and why not if they weren't.
-function EmailOutcomeNote({ outcome }: { outcome?: EmailNotification }) {
-  if (!outcome || outcome.state === "not_applicable") return null;
-  const ok = outcome.state === "sent";
+// Shown right after an admin saves a change that can email the customer. It
+// tells them exactly what happened — saved and emailed, saved without an email,
+// or saved but the email failed (with a safe retry: the server won't send a
+// second copy of a mail that already went out).
+function EmailOutcomeNote({ id, outcome }: { id: string; outcome?: EmailNotification }) {
+  const resend = useResendOrderStatusEmail(id);
+  const shown = resend.data?.emailNotification ?? outcome;
+  if (!shown || shown.state === "not_applicable") return null;
+
+  const tone =
+    shown.state === "sent"
+      ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
+      : shown.state === "not_requested"
+        ? "bg-black/5 text-black/70 dark:bg-white/10 dark:text-white/70"
+        : "bg-amber-500/10 text-amber-700 dark:text-amber-400";
+  const headline =
+    shown.state === "sent"
+      ? "Saved and email sent successfully."
+      : shown.state === "not_requested"
+        ? "Saved without sending an email."
+        : shown.state === "failed"
+          ? "Saved successfully, but email sending failed."
+          : "Saved successfully. No email was sent.";
+
   return (
-    <p
-      role="status"
-      className={`rounded-xl p-3 text-xs font-semibold ${
-        ok
-          ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
-          : "bg-amber-500/10 text-amber-700 dark:text-amber-400"
-      }`}
-    >
-      {ok ? "✓ " : "⚠ "}
-      {outcome.message}
-    </p>
+    <div role="status" className={`space-y-2 rounded-xl p-3 text-xs font-semibold ${tone}`}>
+      <p>
+        {shown.state === "sent" ? "✓ " : shown.state === "not_requested" ? "" : "⚠ "}
+        {headline}
+        {shown.state !== "not_requested" && shown.message ? ` ${shown.message}` : ""}
+      </p>
+      {resend.isError && <p>{messageOf(resend.error, "Couldn't retry the email. Please try again.")}</p>}
+      {shown.state === "failed" && (
+        <button
+          type="button"
+          onClick={() => resend.mutate()}
+          disabled={resend.isPending}
+          className="rounded-full border border-current px-3 py-1 text-xs font-semibold disabled:opacity-50"
+        >
+          {resend.isPending ? "Retrying…" : "Retry sending email"}
+        </button>
+      )}
+    </div>
   );
 }
 
@@ -77,6 +106,8 @@ export default function OrderDetailClient({ id }: { id: string }) {
   // "" = nothing chosen yet → the dropdown shows the order's current status.
   const [nextStatus, setNextStatus] = useState<OrderStatus | "">("");
   const [statusNote, setStatusNote] = useState("");
+  // The change waiting on the admin's permission popup.
+  const [pendingStatus, setPendingStatus] = useState<{ status: OrderStatus; note?: string } | null>(null);
 
   if (isLoading) {
     return (
@@ -122,6 +153,21 @@ export default function OrderDetailClient({ id }: { id: string }) {
   const allowedNext = nextStatuses(order.status);
   const selectedStatus: OrderStatus = nextStatus || order.status;
   const statusChanged = selectedStatus !== order.status;
+
+  // `sendEmail` is the admin's explicit answer; the server only emails on `true`.
+  const saveStatus = (change: { status: OrderStatus; note?: string }, sendEmail: boolean) => {
+    if (statusMutation.isPending) return;
+    statusMutation.mutate(
+      { ...change, sendEmail },
+      {
+        onSuccess: () => {
+          setNextStatus("");
+          setStatusNote("");
+        },
+        onSettled: () => setPendingStatus(null),
+      }
+    );
+  };
   const customerName = order.customer?.name || order.customer?.phone || order.customer?.userId || "—";
   return (
     <div className="space-y-6">
@@ -369,21 +415,16 @@ export default function OrderDetailClient({ id }: { id: string }) {
                     {messageOf(statusMutation.error, "Couldn't update the status. Please try again.")}
                   </p>
                 )}
-                {statusMutation.isSuccess && <EmailOutcomeNote outcome={statusMutation.data?.emailNotification} />}
+                {statusMutation.isSuccess && <EmailOutcomeNote id={id} outcome={statusMutation.data?.emailNotification} />}
                 <button
                   type="button"
                   disabled={!statusChanged || statusMutation.isPending}
                   onClick={() => {
                     if (!statusChanged) return;
-                    statusMutation.mutate(
-                      { status: selectedStatus, note: statusNote.trim() || undefined },
-                      {
-                        onSuccess: () => {
-                          setNextStatus("");
-                          setStatusNote("");
-                        },
-                      }
-                    );
+                    const change = { status: selectedStatus, note: statusNote.trim() || undefined };
+                    // Ask permission only when an email could actually go out; otherwise save quietly.
+                    if (statusChangeEmails(order.status, selectedStatus) && canEmailCustomer(order.customer)) setPendingStatus(change);
+                    else saveStatus(change, false);
                   }}
                   className="w-full rounded-full bg-admin-primary px-5 py-2.5 text-sm font-semibold text-black transition-opacity hover:opacity-90 disabled:opacity-50"
                 >
@@ -399,6 +440,25 @@ export default function OrderDetailClient({ id }: { id: string }) {
 
           {/* Shipment */}
           <ShipmentSection id={id} order={order} />
+
+          {canEmailCustomer(order.customer) && (
+            <EmailConsentModal
+              open={pendingStatus !== null}
+              customerEmail={order.customer.email}
+              summary={
+                pendingStatus
+                  ? [
+                      `Order status: ${ORDER_STATUS_LABELS[order.status]} → ${ORDER_STATUS_LABELS[pendingStatus.status]}`,
+                      ...(pendingStatus.note ? [`Note: ${pendingStatus.note}`] : []),
+                    ]
+                  : []
+              }
+              busy={statusMutation.isPending}
+              onSave={(sendEmail) => pendingStatus && saveStatus(pendingStatus, sendEmail)}
+              onCancel={() => setPendingStatus(null)}
+            />
+          )}
+
         </div>
       </div>
     </div>
@@ -464,6 +524,11 @@ function ShipmentSection({ id, order }: { id: string; order: AdminOrderDetail })
   // "" = nothing chosen yet → the dropdown shows the shipment's current status.
   const [quickStatus, setQuickStatus] = useState<ShipmentStatus | "">("");
   const [quickNote, setQuickNote] = useState("");
+  // The shipment change waiting on the admin's permission popup.
+  type PendingShipment =
+    | { kind: "save"; payload: SaveShipmentInput }
+    | { kind: "quick"; status: ShipmentStatus; note?: string };
+  const [pending, setPending] = useState<PendingShipment | null>(null);
 
   const set = <K extends keyof typeof form>(key: K, value: (typeof form)[K]) =>
     setForm((f) => ({ ...f, [key]: value }));
@@ -478,6 +543,32 @@ function ShipmentSection({ id, order }: { id: string; order: AdminOrderDetail })
   // Shipping date isn't hand-entered: the server stamps `shippedAt` with "now"
   // the moment the shipment is created or its status moves into a shipped-like
   // state (see shipment.service.ts), so we never send it from here.
+  const emailable = canEmailCustomer(order.customer);
+
+  const runSave = (payload: SaveShipmentInput, sendEmail: boolean) => {
+    if (saveMutation.isPending) return;
+    saveMutation.mutate(
+      { ...payload, sendEmail },
+      { onSuccess: () => setEditing(false), onSettled: () => setPending(null) }
+    );
+  };
+  const runQuick = (status: ShipmentStatus, note: string | undefined, sendEmail: boolean) => {
+    if (statusMutation.isPending) return;
+    statusMutation.mutate(
+      { status, note, sendEmail },
+      {
+        onSuccess: () => {
+          setQuickStatus("");
+          setQuickNote("");
+        },
+        onSettled: () => setPending(null),
+      }
+    );
+  };
+
+  // Shipping date isn't hand-entered: the server stamps `shippedAt` with "now"
+  // the moment the shipment is created or its status moves into a shipped-like
+  // state (see shipment.service.ts), so we never send it from here.
   const submit = () => {
     if (!formValid) return;
     const payload: SaveShipmentInput = {
@@ -485,7 +576,25 @@ function ShipmentSection({ id, order }: { id: string; order: AdminOrderDetail })
       trackingNumber: form.trackingNumber.trim(),
       status: form.status,
     };
-    saveMutation.mutate(payload, { onSuccess: () => setEditing(false) });
+    // Ask permission only when this save would move the order to a status that emails the customer.
+    if (emailable && shipmentChangeEmails(order.status, form.status)) setPending({ kind: "save", payload });
+    else runSave(payload, false);
+  };
+
+  const pendingSummary = (): string[] => {
+    if (!pending) return [];
+    if (pending.kind === "save") {
+      return [
+        `Shipment: ${form.carrier.trim()} · ${form.trackingNumber.trim()}`,
+        `Shipping status: ${SHIPMENT_STATUS_LABELS[form.status]}`,
+        `Order status: ${ORDER_STATUS_LABELS[order.status]} → ${ORDER_STATUS_LABELS[orderStatusAfterShipment(order.status, form.status)]}`,
+      ];
+    }
+    return [
+      `Shipping status: ${shipment ? SHIPMENT_STATUS_LABELS[shipment.status] : "—"} → ${SHIPMENT_STATUS_LABELS[pending.status]}`,
+      `Order status: ${ORDER_STATUS_LABELS[order.status]} → ${ORDER_STATUS_LABELS[orderStatusAfterShipment(order.status, pending.status)]}`,
+      ...(pending.note ? [`Note: ${pending.note}`] : []),
+    ];
   };
 
   return (
@@ -505,7 +614,7 @@ function ShipmentSection({ id, order }: { id: string; order: AdminOrderDetail })
 
       {shipment && !editing ? (
         <>
-          {saveMutation.isSuccess && <EmailOutcomeNote outcome={saveMutation.data?.emailNotification} />}
+          {saveMutation.isSuccess && <EmailOutcomeNote id={id} outcome={saveMutation.data?.emailNotification} />}
           <dl className="space-y-1.5 text-sm">
             <ShipmentRow label="Courier" value={shipment.carrier} />
             <ShipmentRow label="AWB / Tracking" value={shipment.trackingNumber} />
@@ -558,21 +667,15 @@ function ShipmentSection({ id, order }: { id: string; order: AdminOrderDetail })
                 {messageOf(statusMutation.error, "Couldn't update the shipping status.")}
               </p>
             )}
-            {statusMutation.isSuccess && <EmailOutcomeNote outcome={statusMutation.data?.emailNotification} />}
+            {statusMutation.isSuccess && <EmailOutcomeNote id={id} outcome={statusMutation.data?.emailNotification} />}
             <button
               type="button"
               disabled={!shipmentStatusChanged || statusMutation.isPending}
               onClick={() => {
                 if (!quickStatus || !shipmentStatusChanged) return;
-                statusMutation.mutate(
-                  { status: quickStatus, note: quickNote.trim() || undefined },
-                  {
-                    onSuccess: () => {
-                      setQuickStatus("");
-                      setQuickNote("");
-                    },
-                  }
-                );
+                const note = quickNote.trim() || undefined;
+                if (emailable && shipmentChangeEmails(order.status, quickStatus)) setPending({ kind: "quick", status: quickStatus, note });
+                else runQuick(quickStatus, note, false);
               }}
               className="w-full rounded-full bg-admin-primary px-5 py-2.5 text-sm font-semibold text-black transition-opacity hover:opacity-90 disabled:opacity-50"
             >
@@ -645,6 +748,21 @@ function ShipmentSection({ id, order }: { id: string; order: AdminOrderDetail })
             )}
           </div>
         </div>
+      )}
+
+      {canEmailCustomer(order.customer) && (
+        <EmailConsentModal
+          open={pending !== null}
+          customerEmail={order.customer.email}
+          summary={pendingSummary()}
+          busy={saveMutation.isPending || statusMutation.isPending}
+          onSave={(sendEmail) => {
+            if (!pending) return;
+            if (pending.kind === "save") runSave(pending.payload, sendEmail);
+            else runQuick(pending.status, pending.note, sendEmail);
+          }}
+          onCancel={() => setPending(null)}
+        />
       )}
     </section>
   );

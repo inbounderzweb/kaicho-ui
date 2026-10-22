@@ -217,7 +217,7 @@ export interface AdminOrderDetail extends Order {
 }
 
 export interface EmailNotification {
-  state: "sent" | "skipped" | "failed" | "not_applicable";
+  state: "sent" | "skipped" | "failed" | "not_applicable" | "not_requested";
   message?: string;
 }
 
@@ -232,7 +232,7 @@ export async function fetchAdminOrderDetail(id: string): Promise<AdminOrderDetai
 
 export async function updateAdminOrderStatus(
   id: string,
-  input: { status: OrderStatus; note?: string }
+  input: { status: OrderStatus; note?: string; sendEmail?: boolean }
 ): Promise<AdminOrderDetail> {
   const { order } = await apiFetch<{ order: AdminOrderDetail }>(`/admin/orders/${encodeURIComponent(id)}/status`, {
     method: "PATCH",
@@ -264,6 +264,8 @@ export interface SaveShipmentInput {
   estimatedDeliveryAt?: string;
   status?: ShipmentStatus;
   notes?: string;
+  /** The admin's explicit consent to email the customer. Omitted/false = no email. */
+  sendEmail?: boolean;
 }
 
 export async function saveAdminOrderShipment(
@@ -279,11 +281,20 @@ export async function saveAdminOrderShipment(
 
 export async function updateAdminOrderShipmentStatus(
   id: string,
-  input: { status: ShipmentStatus; note?: string }
+  input: { status: ShipmentStatus; note?: string; sendEmail?: boolean }
 ): Promise<AdminOrderDetail> {
   const { order } = await apiFetch<{ order: AdminOrderDetail }>(
     `/admin/orders/${encodeURIComponent(id)}/shipment/status`,
     { method: "PATCH", body: JSON.stringify(input) }
   );
+  return order;
+}
+
+/** Retry the customer email for the order's current status after a failed send. */
+export async function resendAdminOrderStatusEmail(id: string): Promise<AdminOrderDetail> {
+  const { order } = await apiFetch<{ order: AdminOrderDetail }>(`/admin/orders/${encodeURIComponent(id)}/status-email`, {
+    method: "POST",
+    body: JSON.stringify({}),
+  });
   return order;
 }

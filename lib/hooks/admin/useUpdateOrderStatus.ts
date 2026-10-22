@@ -10,7 +10,7 @@ export function useUpdateOrderStatus(id: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (input: { status: OrderStatus; note?: string }) => updateAdminOrderStatus(id, input),
+    mutationFn: (input: { status: OrderStatus; note?: string; sendEmail?: boolean }) => updateAdminOrderStatus(id, input),
     onSuccess: (order) => {
       queryClient.setQueryData(adminKeys.orderDetail(id), order);
       // The status endpoint returns the plain order (no joined customer), so
