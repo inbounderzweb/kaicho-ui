@@ -21,7 +21,7 @@ export default function ProductOfferBadge({
 
   return (
     <span
-      title={offer.description ?? offer.name}
+      title={offer.description ?? offerBadgeLabel(offer)}
       className={`pointer-events-none inline-flex max-w-full items-center truncate rounded-md bg-brand px-2 py-1 text-[10px] font-bold uppercase leading-none tracking-wide text-white shadow-sm sm:text-[11px] ${className}`}
     >
       {offerBadgeLabel(offer)}

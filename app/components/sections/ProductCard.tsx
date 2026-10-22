@@ -7,6 +7,7 @@ import ProductArt from "./ProductArt";
 import { slugify, type Product } from "./product-data";
 import { useCartStore } from "@/lib/store/cart.store";
 import { resolveMediaUrl } from "@/lib/api/client";
+import { useShowMrp } from "@/lib/hooks/useShowMrp";
 
 export default function ProductCard({
   name,
@@ -19,6 +20,7 @@ export default function ProductCard({
   compact = false,
 }: Product & { compact?: boolean }) {
   const addItem = useCartStore((s) => s.addItem);
+  const showMrp = useShowMrp();
   const [justAdded, setJustAdded] = useState(false);
   const [wishlisted, setWishlisted] = useState(false);
   const discount = Math.round((1 - price / originalPrice) * 100);
@@ -51,13 +53,15 @@ export default function ProductCard({
   return (
     <div className="group relative flex min-w-0 flex-col overflow-hidden rounded-2xl bg-white transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_20px_40px_-24px_rgba(28,28,28,0.25)]">
       <Link href={href} className="relative block aspect-square overflow-hidden bg-cream">
-        <span
-          className={`absolute left-3 top-3 z-10 rounded-md bg-sale font-bold text-white ${
-            compact ? "px-1.5 py-0.5 text-[10px] sm:px-2 sm:py-1 sm:text-xs" : "px-2 py-1 text-xs"
-          }`}
-        >
-          -{discount}%
-        </span>
+        {showMrp && (
+          <span
+            className={`absolute left-3 top-3 z-10 rounded-md bg-sale font-bold text-white ${
+              compact ? "px-1.5 py-0.5 text-[10px] sm:px-2 sm:py-1 sm:text-xs" : "px-2 py-1 text-xs"
+            }`}
+          >
+            -{discount}%
+          </span>
+        )}
         <div className="h-full w-full transition-transform duration-500 group-hover:scale-105">
           {imageUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
@@ -95,9 +99,11 @@ export default function ProductCard({
           <span className={`font-bold text-ink ${compact ? "text-sm sm:text-lg" : "text-lg"}`}>
             Rs. {price.toFixed(2)}
           </span>
-          <span className={`text-ink-faint line-through ${compact ? "text-[10px] sm:text-sm" : "text-sm"}`}>
-            Rs. {originalPrice.toFixed(2)}
-          </span>
+          {showMrp && (
+            <span className={`text-ink-faint line-through ${compact ? "text-[10px] sm:text-sm" : "text-sm"}`}>
+              Rs. {originalPrice.toFixed(2)}
+            </span>
+          )}
         </div>
 
         <button

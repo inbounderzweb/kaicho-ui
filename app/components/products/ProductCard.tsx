@@ -7,6 +7,7 @@ import { cartLineKey } from "../cart/cart-data";
 import Link from "next/link";
 import Image from "next/image";
 import { resolveMediaUrl } from "@/lib/api/client";
+import { useShowMrp } from "@/lib/hooks/useShowMrp";
 import { useWishlist } from "@/lib/hooks/useWishlist";
 import { useToggleWishlist } from "@/lib/hooks/useToggleWishlist";
 import { useAuthGate } from "@/lib/auth/useAuthGate";
@@ -56,7 +57,8 @@ function ProductCard({
   const href = `/products/${product.slug}`;
   const imageUrl = product.image?.mediumUrl ?? product.image?.thumbnailUrl ?? product.image?.url;
   const outOfStock = !product.inventory.inStock;
-  const hasDiscount = product.pricing.discountPercentage > 0 && product.pricing.mrp > product.pricing.sellingPrice;
+  const showMrp = useShowMrp();
+  const hasDiscount = showMrp && product.pricing.discountPercentage > 0 && product.pricing.mrp > product.pricing.sellingPrice;
 
   function handleWishlistClick(e: React.MouseEvent) {
     e.preventDefault();

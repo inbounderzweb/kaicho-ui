@@ -11,6 +11,7 @@ import {
 } from "@/lib/validation/settings.schema";
 import { ApiError } from "@/lib/api/ApiError";
 import DeliveryAreasCard from "./DeliveryAreasCard";
+import PriceDisplayCard from "./PriceDisplayCard";
 
 export default function SettingsClient() {
   const { data, isLoading, isError, error, refetch } = useStoreSettings();
@@ -156,6 +157,8 @@ export default function SettingsClient() {
           {updateMutation.isPending ? "Saving…" : "Save changes"}
         </button>
       </form>
+
+      <PriceDisplayCard settings={data.settings} />
 
       {/* Keyed on the saved values so the card resets when fresh settings arrive. */}
       <DeliveryAreasCard

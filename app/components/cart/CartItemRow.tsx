@@ -68,9 +68,9 @@ export default function CartItemRow({
                 </h3>
               </Link>
               {freeQuantity > 0 && (
-                <p className="mt-1 inline-flex items-center gap-1 rounded-full bg-brand-soft px-2 py-0.5 text-[11px] font-bold text-brand">
+                <p className="mt-1 inline-flex max-w-full flex-wrap items-center gap-x-1.5 gap-y-0.5 rounded-full bg-brand-soft px-2 py-0.5 text-[11px] font-bold text-brand">
                   <span className="rounded bg-brand px-1 text-[10px] uppercase tracking-wide text-white">Free</span>
-                  {freeQuantity} × BOGO Offer
+                  <span>{freeQuantity} free item{freeQuantity === 1 ? "" : "s"}</span>
                 </p>
               )}
               {isPack && (

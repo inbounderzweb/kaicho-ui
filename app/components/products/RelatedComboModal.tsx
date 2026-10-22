@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import Image from "next/image";
 import { resolveMediaUrl } from "@/lib/api/client";
+import { useShowMrp } from "@/lib/hooks/useShowMrp";
 import type { PublicRelatedCombo } from "@/lib/api/publicProducts";
 
 // "You're adding [Product]. We also have [Combo]" — shown BEFORE the
@@ -29,6 +30,7 @@ export default function RelatedComboModal({
   onContinue: () => void;
   onViewCombo: () => void;
 }) {
+  const showMrp = useShowMrp();
   const panelRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -78,7 +80,7 @@ export default function RelatedComboModal({
             <p className="truncate text-sm font-semibold text-ink">{combo.name}</p>
             <p className="text-sm font-bold text-brand">
               Rs. {combo.price.toFixed(2)}
-              {combo.discountPercentage > 0 && (
+              {showMrp && combo.discountPercentage > 0 && (
                 <span className="ml-1.5 text-xs font-semibold text-ink-faint line-through">
                   Rs. {combo.mrp.toFixed(2)}
                 </span>

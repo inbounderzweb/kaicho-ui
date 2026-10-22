@@ -1,4 +1,5 @@
 import type { PublicProductPricing } from "@/lib/api/publicProducts";
+import { useShowMrp } from "@/lib/hooks/useShowMrp";
 
 // Every number here (mrp, sellingPrice, discountPercentage) comes straight
 // from the backend's computeDiscount() — this component only formats and
@@ -15,7 +16,8 @@ export default function ProductPrice({
   showDiscountBadge?: boolean;
   className?: string;
 }) {
-  const hasDiscount = pricing.discountPercentage > 0 && pricing.mrp > pricing.sellingPrice;
+  const showMrp = useShowMrp();
+  const hasDiscount = showMrp && pricing.discountPercentage > 0 && pricing.mrp > pricing.sellingPrice;
 
   const priceClass = size === "lg" ? "text-2xl sm:text-3xl" : size === "sm" ? "text-sm" : "text-lg";
   const mrpClass = size === "lg" ? "text-base" : "text-xs";

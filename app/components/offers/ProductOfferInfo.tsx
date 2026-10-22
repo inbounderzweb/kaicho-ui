@@ -26,8 +26,7 @@ export default function ProductOfferInfo({
       <span className="inline-flex rounded-md bg-brand px-2.5 py-1 text-xs font-bold uppercase tracking-wide text-white">
         {offerBadgeLabel(offer)}
       </span>
-      <p className="mt-2 text-sm font-semibold text-ink">{offer.name}</p>
-      {offer.description && <p className="mt-0.5 text-sm text-ink-muted">{offer.description}</p>}
+      {offer.description && <p className="mt-2 break-words text-sm text-ink-muted">{offer.description}</p>}
       <ul className="mt-2 list-disc space-y-0.5 pl-5 text-xs text-ink-muted">
         {offerConditions(offer).map((line) => (
           <li key={line}>{line}</li>

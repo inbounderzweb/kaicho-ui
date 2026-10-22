@@ -149,17 +149,17 @@ export default function CartPageClient() {
               <h2 className="font-display text-lg font-bold text-ink">Order Summary</h2>
 
               <div className="mt-4 space-y-2.5 border-b border-border pb-4 text-sm">
-                <div className="flex justify-between text-ink-muted">
+                <div className="flex items-start justify-between gap-3 text-ink-muted">
                   <span>Subtotal</span>
-                  <span className="font-semibold text-ink">Rs. {subtotal.toFixed(2)}</span>
+                  <span className="shrink-0 whitespace-nowrap font-semibold text-ink">Rs. {subtotal.toFixed(2)}</span>
                 </div>
                 {offerDiscount > 0 && (
-                  <div className="flex justify-between text-brand">
-                    <span>BOGO Offer ({offer?.freeUnits} free)</span>
-                    <span className="font-semibold">− Rs. {offerDiscount.toFixed(2)}</span>
+                  <div className="flex items-start justify-between gap-3 text-brand">
+                    <span className="min-w-0">Free item discount{offer && offer.freeUnits > 1 ? ` (${offer.freeUnits} items)` : ""}</span>
+                    <span className="shrink-0 whitespace-nowrap font-semibold">− Rs. {offerDiscount.toFixed(2)}</span>
                   </div>
                 )}
-                <div className="flex justify-between text-ink-muted">
+                <div className="flex items-start justify-between gap-3 text-ink-muted">
                   <span>Shipping</span>
                   <span
                     className={`font-semibold ${

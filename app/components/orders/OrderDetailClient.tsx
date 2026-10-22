@@ -268,9 +268,9 @@ export default function OrderDetailClient({ orderNumber }: { orderNumber: string
                       </p>
                     )}
                     {(item.freeQuantity ?? 0) > 0 && (
-                      <p className="mt-1 inline-flex items-center gap-1 rounded-full bg-brand-soft px-2 py-0.5 text-[11px] font-bold text-brand">
+                      <p className="mt-1 inline-flex max-w-full flex-wrap items-center gap-x-1.5 gap-y-0.5 rounded-full bg-brand-soft px-2 py-0.5 text-[11px] font-bold text-brand">
                         <span className="rounded bg-brand px-1 text-[10px] uppercase tracking-wide text-white">Free</span>
-                        {item.freeQuantity} × BOGO Offer
+                        <span>{item.freeQuantity} free item{item.freeQuantity === 1 ? "" : "s"}</span>
                       </p>
                     )}
                   </div>
@@ -337,18 +337,18 @@ export default function OrderDetailClient({ orderNumber }: { orderNumber: string
           <section className="rounded-2xl border border-border bg-white p-5 sm:p-6">
             <h2 className="font-display text-lg font-bold text-ink">Payment</h2>
             <div className="mt-4 space-y-2.5 border-b border-border pb-4 text-sm">
-              <div className="flex justify-between text-ink-muted">
+              <div className="flex items-start justify-between gap-3 text-ink-muted">
                 <span>Subtotal</span>
                 <span className="font-semibold text-ink">Rs. {order.pricing.subtotal.toFixed(2)}</span>
               </div>
               {Number(order.pricing.offerDiscountTotal ?? 0) > 0 && (
-                <div className="flex justify-between text-brand">
-                  <span>{order.offer?.name ?? "BOGO Offer"} ({order.offer?.freeUnits ?? 0} free)</span>
+                <div className="flex items-start justify-between gap-3 text-brand">
+                  <span className="min-w-0">Free item discount{(order.offer?.freeUnits ?? 0) > 1 ? ` (${order.offer?.freeUnits} items)` : ""}</span>
                   <span className="font-semibold">− Rs. {Number(order.pricing.offerDiscountTotal).toFixed(2)}</span>
                 </div>
               )}
               {order.coupon && (Number(order.pricing.discountTotal) > 0 || order.coupon.freeDelivery) && (
-                <div className="flex justify-between text-brand">
+                <div className="flex items-start justify-between gap-3 text-brand">
                   <span>Coupon ({order.coupon.code})</span>
                   <span className="font-semibold">
                     {order.coupon.freeDelivery && !Number(order.pricing.discountTotal)
@@ -357,14 +357,14 @@ export default function OrderDetailClient({ orderNumber }: { orderNumber: string
                   </span>
                 </div>
               )}
-              <div className="flex justify-between text-ink-muted">
+              <div className="flex items-start justify-between gap-3 text-ink-muted">
                 <span>Shipping</span>
                 <span className={`font-semibold ${order.pricing.shippingFee === 0 ? "text-brand" : "text-ink"}`}>
                   {order.pricing.shippingFee === 0 ? "Free" : `Rs. ${order.pricing.shippingFee.toFixed(2)}`}
                 </span>
               </div>
               {order.pricing.taxTotal > 0 && (
-                <div className="flex justify-between text-ink-muted">
+                <div className="flex items-start justify-between gap-3 text-ink-muted">
                   <span>Tax</span>
                   <span className="font-semibold text-ink">Rs. {order.pricing.taxTotal.toFixed(2)}</span>
                 </div>

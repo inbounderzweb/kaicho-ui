@@ -42,9 +42,8 @@ export default function CartOfferPanel({
     >
       <div className="flex flex-wrap items-center gap-2">
         <span className="rounded-md bg-brand px-2 py-1 text-[11px] font-bold uppercase tracking-wide text-white">{label}</span>
-        <h2 className="text-sm font-bold text-ink">{offer.name}</h2>
       </div>
-      {offer.description && <p className="mt-1 text-xs text-ink-muted">{offer.description}</p>}
+      {offer.description && <p className="mt-1 break-words text-xs text-ink-muted">{offer.description}</p>}
 
       <p aria-live="polite" className="mt-3 text-sm font-semibold text-ink">
         {offer.applied

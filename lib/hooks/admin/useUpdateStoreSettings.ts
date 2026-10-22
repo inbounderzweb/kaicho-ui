@@ -6,7 +6,7 @@ export function useUpdateStoreSettings() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (patch: Partial<StoreSettingsFormInput & DeliveryAreasInput>) => updateStoreSettings(patch),
+    mutationFn: (patch: Partial<StoreSettingsFormInput & DeliveryAreasInput & { showMrp: boolean }>) => updateStoreSettings(patch),
     onSuccess: (res) => {
       queryClient.setQueryData(settingsKeys.admin, res);
       // The storefront reads the same numbers from /settings — drop its

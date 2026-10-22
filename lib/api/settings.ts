@@ -7,6 +7,8 @@ export interface StoreSettings {
   /** Off = every state is served; on = only `serviceableStates`. */
   restrictDeliveryToStates?: boolean;
   serviceableStates?: IndianState[];
+  /** false = hide the struck-through MRP and % OFF labels. Absent = shown. */
+  showMrp?: boolean;
   updatedAt: string;
 }
 
@@ -35,7 +37,7 @@ export function fetchStoreSettings(): Promise<{ settings: StoreSettings }> {
 }
 
 export function updateStoreSettings(
-  patch: Partial<StoreSettingsFormInput & DeliveryAreasInput>
+  patch: Partial<StoreSettingsFormInput & DeliveryAreasInput & { showMrp: boolean }>
 ): Promise<{ settings: StoreSettings }> {
   return apiFetch<{ settings: StoreSettings }>("/admin/settings", {
     method: "PATCH",
