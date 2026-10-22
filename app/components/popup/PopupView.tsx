@@ -2,7 +2,7 @@
 
 import { useEffect, useId, useRef, useState } from "react";
 import Link from "next/link";
-import type { PopupConfig, CloseButtonSize, CloseButtonStyle, DesktopPlacement, MobilePlacement, PopupDevice } from "@/lib/api/popup";
+import type { PopupConfig, CountdownPosition, CloseButtonSize, CloseButtonStyle, DesktopPlacement, MobilePlacement, PopupDevice } from "@/lib/api/popup";
 import type { DismissAttempt } from "@/lib/popup/controller";
 import type { ResolvedPopupRuntime } from "@/lib/popup/timing";
 import { resolveMediaUrl } from "@/lib/api/client";
@@ -37,6 +37,16 @@ const THEME = {
   DARK: { panel: "bg-charcoal text-white", muted: "text-white/75", cta: "bg-white text-ink hover:bg-cream", dark: true },
   BRAND: { panel: "bg-brand text-white", muted: "text-white/85", cta: "bg-white text-brand-darker hover:bg-cream", dark: true },
 } as const;
+
+// Where the countdown sits on a banner image (six alignment spots).
+const COUNTDOWN_SPOT: Record<CountdownPosition, string> = {
+  TOP_LEFT: "top-0 justify-start text-left",
+  TOP_CENTER: "top-0 justify-center text-center",
+  TOP_RIGHT: "top-0 justify-end text-right",
+  BOTTOM_LEFT: "bottom-0 justify-start text-left",
+  BOTTOM_CENTER: "bottom-0 justify-center text-center",
+  BOTTOM_RIGHT: "bottom-0 justify-end text-right",
+};
 
 const WIDTH = { SM: "max-w-xl", MD: "max-w-3xl", LG: "max-w-5xl" } as const;
 
@@ -87,7 +97,7 @@ function useSecondsLeft(closesAt: number | null, enabled: boolean): number | nul
 // Flip-clock style: each digit sits in its own box, the two digits of a unit
 // are joined, with the unit name underneath. Brand colour normally; red +
 // pulsing in the final hour. `overlay` = sits on the bottom of the image.
-function OfferCountdown({ endsAt, label, overlay = false }: { endsAt: string; label?: string; overlay?: boolean }) {
+function OfferCountdown({ endsAt, label, overlay = false, position = "BOTTOM_CENTER" }: { endsAt: string; label?: string; overlay?: boolean; position?: CountdownPosition }) {
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
     const id = setInterval(() => setNow(Date.now()), 1000);
@@ -110,10 +120,11 @@ function OfferCountdown({ endsAt, label, overlay = false }: { endsAt: string; la
     <div
       className={
         overlay
-          ? `${styles.countdown} absolute inset-x-0 bottom-0 px-3 pb-3 pt-10 text-center text-black`
+          ? `${styles.countdown} absolute inset-x-0 flex p-3 text-black ${COUNTDOWN_SPOT[position]}`
           : "mt-5 text-center"
       }
     >
+      <div>
       {headline && <p className={`text-base font-bold leading-snug ${parts.urgent && !overlay ? "text-red-600" : ""}`}>{headline}</p>}
       {/* Digits tick every second, so they're hidden from screen readers; a
           calm static summary is announced instead. */}
@@ -140,6 +151,7 @@ function OfferCountdown({ endsAt, label, overlay = false }: { endsAt: string; la
             <span className={`mt-1 text-[11px] ${overlay ? "opacity-90" : "opacity-80"}`}>{unit}</span>
           </div>
         ))}
+      </div>
       </div>
     </div>
   );
@@ -312,7 +324,7 @@ export default function PopupView({
               data-ready={loadedImage === imageUrl}
               className={`${styles.image} block h-auto w-full object-cover md:h-full md:object-fill`}
             />
-            {countdownOn && <OfferCountdown overlay endsAt={popup.countdown!.endsAt!} />}
+            {countdownOn && <OfferCountdown overlay endsAt={popup.countdown!.endsAt!} position={popup.countdown?.position} />}
           </div>
         )}
 

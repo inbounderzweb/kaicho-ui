@@ -344,6 +344,19 @@ export default function PopupEditorClient({ id }: { id?: string }) {
                 {values.countdown?.enabled && (
                   <div className="space-y-3">
                     <TextField name="countdown.label" label="Countdown headline (optional)" maxLength={80} placeholder="Leave empty for numbers only" />
+                    <SelectField
+                      name="countdown.position"
+                      label="Countdown position on the banner"
+                      hint="Where the timer sits on the banner image. Pick a spot that doesn't cover the artwork."
+                      options={[
+                        { value: "TOP_LEFT", label: "Top left" },
+                        { value: "TOP_CENTER", label: "Top centre" },
+                        { value: "TOP_RIGHT", label: "Top right" },
+                        { value: "BOTTOM_LEFT", label: "Bottom left" },
+                        { value: "BOTTOM_CENTER", label: "Bottom centre" },
+                        { value: "BOTTOM_RIGHT", label: "Bottom right" },
+                      ]}
+                    />
                     <label className={LABEL} htmlFor="countdownEndsAt">Countdown ends</label>
                     <input
                       id="countdownEndsAt"

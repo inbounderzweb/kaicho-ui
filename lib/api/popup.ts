@@ -16,6 +16,8 @@ export const DESKTOP_PLACEMENTS = [
   "BOTTOM_LEFT", "BOTTOM_CENTER", "BOTTOM_RIGHT",
 ] as const;
 export type DesktopPlacement = (typeof DESKTOP_PLACEMENTS)[number];
+export const COUNTDOWN_POSITIONS = ["TOP_LEFT", "TOP_CENTER", "TOP_RIGHT", "BOTTOM_LEFT", "BOTTOM_CENTER", "BOTTOM_RIGHT"] as const;
+export type CountdownPosition = (typeof COUNTDOWN_POSITIONS)[number];
 export type MobilePlacement = "CENTER" | "BOTTOM_SHEET";
 export type CloseButtonPosition = "TOP_RIGHT" | "TOP_LEFT";
 export type CloseButtonSize = "SM" | "MD" | "LG";
@@ -75,7 +77,7 @@ export interface PopupConfig {
   };
   display: PopupDisplay;
   /** Optional urgency timer (d/h/m/s to endsAt). Independent of auto-close. */
-  countdown: { enabled: boolean; endsAt: string | null; label?: string };
+  countdown: { enabled: boolean; endsAt: string | null; label?: string; position?: CountdownPosition };
   targeting: { includePaths: string[] };
 }
 

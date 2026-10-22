@@ -40,7 +40,7 @@ export function defaultPopupForm(): PopupFormValues {
       minReappearanceSeconds: 30,
       showOnEveryLoad: false,
     },
-    countdown: { enabled: false, endsAt: null, label: "" },
+    countdown: { enabled: false, endsAt: null, label: "", position: "BOTTOM_CENTER" },
     targeting: { includePaths: [] },
     schedule: { startsAt: null, endsAt: null },
   };
@@ -94,6 +94,7 @@ export function formValuesToPayload(v: PopupFormValues): PopupFormPayload {
       enabled: v.countdown.enabled,
       endsAt: v.countdown.endsAt || null,
       label: opt(v.countdown.label),
+      position: v.countdown.position ?? "BOTTOM_CENTER",
     },
     targeting: { includePaths: v.targeting.includePaths.map((p) => p.trim()).filter(Boolean) },
     schedule: { startsAt: v.schedule.startsAt || null, endsAt: v.schedule.endsAt || null },

@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { POPUP_LIMITS as L } from "../popup/limits";
-import { DESKTOP_PLACEMENTS } from "../api/popup";
+import { COUNTDOWN_POSITIONS, DESKTOP_PLACEMENTS } from "../api/popup";
 
 // Inline UX validation for the popup editor. kaicho-be's popup.validation.ts
 // re-validates and is authoritative — keep the rules in lockstep.
@@ -80,6 +80,7 @@ export const popupFormSchema = z
       enabled: z.boolean(),
       endsAt: z.string().nullable().optional(),
       label: z.string().trim().max(80, "Headline must be at most 80 characters").optional(),
+      position: z.enum(COUNTDOWN_POSITIONS).optional(),
     }),
     targeting: z.object({ includePaths: z.array(z.string()).max(L.maxIncludePaths) }),
     schedule: z.object({
