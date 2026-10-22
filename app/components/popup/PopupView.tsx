@@ -122,7 +122,7 @@ function OfferCountdown({ endsAt, label, overlay = false, position = "BOTTOM_CEN
     <div
       className={
         overlay
-          ? `${styles.countdown} absolute inset-x-0 flex p-3 text-black ${COUNTDOWN_SPOT[position]}`
+          ? `${styles.countdown} absolute inset-x-0 flex translate-y-1 p-3 text-black md:translate-y-0 ${COUNTDOWN_SPOT[position]}`
           : "mt-5 text-center"
       }
     >
