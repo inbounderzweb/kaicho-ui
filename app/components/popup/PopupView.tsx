@@ -142,7 +142,7 @@ function OfferCountdown({ endsAt, label, overlay = false, position = "BOTTOM_CEN
               {String(value).padStart(2, "0").split("").map((d, i) => (
                 <span
                   key={i}
-                  className={`flex items-center justify-center font-semibold tabular-nums rounded-xl border ${box} ${
+                  className={`flex items-center justify-center font-semibold tabular-nums rounded-sm border ${box} ${
                     overlay ? "h-9 w-7 text-xl md:h-12 md:w-9 md:text-2xl" : "h-10 w-8 text-xl"
                   }`}
                 >
@@ -294,7 +294,7 @@ export default function PopupView({
         aria-label={content.heading && !imageOnly ? undefined : content.heading || content.imageAlt || "Promotion"}
         aria-describedby={content.body && !imageOnly ? bodyId : undefined}
         tabIndex={-1}
-        className={`${styles.panel} pointer-events-auto relative w-full overflow-hidden shadow-2xl outline-none ${WIDTH[popup.design.size]} ${imageOnly ? "bg-charcoal text-white" : theme.panel} ${
+        className={`${styles.panel} pointer-events-auto relative w-[calc(100%-22px)] overflow-hidden shadow-2xl outline-none ${WIDTH[popup.design.size]} ${imageOnly ? "bg-charcoal text-white" : theme.panel} ${
           sheet ? `${imageOnly ? "" : "pb-[env(safe-area-inset-bottom)]"}` : ""
         } max-h-[90%] overflow-y-auto md:h-[80%] md:max-h-none md:w-1/2 md:max-w-none md:rounded-none`}
       >
