@@ -366,7 +366,7 @@ export default function OfferDetailClient({ id }: { id?: string }) {
                     <label className={LABEL} htmlFor="offer-max">Max free units per order *</label>
                     <input id="offer-max" type="number" min={1} max={100} {...register("maxFreeUnitsPerOrder")} className={FIELD} />
                     {errors.maxFreeUnitsPerOrder && <p className={ERR}>{errors.maxFreeUnitsPerOrder.message}</p>}
-                    <p className={HINT}>Caps free units, not cart size.</p>
+                    <p className={HINT}>The most free items one order can get. Every {Number(watched.buyQuantity) + 1 || 2} eligible items earn 1 free, so 4 items with a limit of 2 → 2 free (the cheapest ones; the dearest are charged). Enter 100 for no practical limit.</p>
                   </div>
                   <div>
                     <label className={LABEL} htmlFor="offer-min">Min purchased price (₹)</label>
