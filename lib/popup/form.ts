@@ -16,8 +16,8 @@ export function defaultPopupForm(): PopupFormValues {
   return {
     name: "",
     priority: 100,
-    content: { heading: "", body: "", imageUrl: "", imageAlt: "", ctaLabel: "", ctaUrl: "" },
-    design: { theme: "LIGHT", size: "MD" },
+    content: { heading: "", body: "", imageUrl: "", desktopImageUrl: "", mobileImageUrl: "", imageAlt: "", ctaLabel: "", ctaUrl: "" },
+    design: { theme: "LIGHT", size: "MD", imageOnly: false },
     devices: {
       desktop: { enabled: true, placement: "CENTER" },
       mobile: { enabled: true, placement: "BOTTOM_SHEET" },
@@ -54,6 +54,8 @@ export function popupToFormValues(p: Popup): PopupFormValues {
       heading: p.content.heading,
       body: p.content.body,
       imageUrl: p.content.imageUrl ?? "",
+      desktopImageUrl: p.content.desktopImageUrl ?? "",
+      mobileImageUrl: p.content.mobileImageUrl ?? "",
       imageAlt: p.content.imageAlt ?? "",
       ctaLabel: p.content.ctaLabel ?? "",
       ctaUrl: p.content.ctaUrl ?? "",
@@ -78,6 +80,8 @@ export function formValuesToPayload(v: PopupFormValues): PopupFormPayload {
       heading: v.content.heading.trim(),
       body: v.content.body.trim(),
       imageUrl: opt(v.content.imageUrl),
+      desktopImageUrl: opt(v.content.desktopImageUrl),
+      mobileImageUrl: opt(v.content.mobileImageUrl),
       imageAlt: opt(v.content.imageAlt),
       ctaLabel: opt(v.content.ctaLabel),
       ctaUrl: opt(v.content.ctaUrl),

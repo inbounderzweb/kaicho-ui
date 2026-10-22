@@ -10,7 +10,12 @@ export type PopupEffectiveState = PopupStatus | "SCHEDULED" | "LIVE" | "EXPIRED"
 
 export type PopupTheme = "LIGHT" | "DARK" | "BRAND";
 export type PopupSize = "SM" | "MD" | "LG";
-export type DesktopPlacement = "CENTER" | "BOTTOM_RIGHT" | "BOTTOM_LEFT";
+export const DESKTOP_PLACEMENTS = [
+  "TOP_LEFT", "TOP_CENTER", "TOP_RIGHT",
+  "CENTER_LEFT", "CENTER", "CENTER_RIGHT",
+  "BOTTOM_LEFT", "BOTTOM_CENTER", "BOTTOM_RIGHT",
+] as const;
+export type DesktopPlacement = (typeof DESKTOP_PLACEMENTS)[number];
 export type MobilePlacement = "CENTER" | "BOTTOM_SHEET";
 export type CloseButtonPosition = "TOP_RIGHT" | "TOP_LEFT";
 export type CloseButtonSize = "SM" | "MD" | "LG";
@@ -33,6 +38,8 @@ export interface PopupContent {
   heading: string;
   body: string;
   imageUrl?: string;
+  desktopImageUrl?: string;
+  mobileImageUrl?: string;
   imageAlt?: string;
   ctaLabel?: string;
   ctaUrl?: string;
@@ -55,7 +62,7 @@ export interface PopupDisplay {
 /** The editable configuration (also what a PATCH/POST body is built from). */
 export interface PopupConfig {
   content: PopupContent;
-  design: { theme: PopupTheme; size: PopupSize };
+  design: { theme: PopupTheme; size: PopupSize; imageOnly?: boolean };
   devices: {
     desktop: { enabled: boolean; placement: DesktopPlacement };
     mobile: { enabled: boolean; placement: MobilePlacement };

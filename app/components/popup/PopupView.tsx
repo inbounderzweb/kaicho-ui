@@ -2,12 +2,14 @@
 
 import { useEffect, useId, useRef, useState } from "react";
 import Link from "next/link";
-import type { PopupConfig, CloseButtonSize, CloseButtonStyle, PopupDevice } from "@/lib/api/popup";
+import type { PopupConfig, CloseButtonSize, CloseButtonStyle, DesktopPlacement, MobilePlacement, PopupDevice } from "@/lib/api/popup";
 import type { DismissAttempt } from "@/lib/popup/controller";
 import type { ResolvedPopupRuntime } from "@/lib/popup/timing";
 import { resolveMediaUrl } from "@/lib/api/client";
 import { countdownParts } from "@/lib/popup/countdown";
+import { popupImageUrl } from "@/lib/popup/media";
 import { IconClose } from "../ui/icons";
+import styles from "./PopupView.module.css";
 
 // Presentational + accessibility layer. It owns NO timers that affect
 // lifecycle: when to open/close is the controller's call; this only renders
@@ -36,7 +38,20 @@ const THEME = {
   BRAND: { panel: "bg-brand text-white", muted: "text-white/85", cta: "bg-white text-brand-darker hover:bg-cream", dark: true },
 } as const;
 
-const WIDTH = { SM: "max-w-xs", MD: "max-w-md", LG: "max-w-xl" } as const;
+const WIDTH = { SM: "max-w-xl", MD: "max-w-3xl", LG: "max-w-5xl" } as const;
+
+const PLACEMENT: Record<DesktopPlacement | MobilePlacement, string> = {
+  TOP_LEFT: "items-start justify-start p-4",
+  TOP_CENTER: "items-start justify-center p-4",
+  TOP_RIGHT: "items-start justify-end p-4",
+  CENTER_LEFT: "items-center justify-start p-4",
+  CENTER: "items-center justify-center p-4",
+  CENTER_RIGHT: "items-center justify-end p-4",
+  BOTTOM_LEFT: "items-end justify-start p-4",
+  BOTTOM_CENTER: "items-end justify-center p-4",
+  BOTTOM_RIGHT: "items-end justify-end p-4",
+  BOTTOM_SHEET: "items-end justify-center",
+};
 
 const FOCUSABLE =
   'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
@@ -87,7 +102,7 @@ function OfferCountdown({ endsAt, label, overlay = false }: { endsAt: string; la
     ["Minutes", parts.minutes],
     ["Seconds", parts.seconds],
   ];
-  const box = parts.urgent ? "bg-red-600" : "bg-brand";
+  const box = parts.urgent ? "text-red-600" : "text-black";
   const headline = label?.trim();
   const spoken = `${parts.days ? `${parts.days} days ` : ""}${parts.hours} hours ${parts.minutes} minutes`;
 
@@ -95,7 +110,7 @@ function OfferCountdown({ endsAt, label, overlay = false }: { endsAt: string; la
     <div
       className={
         overlay
-          ? "absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 via-black/40 to-transparent px-3 pb-3 pt-10 text-center text-white"
+          ? `${styles.countdown} absolute inset-x-0 bottom-0 px-3 pb-3 pt-10 text-center text-black`
           : "mt-5 text-center"
       }
     >
@@ -104,13 +119,17 @@ function OfferCountdown({ endsAt, label, overlay = false }: { endsAt: string; la
           calm static summary is announced instead. */}
       <span className="sr-only">Offer ends in about {spoken}</span>
       <div aria-hidden="true" className={`flex flex-wrap justify-center gap-x-3 gap-y-2 ${headline ? "mt-3" : ""}`}>
-        {units.map(([unit, value]) => (
-          <div key={unit} className="flex flex-col items-center">
+        {units.map(([unit, value], index) => (
+          <div
+            key={unit}
+            className={`${overlay ? styles.countdownUnit : ""} flex flex-col items-center`}
+            style={overlay ? { animationDelay: `${320 + index * 90}ms` } : undefined}
+          >
             <div className={`flex gap-px ${parts.urgent ? "motion-safe:animate-pulse" : ""}`}>
               {String(value).padStart(2, "0").split("").map((d, i) => (
                 <span
                   key={i}
-                  className={`flex items-center justify-center font-extrabold tabular-nums text-white first:rounded-l-md last:rounded-r-md ${box} ${
+                  className={`flex items-center justify-center font-extrabold tabular-nums bg-white first:rounded-l-md last:rounded-r-md ${box} ${
                     overlay ? "h-9 w-7 text-xl" : "h-11 w-8 text-2xl"
                   }`}
                 >
@@ -137,10 +156,13 @@ export default function PopupView({
   contained = false,
 }: PopupViewProps) {
   const { content } = popup;
+  const bannerImage = popupImageUrl(content, device);
+  // Image promotions are edge-to-edge: saved copy must not add a text panel.
+  const imageOnly = Boolean(bannerImage);
   const theme = THEME[popup.design.theme];
   const placement = popup.devices[device].placement;
   // Only a centred card / mobile sheet dims the page and traps focus. A
-  // corner toast leaves the rest of the page fully usable.
+  // banner in any other desktop position leaves the page fully usable.
   const modal = placement === "CENTER" || placement === "BOTTOM_SHEET";
 
   const titleId = useId();
@@ -148,6 +170,7 @@ export default function PopupView({
   const rootRef = useRef<HTMLDivElement>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
+  const [loadedImage, setLoadedImage] = useState<string | null>(null);
   const secondsLeft = useSecondsLeft(closesAt, runtime.countdownVisible);
 
   // Focus: move into a modal on open, restore on close. Non-modals never
@@ -155,9 +178,9 @@ export default function PopupView({
   useEffect(() => {
     if (!modal) return;
     const previous = document.activeElement as HTMLElement | null;
-    (closeRef.current ?? dialogRef.current)?.focus({ preventScroll: true });
+    (imageOnly ? dialogRef.current : closeRef.current ?? dialogRef.current)?.focus({ preventScroll: true });
     return () => previous?.focus?.({ preventScroll: true });
-  }, [modal]);
+  }, [modal, imageOnly]);
 
   // Escape. Real popup: document-level. Contained preview: only when focus
   // is inside the frame (handled by onKeyDown below).
@@ -195,29 +218,28 @@ export default function PopupView({
   };
 
   const position = contained ? "absolute" : "fixed";
-  const wrapperPlacement =
-    placement === "BOTTOM_SHEET"
-      ? "items-end justify-center"
-      : placement === "BOTTOM_RIGHT"
-        ? "items-end justify-end p-4"
-        : placement === "BOTTOM_LEFT"
-          ? "items-end justify-start p-4"
-          : "items-center justify-center p-4";
+  const wrapperPlacement = PLACEMENT[placement] ?? PLACEMENT.CENTER;
 
   const closeSide = runtime.closeButtonPosition === "TOP_LEFT" ? "left-2" : "right-2";
   const countdownOn = Boolean(popup.countdown?.enabled && popup.countdown.endsAt);
-  const hasText = Boolean(content.heading || content.body || (content.ctaLabel && content.ctaUrl));
+  const imageUrl = bannerImage ? resolveMediaUrl(bannerImage) : null;
+  const showCloseButton = runtime.closeButtonEnabled || imageOnly;
+  const closeButtonClasses = imageOnly
+    ? "h-10 w-10 bg-transparent text-white/45 hover:text-white/90 focus-visible:text-white focus-visible:outline-white/60"
+    : `${CLOSE_PX[runtime.closeButtonSize]} ${closeStyle(runtime.closeButtonStyle, theme.dark)} focus-visible:outline-brand`;
+  const hasText = !imageOnly && Boolean(content.heading || content.body || (content.ctaLabel && content.ctaUrl));
   // With an image, the countdown lives on the image; otherwise in the body.
-  const needsBody =
+  const needsBody = !imageOnly && (
     hasText ||
-    (countdownOn && !content.imageUrl) ||
+    (countdownOn && !bannerImage) ||
     !runtime.closeButtonEnabled ||
-    (runtime.countdownVisible && !content.imageUrl);
+    (runtime.countdownVisible && !bannerImage)
+  );
   const waitLabel = secondsLeft !== null ? `${secondsLeft}s` : "";
   const sheet = placement === "BOTTOM_SHEET";
 
   const cta =
-    content.ctaLabel && content.ctaUrl ? (
+    !imageOnly && content.ctaLabel && content.ctaUrl ? (
       content.ctaUrl.startsWith("/") ? (
         <Link
           href={content.ctaUrl as never}
@@ -243,7 +265,7 @@ export default function PopupView({
     <div
       ref={rootRef}
       data-popup-root
-      className={`${position} inset-0 z-[70] flex ${wrapperPlacement} ${modal ? "bg-black/50" : "pointer-events-none"}`}
+      className={`${styles.root} ${position} inset-0 z-[70] flex ${wrapperPlacement} ${modal ? "bg-black/50" : "pointer-events-none"}`}
       onMouseDown={(e) => {
         // Backdrop = a press on the dim layer itself, never on the card.
         if (modal && e.target === e.currentTarget) onDismiss("backdrop");
@@ -254,54 +276,59 @@ export default function PopupView({
         ref={dialogRef}
         role="dialog"
         aria-modal={modal ? "true" : undefined}
-        aria-labelledby={content.heading ? titleId : undefined}
-        aria-label={content.heading ? undefined : "Promotion"}
-        aria-describedby={content.body ? bodyId : undefined}
+        aria-labelledby={content.heading && !imageOnly ? titleId : undefined}
+        aria-label={content.heading && !imageOnly ? undefined : content.heading || content.imageAlt || "Promotion"}
+        aria-describedby={content.body && !imageOnly ? bodyId : undefined}
         tabIndex={-1}
-        className={`pointer-events-auto relative w-full overflow-hidden shadow-2xl outline-none ${WIDTH[popup.design.size]} ${theme.panel} ${
-          sheet ? "rounded-t-3xl pb-[env(safe-area-inset-bottom)]" : "rounded-3xl"
-        } max-h-[90%] overflow-y-auto`}
+        className={`${styles.panel} pointer-events-auto relative w-full overflow-hidden shadow-2xl outline-none ${WIDTH[popup.design.size]} ${imageOnly ? "bg-charcoal text-white" : theme.panel} ${
+          sheet ? `${imageOnly ? "" : "pb-[env(safe-area-inset-bottom)]"}` : ""
+        } max-h-[90%] overflow-y-auto md:h-[80%] md:max-h-none md:w-1/2 md:max-w-none md:rounded-none`}
       >
-        {runtime.closeButtonEnabled && (
+        {showCloseButton && (
           <button
             ref={closeRef}
             type="button"
             aria-label={dismissLocked ? `Close popup (available in ${waitLabel || "a moment"})` : "Close popup"}
             aria-disabled={dismissLocked || undefined}
             onClick={() => onDismiss("manual")}
-            className={`absolute top-2 ${closeSide} z-10 inline-flex items-center justify-center rounded-full transition-opacity focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand ${CLOSE_PX[runtime.closeButtonSize]} ${closeStyle(runtime.closeButtonStyle, theme.dark)} ${
-              dismissLocked ? "opacity-50" : "hover:opacity-90"
+            className={`absolute top-2 ${closeSide} z-10 inline-flex items-center justify-center rounded-full transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 ${closeButtonClasses} ${
+              dismissLocked ? "opacity-50" : !imageOnly ? "hover:opacity-90" : ""
             }`}
           >
-            <IconClose className={CLOSE_ICON[runtime.closeButtonSize]} aria-hidden="true" />
+            <IconClose className={imageOnly ? "h-3.5 w-3.5" : CLOSE_ICON[runtime.closeButtonSize]} aria-hidden="true" />
           </button>
         )}
 
-        {content.imageUrl && (
-          <div className="relative">
+        {imageUrl && (
+          <div className="relative overflow-hidden md:h-full">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src={resolveMediaUrl(content.imageUrl)}
+              src={imageUrl}
               alt={content.imageAlt ?? ""}
-              className={`w-full object-cover ${hasText ? "aspect-[16/9]" : "h-auto"}`}
+              decoding="async"
+              fetchPriority="high"
+              onLoad={() => setLoadedImage(imageUrl)}
+              onError={() => setLoadedImage(imageUrl)}
+              data-ready={loadedImage === imageUrl}
+              className={`${styles.image} block h-auto w-full object-cover md:h-full md:object-fill`}
             />
-            {countdownOn && <OfferCountdown overlay endsAt={popup.countdown!.endsAt!} label={popup.countdown?.label} />}
+            {countdownOn && <OfferCountdown overlay endsAt={popup.countdown!.endsAt!} />}
           </div>
         )}
 
         {needsBody && (
-        <div className={`p-6 pt-8 ${countdownOn ? "text-center" : ""}`}>
-          {content.heading && (
+        <div className={`p-8 pt-10 ${countdownOn ? "text-center" : ""}`}>
+          {content.heading && !imageOnly && (
             <h2 id={titleId} className={`text-xl font-bold leading-snug ${countdownOn ? "" : "pr-8"}`}>
               {content.heading}
             </h2>
           )}
-          {content.body && (
+          {content.body && !imageOnly && (
             <p id={bodyId} className={`mt-2 text-sm leading-6 ${theme.muted}`}>
               {content.body}
             </p>
           )}
-          {countdownOn && !content.imageUrl && popup.countdown?.endsAt && (
+          {countdownOn && !bannerImage && popup.countdown?.endsAt && (
             <OfferCountdown endsAt={popup.countdown.endsAt} label={popup.countdown.label} />
           )}
           {cta}

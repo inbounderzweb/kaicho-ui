@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { popupFormSchema } from "../popup.schema";
 import { defaultPopupForm, formValuesToPayload } from "../../popup/form";
+import { DESKTOP_PLACEMENTS } from "../../api/popup";
 
 const valid = () => ({ ...defaultPopupForm(), name: "Welcome", content: { ...defaultPopupForm().content, heading: "Hi" } });
 const issues = (v: unknown) => {
@@ -78,7 +79,45 @@ describe("popupFormSchema", () => {
   it("payload drops empty optionals and null-ifies empty dates", () => {
     const p = formValuesToPayload(valid());
     expect(p.content.imageUrl).toBeUndefined();
+    expect(p.content.desktopImageUrl).toBeUndefined();
+    expect(p.content.mobileImageUrl).toBeUndefined();
     expect(p.content.ctaLabel).toBeUndefined();
     expect(p.schedule).toEqual({ startsAt: null, endsAt: null });
+  });
+
+  it("saves separate device artwork without replacing the original banner", () => {
+    const v = valid();
+    v.content.imageUrl = "/original.jpg";
+    v.content.desktopImageUrl = "/desktop.jpg";
+    v.content.mobileImageUrl = "https://cdn.example.com/mobile.jpg";
+    v.devices.desktop.placement = "TOP_RIGHT";
+    const parsed = popupFormSchema.parse(v);
+    const payload = formValuesToPayload(parsed);
+    expect(payload.content).toMatchObject({
+      imageUrl: "/original.jpg", desktopImageUrl: "/desktop.jpg", mobileImageUrl: "https://cdn.example.com/mobile.jpg",
+    });
+    expect(payload.devices.desktop.placement).toBe("TOP_RIGHT");
+    expect(payload.devices.mobile.placement).toBe("BOTTOM_SHEET");
+  });
+
+  it("allows all nine positions only on desktop", () => {
+    for (const placement of DESKTOP_PLACEMENTS) {
+      const v = valid();
+      v.devices.desktop.placement = placement;
+      expect(issues(v)).toEqual([]);
+      if (placement !== "CENTER") {
+        expect(issues({ ...v, devices: { ...v.devices, mobile: { enabled: true, placement } } }).join("|")).toMatch(/devices.mobile.placement/);
+      }
+    }
+  });
+
+  it("validates device image URLs and accepts image-only artwork without a shared image", () => {
+    const v = valid();
+    v.design.imageOnly = true;
+    v.content.desktopImageUrl = "javascript:alert(1)";
+    expect(issues(v).join("|")).toMatch(/content.desktopImageUrl/);
+    v.content.desktopImageUrl = "/desktop.jpg";
+    v.content.mobileImageUrl = "/mobile.jpg";
+    expect(issues(v)).toEqual([]);
   });
 });

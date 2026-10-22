@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { POPUP_LIMITS as L } from "../popup/limits";
+import { DESKTOP_PLACEMENTS } from "../api/popup";
 
 // Inline UX validation for the popup editor. kaicho-be's popup.validation.ts
 // re-validates and is authoritative — keep the rules in lockstep.
@@ -46,13 +47,15 @@ export const popupFormSchema = z
       heading: z.string().trim().max(120, "Heading must be at most 120 characters"),
       body: z.string().trim().max(500, "Body must be at most 500 characters"),
       imageUrl: z.string().trim().max(2048).optional(),
+      desktopImageUrl: href("Desktop banner image").optional(),
+      mobileImageUrl: href("Mobile banner image").optional(),
       imageAlt: z.string().trim().max(200).optional(),
       ctaLabel: z.string().trim().max(40, "Button label must be at most 40 characters").optional(),
       ctaUrl: href("Button link").optional(),
     }),
-    design: z.object({ theme: z.enum(["LIGHT", "DARK", "BRAND"]), size: z.enum(["SM", "MD", "LG"]) }),
+    design: z.object({ theme: z.enum(["LIGHT", "DARK", "BRAND"]), size: z.enum(["SM", "MD", "LG"]), imageOnly: z.boolean().optional() }),
     devices: z.object({
-      desktop: z.object({ enabled: z.boolean(), placement: z.enum(["CENTER", "BOTTOM_RIGHT", "BOTTOM_LEFT"]) }),
+      desktop: z.object({ enabled: z.boolean(), placement: z.enum(DESKTOP_PLACEMENTS) }),
       mobile: z.object({ enabled: z.boolean(), placement: z.enum(["CENTER", "BOTTOM_SHEET"]) }),
     }),
     timing: z.object({
@@ -90,6 +93,9 @@ export const popupFormSchema = z
 
     if (Boolean(content.ctaLabel) !== Boolean(content.ctaUrl)) {
       add(["content", content.ctaLabel ? "ctaUrl" : "ctaLabel"], "A call-to-action needs both a button label and a link");
+    }
+    if (v.design.imageOnly && !content.imageUrl && !content.desktopImageUrl && !content.mobileImageUrl) {
+      add(["design", "imageOnly"], "Image-only needs an image — add one first");
     }
     if (v.countdown.enabled && !v.countdown.endsAt) {
       add(["countdown", "endsAt"], "Set the countdown end time");

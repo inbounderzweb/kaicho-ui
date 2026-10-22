@@ -15,7 +15,8 @@ import { defaultPopupForm, popupToFormValues, formValuesToPayload, normalizeForS
 import { describeVisibleDuration } from "@/lib/popup/timing";
 import { POPUP_LIMITS as L } from "@/lib/popup/limits";
 import PopupStatusBadge from "./PopupStatusBadge";
-import CollectionImagePicker from "./CollectionImagePicker";
+import BannerImageField from "./popup/BannerImageField";
+import DesktopPlacementField from "./popup/DesktopPlacementField";
 import PopupPreview, { type PopupPreviewHandle } from "./popup/PopupPreview";
 import { OpenCloseTimingFields, CloseControlFields, PerDeviceNote } from "./popup/TimingFields";
 import { CARD, ERR, FIELD, HINT, LABEL, NumberField, SelectField, TextField, ToggleField, errorAt } from "./popup/fields";
@@ -214,7 +215,6 @@ export default function PopupEditorClient({ id }: { id?: string }) {
     );
   }
 
-  const imageUrl = values.content?.imageUrl ?? "";
   const visibleFor = (device: PopupDevice) => {
     const { runtime } = runtimeFromForm(values, device);
     return runtime ? describeVisibleDuration(runtime) : null;
@@ -297,28 +297,44 @@ export default function PopupEditorClient({ id }: { id?: string }) {
 
             {/* Content & design */}
             <section role="tabpanel" id="panel-content" aria-labelledby="tab-content" hidden={tab !== "content"} className={CARD}>
-              <TextField name="content.heading" label="Heading" maxLength={120} />
-              <TextField name="content.body" label="Body text" multiline maxLength={500} />
-              <CollectionImagePicker
-                label="Popup image (optional)"
-                value={imageUrl ? { mediaId: "", url: imageUrl } : null}
-                onChange={(img) => {
-                  let url = img?.url ?? "";
-                  try {
-                    const parsed = new URL(url);
-                    if (parsed.pathname.startsWith("/uploads/")) url = parsed.pathname;
-                  } catch {
-                    // already relative
-                  }
-                  setValue("content.imageUrl", url, { shouldDirty: true });
-                }}
-              />
-              {errorAt(formState.errors, "content.imageUrl") && <p className={ERR}>{errorAt(formState.errors, "content.imageUrl")}</p>}
+              <p className={HINT}>Upload a separate banner for desktop and mobile. Each screen shows its own image. Desktop positioning is in the Desktop tab.</p>
+              <div className="grid gap-5 sm:grid-cols-2">
+                <BannerImageField
+                  name="content.desktopImageUrl"
+                  label="Desktop image"
+                  hint="Upload your desktop banner. Only shown on desktop."
+                />
+                <BannerImageField
+                  name="content.mobileImageUrl"
+                  label="Mobile image"
+                  hint="Upload your mobile banner. Mobile alignment stays the same."
+                />
+              </div>
+              <details
+                open={Boolean(errorAt(formState.errors, "content.imageUrl")) || undefined}
+                className="rounded-xl border border-admin-border p-3 dark:border-admin-border-dark"
+              >
+                <summary className="cursor-pointer text-xs font-semibold">Shared fallback image (optional)</summary>
+                <div className="mt-3">
+                  <BannerImageField
+                    name="content.imageUrl"
+                    label="Fallback banner image"
+                    hint="Used only when a device has no image of its own. Existing banners remain here."
+                  />
+                </div>
+              </details>
+              <TextField name="content.heading" label="Heading (optional)" maxLength={120} />
+              <TextField name="content.body" label="Body text (optional)" multiline maxLength={500} />
               <TextField name="content.imageAlt" label="Image description (alt text)" maxLength={200} hint="Read by screen readers. Leave empty for a purely decorative image." />
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <TextField name="content.ctaLabel" label="Button label" maxLength={40} />
                 <TextField name="content.ctaUrl" label="Button link" placeholder="/products or https://…" />
               </div>
+              <ToggleField
+                name="design.imageOnly"
+                label="Image only — hide the heading, text and button"
+                hint="Removes the white text area so just the image (and countdown, if on) is shown. Your text stays saved. Needs an image."
+              />
               <div className="space-y-3 rounded-xl border border-admin-border p-3 dark:border-admin-border-dark">
                 <ToggleField
                   name="countdown.enabled"
@@ -372,7 +388,7 @@ export default function PopupEditorClient({ id }: { id?: string }) {
             {/* Desktop */}
             <section role="tabpanel" id="panel-desktop" aria-labelledby="tab-desktop" hidden={tab !== "desktop"} className={CARD}>
               <ToggleField name="devices.desktop.enabled" label="Show on desktop" />
-              <SelectField name="devices.desktop.placement" label="Placement" options={[{ value: "CENTER", label: "Centred dialog" }, { value: "BOTTOM_RIGHT", label: "Bottom-right corner" }, { value: "BOTTOM_LEFT", label: "Bottom-left corner" }]} hint="Corner placements don't dim or block the page." />
+              <DesktopPlacementField />
               {useShared ? (
                 <PerDeviceNote />
               ) : (
