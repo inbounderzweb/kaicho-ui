@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { forwardRef, useImperativeHandle, useRef, useState } from "react";
 import AddressForm from "../address/AddressForm";
 import AddressLines from "../address/AddressLines";
 import { useAddresses } from "@/lib/hooks/useAddresses";
@@ -9,16 +9,48 @@ import { ApiError } from "@/lib/api/ApiError";
 import type { AddressInput } from "@/lib/api/address";
 import { IconMapPin } from "../ui/icons";
 
-export default function AddressSelector({
-  selectedId,
-  onSelect,
-}: {
+/** Lets the checkout page pull the customer's attention to this section. */
+export interface AddressSelectorHandle {
+  /** Scroll here, open the add form if nothing is saved, and focus the first field. */
+  requireAttention: () => void;
+}
+
+const AddressSelector = forwardRef<AddressSelectorHandle, {
   selectedId: string | null;
   onSelect: (addressId: string) => void;
-}) {
+  /** Shown highlighted at the top of the section while an address is required. */
+  attentionMessage?: string | null;
+  /** Called after a NEW address was saved and selected (so checkout can return to Pay Now). */
+  onAdded?: () => void;
+}>(function AddressSelector({ selectedId, onSelect, attentionMessage = null, onAdded }, ref) {
   const { data: addresses, isLoading, isError, refetch } = useAddresses();
   const addMutation = useAddAddress();
   const [isAdding, setIsAdding] = useState(false);
+  const sectionRef = useRef<HTMLElement>(null);
+
+  useImperativeHandle(
+    ref,
+    () => ({
+      requireAttention() {
+        const section = sectionRef.current;
+        if (!section) return;
+        section.scrollIntoView({ behavior: "smooth", block: "center" });
+        const noneSaved = !isLoading && !isError && (!addresses || addresses.length === 0);
+        if (noneSaved) setIsAdding(true);
+        // Wait for the scroll and (when opened) the form to render, then focus
+        // the first relevant control without jumping the page again.
+        setTimeout(() => {
+          const target =
+            section.querySelector<HTMLElement>("form input:not([type=hidden]):not([disabled])") ??
+            section.querySelector<HTMLElement>("input[type=radio]:checked") ??
+            section.querySelector<HTMLElement>("input[type=radio]") ??
+            section.querySelector<HTMLElement>("button");
+          target?.focus({ preventScroll: true });
+        }, 400);
+      },
+    }),
+    [addresses, isLoading, isError]
+  );
 
   // Default-address preselection is owned by the parent (CheckoutClient),
   // which derives it into `selectedId` alongside the checkout validation
@@ -31,13 +63,29 @@ export default function AddressSelector({
         setIsAdding(false);
         // A freshly added address is almost always the one being shipped to.
         onSelect(created.id);
+        onAdded?.();
       },
     });
   };
 
   return (
-    <section className="rounded-2xl border border-border bg-white p-5 sm:p-6">
-      <h2 className="font-display text-lg font-bold text-ink">Delivery address</h2>
+    <section
+      ref={sectionRef}
+      id="delivery-address"
+      tabIndex={-1}
+      aria-labelledby="delivery-address-title"
+      className={`scroll-mt-24 rounded-2xl border bg-white p-5 outline-none transition-shadow sm:p-6 ${
+        attentionMessage ? "border-sale ring-2 ring-sale/30" : "border-border"
+      }`}
+    >
+      <h2 id="delivery-address-title" className="font-display text-lg font-bold text-ink">
+        Delivery address
+      </h2>
+      {attentionMessage && (
+        <p role="alert" className="mt-3 rounded-xl bg-sale/10 px-3 py-2.5 text-sm font-semibold text-sale">
+          {attentionMessage}
+        </p>
+      )}
 
       {isLoading ? (
         <div className="mt-4 space-y-3">
@@ -135,4 +183,7 @@ export default function AddressSelector({
       )}
     </section>
   );
-}
+});
+
+export default AddressSelector;
+

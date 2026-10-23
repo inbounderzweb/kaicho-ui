@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Breadcrumbs from "../ui/Breadcrumbs";
 import Button from "../ui/Button";
-import AddressSelector from "./AddressSelector";
+import AddressSelector, { type AddressSelectorHandle } from "./AddressSelector";
 import OrderSummary from "./OrderSummary";
 import PaymentMethodSelector from "./PaymentMethodSelector";
 import CouponField from "./CouponField";
@@ -17,6 +17,7 @@ import { useCreateOrder } from "@/lib/hooks/useCreateOrder";
 import { useVerifyPayment } from "@/lib/hooks/useVerifyPayment";
 import { useAddresses } from "@/lib/hooks/useAddresses";
 import { useDeliveryArea } from "@/lib/hooks/useDeliveryArea";
+import { checkoutAddressProblem } from "@/lib/address/checkoutAddress";
 import { loadRazorpayScript } from "@/lib/payments/loadRazorpayScript";
 import { ApiError } from "@/lib/api/ApiError";
 import type { CheckoutLineInput } from "@/lib/api/checkout";
@@ -81,7 +82,15 @@ export default function CheckoutClient() {
   const previewMutation = useCheckoutPreview();
   const createOrderMutation = useCreateOrder();
   const verifyPaymentMutation = useVerifyPayment();
-  const { data: addresses } = useAddresses();
+  const { data: addresses, isLoading: addressesLoading, isError: addressesFailed } = useAddresses();
+  const addressSelectorRef = useRef<AddressSelectorHandle>(null);
+  const payButtonRef = useRef<HTMLButtonElement>(null);
+  // Set when Pay Now is pressed without a usable delivery address: highlights the
+  // address section with this message until the customer fixes it.
+  const [addressAttention, setAddressAttention] = useState<string | null>(null);
+  // Synchronous guard against a second click landing before React re-renders
+  // with the button disabled (double-click / rapid taps).
+  const submitLockRef = useRef(false);
   const deliveryArea = useDeliveryArea();
 
   // One key for the whole checkout page, generated lazily on the first
@@ -163,12 +172,22 @@ export default function CheckoutClient() {
   const isCartEmpty = cartHydrated && items.length === 0;
   const fallbackAddressId = addresses?.find((address) => address.isDefault)?.id ?? addresses?.[0]?.id ?? null;
   const effectiveAddressId = selectedAddressId ?? fallbackAddressId;
-  const isAddressReady = Boolean(effectiveAddressId);
   // The admin can limit delivery to certain states; the server refuses
   // anything else at checkout, this just says so before the customer pays.
   const selectedAddress = addresses?.find((address) => address.id === effectiveAddressId);
   const outsideDeliveryArea = Boolean(selectedAddress) && !deliveryArea.isServed(selectedAddress?.state);
   const deliveryAreaMessage = outsideDeliveryArea ? deliveryArea.messageFor(selectedAddress?.state) : null;
+  // Pay Now stays clickable without an address; this decides what clicking does.
+  // Existing addresses are not proof of a valid one: it must be selected,
+  // complete and deliverable.
+  const addressProblem = checkoutAddressProblem({
+    addresses,
+    isLoading: addressesLoading,
+    isError: addressesFailed,
+    selectedId: effectiveAddressId,
+    isServed: (state) => deliveryArea.isServed(state),
+    notServedMessage: (state) => deliveryArea.messageFor(state),
+  });
 
   // add_shipping_info: once per distinct address the checkout actually
   // settles on (default auto-pick or an explicit AddressSelector choice) —
@@ -204,13 +223,23 @@ export default function CheckoutClient() {
       ? "Your cart is empty."
       : hasBlockingIssue
         ? "Some items are unavailable or out of stock."
-        : !isAddressReady
-          ? "Select a delivery address to continue."
-          : outsideDeliveryArea
-            ? "Choose an address in an area we deliver to."
-            : createOrderMutation.isPending || isPaying
-            ? "Please wait..."
-            : null;
+        : createOrderMutation.isPending || isPaying
+          ? "Please wait..."
+          : null;
+
+  const handleSelectAddress = (addressId: string) => {
+    setSelectedAddressId(addressId);
+    setAddressAttention(null);
+    setFlowError(null);
+  };
+  // After a new address is saved, bring Pay Now back into view so the customer
+  // can finish without hunting for it (mobile: the button sits below the summary).
+  const handleAddressAdded = () => {
+    setTimeout(() => {
+      payButtonRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+      payButtonRef.current?.focus({ preventScroll: true });
+    }, 250);
+  };
 
   const goToOrder = useCallback(
     (orderNumber: string) => {
@@ -220,7 +249,7 @@ export default function CheckoutClient() {
     [clearCart, router]
   );
 
-  const handlePlaceOrder = async () => {
+  const placeOrder = async () => {
     if (!effectiveAddressId || lines.length === 0) return;
     setFlowError(null);
     // The offer discount the customer is looking at right now. Sent only so
@@ -256,6 +285,21 @@ export default function CheckoutClient() {
       if (err instanceof ApiError && err.status === 409 && /coupon/i.test(err.message)) {
         setCouponCode(null);
         idempotencyKeyRef.current = null;
+      }
+      // The session ended while the customer was on this page: send them back
+      // through sign-in instead of showing a generic failure.
+      if (err instanceof ApiError && err.status === 401) {
+        setFlowError("Your session has expired. Please sign in again to continue.");
+        void refetch();
+        return;
+      }
+      // The server refused the address (incomplete, or outside the delivery
+      // areas): point the customer at the address section, no order exists.
+      const code = err instanceof ApiError ? (err.details as { code?: string } | undefined)?.code : undefined;
+      if (code === "ADDRESS_INCOMPLETE" || code === "DELIVERY_AREA_NOT_SERVED") {
+        setAddressAttention(errorMessageOf(err, "Please check your delivery address."));
+        addressSelectorRef.current?.requireAttention();
+        return;
       }
       setFlowError(errorMessageOf(err, "Couldn't place your order. Please try again."));
       return;
@@ -347,6 +391,40 @@ export default function CheckoutClient() {
     checkout.open();
   };
 
+  // Pay Now: every mandatory condition is re-checked here, and only then does
+  // the order/payment flow start. Nothing is created or charged on a failed check.
+  const handlePlaceOrder = async () => {
+    if (submitLockRef.current || createOrderMutation.isPending || isPaying) return;
+    setFlowError(null);
+
+    if (!cartHydrated) return;
+    if (isCartEmpty || lines.length === 0) {
+      setFlowError("Your cart is empty. Add items before paying.");
+      return;
+    }
+    if (hasBlockingIssue) {
+      setFlowError("Some items are unavailable or out of stock. Please review your cart.");
+      return;
+    }
+    if (addressProblem) {
+      if (addressProblem.kind === "loading" || addressProblem.kind === "load-failed") {
+        setFlowError(addressProblem.message);
+        return;
+      }
+      setAddressAttention(addressProblem.message);
+      addressSelectorRef.current?.requireAttention();
+      return;
+    }
+    setAddressAttention(null);
+
+    submitLockRef.current = true;
+    try {
+      await placeOrder();
+    } finally {
+      submitLockRef.current = false;
+    }
+  };
+
   if (authState === "error") {
     return (
       <section className="mx-auto flex max-w-[1280px] flex-col items-center justify-center gap-3 px-5 py-24 text-center sm:px-6 lg:px-8">
@@ -374,12 +452,12 @@ export default function CheckoutClient() {
   }
 
   const previewFailed = previewMutation.isError;
+  // Only the cart itself and an in-flight request disable Pay Now. A missing or
+  // invalid address does not: clicking explains and guides the customer to fix it.
   const canPlaceOrder = Boolean(
-    effectiveAddressId &&
-      cartHydrated &&
+    cartHydrated &&
       !isCartEmpty &&
       !hasBlockingIssue &&
-      !outsideDeliveryArea &&
       !createOrderMutation.isPending &&
       !isPaying
   );
@@ -406,12 +484,13 @@ export default function CheckoutClient() {
       ) : (
         <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-3">
           <div className="space-y-6 lg:col-span-2">
-            <AddressSelector selectedId={effectiveAddressId} onSelect={setSelectedAddressId} />
-            {deliveryAreaMessage && (
-              <p role="alert" className="mt-3 rounded-xl bg-red-50 p-3 text-sm font-medium text-red-700">
-                {deliveryAreaMessage} Please choose or add an address in an area we deliver to.
-              </p>
-            )}
+            <AddressSelector
+              ref={addressSelectorRef}
+              selectedId={effectiveAddressId}
+              onSelect={handleSelectAddress}
+              attentionMessage={addressAttention ?? deliveryAreaMessage}
+              onAdded={handleAddressAdded}
+            />
             <PaymentMethodSelector
               value={paymentMethod}
               onChange={handlePaymentMethodChange}
@@ -473,25 +552,25 @@ export default function CheckoutClient() {
               )}
 
               <button
+                ref={payButtonRef}
                 type="button"
                 onClick={handlePlaceOrder}
                 disabled={!canPlaceOrder}
+                aria-busy={createOrderMutation.isPending || isPaying || undefined}
                 className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-full bg-brand text-sm font-semibold tracking-wide text-white transition-colors hover:bg-brand-dark disabled:cursor-not-allowed disabled:bg-brand/40"
               >
                 {createOrderMutation.isPending || isPaying ? "Please wait…" : "Pay now"}
               </button>
 
-              {!effectiveAddressId && (
-                <p className="mt-2 text-center text-[11px] text-ink-faint">
-                  Select a delivery address to continue.
-                </p>
+              {addressAttention && (
+                <p className="mt-2 text-center text-[11px] font-semibold text-sale">{addressAttention}</p>
               )}
               {effectiveAddressId && !preview && !previewFailed && (
                 <p className="mt-2 text-center text-[11px] text-ink-faint">
                   Pricing is still loading. You can place the order once it finishes loading.
                 </p>
               )}
-              {disabledReason && isAddressReady && (
+              {disabledReason && (
                 <p className="mt-2 text-center text-[11px] text-ink-faint">{disabledReason}</p>
               )}
 
