@@ -169,7 +169,13 @@ export default function PopupView({
   contained = false,
 }: PopupViewProps) {
   const { content } = popup;
-  const bannerImage = popupImageUrl(content, device);
+  // A banner whose file is gone (deleted upload, bad URL) must not leave an
+  // empty, zero-height popup: once it fails to load we drop it and show the
+  // text card instead, or nothing at all if there is no text.
+  const [failedImage, setFailedImage] = useState<string | null>(null);
+  const deviceImage = popupImageUrl(content, device);
+  const bannerImage = deviceImage && deviceImage !== failedImage ? deviceImage : undefined;
+  const imageBroken = Boolean(deviceImage) && deviceImage === failedImage;
   // Image promotions are edge-to-edge: saved copy must not add a text panel.
   const imageOnly = Boolean(bannerImage);
   const theme = THEME[popup.design.theme];
@@ -274,6 +280,8 @@ export default function PopupView({
       )
     ) : null;
 
+  if (imageBroken && !hasText && !countdownOn) return null;
+
   return (
     <div
       ref={rootRef}
@@ -321,7 +329,7 @@ export default function PopupView({
               decoding="async"
               fetchPriority="high"
               onLoad={() => setLoadedImage(imageUrl)}
-              onError={() => setLoadedImage(imageUrl)}
+              onError={() => setFailedImage(bannerImage ?? null)}
               data-ready={loadedImage === imageUrl}
               className={`${styles.image} block h-auto w-full object-cover md:h-full md:object-fill`}
             />
