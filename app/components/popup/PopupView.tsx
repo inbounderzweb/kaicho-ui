@@ -179,7 +179,11 @@ export default function PopupView({
   // Image promotions are edge-to-edge: saved copy must not add a text panel.
   const imageOnly = Boolean(bannerImage);
   const theme = THEME[popup.design.theme];
-  const placement = popup.devices[device].placement;
+  // An edge-to-edge image banner reads as a floating card, not a drawer: a
+  // bottom-sheet placement (the mobile default) would pin it to the bottom
+  // edge, so centre it instead.
+  const configuredPlacement = popup.devices[device].placement;
+  const placement = imageOnly && configuredPlacement === "BOTTOM_SHEET" ? "CENTER" : configuredPlacement;
   // Only a centred card / mobile sheet dims the page and traps focus. A
   // banner in any other desktop position leaves the page fully usable.
   const modal = placement === "CENTER" || placement === "BOTTOM_SHEET";
