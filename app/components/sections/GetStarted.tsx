@@ -10,7 +10,7 @@ const HIGHLIGHTS = [
   },
   {
     title: "Doorstep Delivery",
-    desc: "Sealed fresh with Japanese retort technology and delivered straight to you.",
+    desc: "Sealed with Japanese retort technology and delivered straight to your doorstep.",
     Icon: IconTruck,
   },
 ];
@@ -21,7 +21,7 @@ export default function GetStarted() {
       <Container fluid className="grid grid-cols-1 items-center gap-12 lg:grid-cols-2 lg:gap-16">
         <div>
           <span className="text-xs font-bold uppercase tracking-[0.2em] text-terracotta">
-            Start With Healthy
+     Wellness Served Daily
           </span>
           <h2 className="mt-3 font-display text-3xl font-bold tracking-tight text-ink sm:text-4xl">
             Get Started Today!

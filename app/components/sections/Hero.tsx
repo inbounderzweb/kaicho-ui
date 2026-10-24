@@ -12,7 +12,7 @@ const PRODUCTS = [
   name: "Kaicho Porridge Collection",
   heading: "Wholesome Meals",
   secondLine: "For Every Day",
-  description: "Discover four delicious ready-to-eat porridges crafted for convenient, nourishing meals. Just heat, serve, and enjoy.",
+  description: "Four ready-to-eat porridges. Just heat, serve, and enjoy.",
   image: "first_banner_mobile_trim.png",
   desktopImage: "first_banner_desktop_trim.png"
 },
@@ -23,10 +23,10 @@ const PRODUCTS = [
 ] as const;
 
 const FEATURES = [
-  { lines: ["100%", "Natural"], image: "icon_Layer_1.png", width: 40 },
-  { lines: ["No", "Preservatives"], image: "icon_Layer_2.png", width: 30 },
-  { lines: ["Diabetic", "Friendly"], image: "icon_Layer_3.png", width: 36 },
-  { lines: ["High in Fiber", "& Protein"], image: "icon_Layer_4.png", width: 40 },
+  { lines: ["Travel", "Friendly"], image: "icons/icon_1.png", width: 40 },
+  { lines: ["No", "Refrigeration"], image: "icons/icon_2.png", width: 40 },
+  { lines: ["Retort", "Pouch"], image: "icons/icon_3.png", width: 30 },
+  { lines: ["No", "Preservatives"], image: "icons/icon_4.png", width: 39 },
 ] as const;
 
 const SLIDE_DURATION = 6000;

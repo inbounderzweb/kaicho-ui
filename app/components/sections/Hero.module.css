@@ -52,8 +52,8 @@
 
 .features { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); width: calc(var(--unit) * 380); margin-top: calc(var(--unit) * 30); transform: translateX(calc(var(--unit) * -7)); list-style: none; }
 .features li { display: flex; flex-direction: column; align-items: center; text-align: center; }
-.featureArtwork { display: grid; place-items: center; height: calc(var(--unit) * 40); }
-.featureIcon { width: auto; height: calc(var(--unit) * 40); object-fit: contain; transition: transform .3s ease; }
+.featureArtwork { display: grid; place-items: center; height: calc(var(--unit) * 40 + 3px); }
+.featureIcon { width: auto; height: calc(var(--unit) * 40 + 3px); object-fit: contain; transition: transform .3s ease; }
 .features li:hover .featureIcon { transform: translateY(-4px); }
 .features p { margin-top: calc(var(--unit) * 8); font-size: max(12px, calc(var(--unit) * 14)); line-height: max(12px, calc(var(--unit) * 14)); font-weight: 300; }
 .features p span { display: block; white-space: nowrap; }
@@ -90,13 +90,14 @@
   .hero:hover .productArrow { opacity: 1; }
 }
 
-/* Phones. The hero must fit between the sticky top bar (60 units + 10px) and the fixed
-   bottom tab bar (56px + safe area) so the CTA is visible without scrolling.
+/* Phones. The hero must fit between the sticky top bar (74px) and the fixed
+   bottom tab bar (69px + safe area) so the CTA is visible without scrolling.
    Text scales with width (--unit); the product image takes whatever height is left. */
 @media (max-width: 559px) {
   .hero {
-    --visible: calc(100svh - var(--unit) * 60 - 10px - 56px - env(safe-area-inset-bottom));
-    --stage: clamp(180px, calc(100svh - var(--unit) * 394 - 88px - env(safe-area-inset-bottom)), calc(var(--unit) * 345));
+    /* Real chrome: sticky header = 74px (Header h-18.5), fixed MobileTabBar = 68px + 1px border + safe area. */
+    --visible: calc(100svh - 74px - 69px - env(safe-area-inset-bottom));
+    --stage: clamp(180px, calc(100svh - var(--unit) * 334 - 165px - env(safe-area-inset-bottom)), calc(var(--unit) * 345));
     display: flex;
     min-height: var(--visible);
   }
@@ -108,7 +109,7 @@
   /* Auto margins hand any spare height to the gaps around the image. */
   .productStage { width: var(--stage); height: var(--stage); margin-top: auto; margin-bottom: auto; margin-left: calc(var(--stage) * .13); }
   .features { width: calc(var(--unit) * 380 - 28px); margin-top: 0; transform: translate(calc(var(--unit) * -7), -4px); }
-  .featureArtwork, .featureIcon { height: calc(var(--unit) * 40 - 16px); }
+  .featureArtwork, .featureIcon { height: calc(var(--unit) * 40 - 13px); }
   .features p { font-size: max(7px, calc(var(--unit) * 14 - 5px)); line-height: max(9px, calc(var(--unit) * 14 - 3px)); }
   .cta { height: max(44px, calc(var(--unit) * 44)); margin-top: calc(var(--unit) * 20); }
   .productArrow { top: calc(var(--unit) * 156 + var(--stage) / 2 - 18px); }
@@ -116,7 +117,9 @@
 }
 
 @media (min-width: 560px) and (max-width: 1023px) {
-  .hero { --unit: 1.2px; min-height: max(906px, calc(100svh - 128px)); }
+  /* Tablet still shows the fixed bottom tab bar (hidden from 1024px), so end the hero at its top edge. */
+  .hero { --unit: 1.2px; min-height: max(860px, calc(100svh - 74px - 69px - env(safe-area-inset-bottom))); }
+  .content { padding-bottom: 40px; }
   .foliage { height: 510px; }
   .leaves { object-position: center 30%; }
 }
@@ -146,14 +149,12 @@
   .productStage { position: absolute; top: calc(50% + var(--desktop-unit) * 18); right: calc(var(--edge) + 4vw + 60px - 1.54vw); width: calc(44% - 25px); height: auto; aspect-ratio: 1; margin: 0; transform: translateY(-50%) scale(var(--scroll-zoom, 1)); }
   .productImage { filter: drop-shadow(0 18px 12px #001c1a35); }
   .bannerSlide .productImage { filter: drop-shadow(0 18px 12px #001c1a35); }
-  .bannerSlide .productReveal { transform: scale(1.12); }
+  /* Wide pack shot: nudge right so its left pack never runs under the (nowrap) copy. */
+  .bannerSlide .productReveal { transform: translateX(6%); }
   .features { width: calc(var(--desktop-unit) * 440); max-width: 44%; margin-top: calc(var(--desktop-unit) * 38); transform: translateX(calc(var(--desktop-unit) * -24)); }
-  .featureArtwork { width: calc(var(--desktop-unit) * 46); height: calc(var(--desktop-unit) * 46); border: 2px solid #ffffff; border-radius: 50%; }
-  .featureIcon { height: calc(var(--desktop-unit) * 30); }
-  .features li:first-child .featureArtwork { border: 0; }
-  .features li:first-child .featureIcon { height: calc(var(--desktop-unit) * 46); }
-  .features li:last-child .featureArtwork { border: 0; }
-  .features li:last-child .featureIcon { height: calc(var(--desktop-unit) * 46); }
+  /* No CSS ring: the icon artwork carries its own circle where it has one. */
+  .featureArtwork { width: calc(var(--desktop-unit) * 46 + 3px); height: calc(var(--desktop-unit) * 46 + 3px); }
+  .featureIcon { height: calc(var(--desktop-unit) * 46 + 3px); }
   .features p { margin-top: calc(var(--desktop-unit) * 10); font-size: max(12px, calc(var(--desktop-unit) * 14)); line-height: 1.3; font-weight: 400; }
   .cta { gap: calc(var(--desktop-unit) * 18); min-width: calc(var(--desktop-unit) * 230); height: max(42px, calc(var(--desktop-unit) * 48)); margin-top: calc(var(--desktop-unit) * 38); padding: 0 calc(var(--desktop-unit) * 26); background: #00a861; font-size: max(14px, calc(var(--desktop-unit) * 16)); font-weight: 500; }
   .ctaArrow { width: calc(var(--desktop-unit) * 22); height: calc(var(--desktop-unit) * 22); }
@@ -165,6 +166,11 @@
   .productArrow:hover { background: #fff; }
   .previous { left: max(16px, calc(var(--desktop-unit) * 34)); }
   .next { right: max(16px, calc(var(--desktop-unit) * 34)); }
+}
+
+/* Narrow desktops: the copy column is only ~44% wide, so let the description wrap instead of running under the product art. */
+@media (min-width: 1024px) and (max-width: 1365px) {
+  .description { white-space: normal; max-width: 100%; }
 }
 
 @media (prefers-reduced-motion: reduce) {
