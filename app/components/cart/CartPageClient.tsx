@@ -93,11 +93,6 @@ export default function CartPageClient() {
         {itemCount} {itemCount === 1 ? "item" : "items"} in your cart
       </p>
 
-      {/* Free shipping progress */}
-      <div className="mt-6">
-        <ShippingProgress subtotal={subtotal} />
-      </div>
-
       {items.length === 0 ? (
         <div className="mt-8 flex flex-col items-center justify-center rounded-2xl border border-dashed border-border py-20 text-center">
           <IconCart className="h-10 w-10 text-ink-faint" />
@@ -114,7 +109,6 @@ export default function CartPageClient() {
         <div className="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-3">
           {/* Items list */}
           <div className="space-y-4 lg:col-span-2">
-            {offer && <CartOfferPanel offer={offer} items={items} isRefreshing={isEvaluating} />}
             <div className="rounded-2xl border border-border bg-white p-4 sm:p-6">
               <div className="hidden border-b border-border pb-3 text-xs font-bold uppercase tracking-wider text-ink-faint sm:flex sm:items-center sm:justify-between">
                 <span>Product</span>
@@ -141,6 +135,8 @@ export default function CartPageClient() {
                 );
               })}
             </div>
+            {offer && <CartOfferPanel offer={offer} items={items} isRefreshing={isEvaluating} />}
+            <ShippingProgress subtotal={subtotal} />
           </div>
 
           {/* Order summary */}

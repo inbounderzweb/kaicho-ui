@@ -8,6 +8,14 @@ import BowlSteam from "./BowlSteam";
 import styles from "./Hero.module.css";
 
 const PRODUCTS = [
+  {
+  name: "Kaicho Porridge Collection",
+  heading: "Wholesome Meals",
+  secondLine: "For Every Day",
+  description: "Discover four delicious ready-to-eat porridges crafted for convenient, nourishing meals. Just heat, serve, and enjoy.",
+  image: "first_banner_mobile_trim.png",
+  desktopImage: "first_banner_desktop_trim.png"
+},
   { name: "Chicken Oats Porridge", heading: "Chicken Oats", secondLine: "Porridge", description: "A nourishing meal, ready in minutes.", image: "Chicken-Oats.png", desktopImage: "desktop-Chicken-Oats.png" },
   { name: "Broccoli & Mushroom Oats Porridge", heading: "Broccoli & Mushroom", secondLine: "Oats Porridge", description: "Veggie goodness, ready in minutes.", image: "Broccolli.png", desktopImage: "desktop-Broccolli.png" },
   { name: "Mixed Millet Porridge", heading: "Mixed Millet", secondLine: "Porridge", description: "Wholesome millets, ready in minutes.", image: "Mixed-Millet.png", desktopImage: "desktop-Mixed-Millet.png" },
@@ -25,7 +33,11 @@ const SLIDE_DURATION = 6000;
 const ENTER_DURATION = 700;
 const EXIT_DURATION = 700;
 const HOLD_DURATION = SLIDE_DURATION - EXIT_DURATION;
-const INITIAL_SLIDE = 2;
+const INITIAL_SLIDE = 0;
+
+// The collection banners are wide multi-pack shots, not a single bowl photo,
+// so they skip the bowl steam and get their own sizing in Hero.module.css.
+const isBanner = (image: string) => image.startsWith("first_banner");
 
 function productIndex(slide: number) {
   return ((slide % PRODUCTS.length) + PRODUCTS.length) % PRODUCTS.length;
@@ -233,6 +245,7 @@ export default function Hero() {
                 key={item.image}
                 className={[
                   styles.productSlide,
+                  isBanner(item.image) ? styles.bannerSlide : "",
                   index === active ? styles.activeSlide : "",
                   index === active && transitioning ? styles.incomingSlide : "",
                   index === outgoing ? styles.outgoingSlide : "",
@@ -246,7 +259,7 @@ export default function Hero() {
                     <source media="(min-width: 1024px)" srcSet={`/hero-page/product-images/${item.desktopImage}`} />
                   <Image
                     src={`/hero-page/product-images/${item.image}`}
-                    alt={index === active ? `Kaicho ${item.name} pack with a freshly served bowl` : ""}
+                    alt={index === active ? (isBanner(item.image) ? `${item.name}: Chicken Oats, Navadhanya, Mixed Millet and Broccoli & Mushroom porridge packs` : `Kaicho ${item.name} pack with a freshly served bowl`) : ""}
                     width={280}
                     height={280}
                     unoptimized
@@ -256,7 +269,7 @@ export default function Hero() {
                     className={styles.productImage}
                   />
                   </picture>
-                  <BowlSteam />
+                  {!isBanner(item.image) && <BowlSteam />}
                 </div>
               </div>
             ))}

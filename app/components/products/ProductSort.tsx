@@ -27,7 +27,7 @@ export default function ProductSort({
   const current = OPTIONS.find((o) => o.sort === sort && o.order === order)?.value ?? "relevance";
 
   return (
-    <label className="flex items-center gap-2 text-sm text-ink-muted">
+    <label className="flex min-w-0 items-center gap-2 text-sm text-ink-muted">
       <span className="hidden sm:inline">Sort by</span>
       <select
         aria-label="Sort products"

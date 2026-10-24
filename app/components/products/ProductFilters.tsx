@@ -35,6 +35,9 @@ export default function ProductFilters(props: ProductFiltersProps) {
   const { layout = "sidebar" } = props;
   const [drawerOpen, setDrawerOpen] = useState(false);
   const isToolbar = layout === "toolbar";
+  const { value, onChange } = props;
+  const activeCount =
+    (value.brand ? 1 : 0) + (value.minPrice || value.maxPrice ? 1 : 0) + (props.showCategoryFilter !== false && value.category ? 1 : 0);
 
   return (
     <>
@@ -44,9 +47,11 @@ export default function ProductFilters(props: ProductFiltersProps) {
         <button
           type="button"
           onClick={() => setDrawerOpen(true)}
-          className="flex h-10 items-center gap-2 rounded-full border border-border bg-white px-4 text-sm font-semibold text-ink transition-colors hover:border-brand hover:text-brand"
+          className={`flex h-10 items-center gap-2 rounded-full border border-border bg-white px-4 text-sm font-semibold text-ink transition-colors hover:border-brand hover:text-brand ${isToolbar ? "whitespace-nowrap" : ""}`}
         >
-          Filters
+          Filters{activeCount > 0 && (
+            <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-brand px-1 text-xs text-white">{activeCount}</span>
+          )}
         </button>
       </div>
 
@@ -72,8 +77,12 @@ export default function ProductFilters(props: ProductFiltersProps) {
             onClick={() => setDrawerOpen(false)}
             className="absolute inset-0 bg-charcoal/40"
           />
-          <div className="absolute inset-y-0 right-0 flex w-full max-w-xs flex-col overflow-y-auto bg-white p-5 shadow-xl">
-            <div className="flex items-center justify-between">
+          <div
+            className={`absolute inset-y-0 right-0 flex w-full flex-col bg-white shadow-xl ${
+              isToolbar ? "max-w-md" : "max-w-xs overflow-y-auto p-5"
+            }`}
+          >
+            <div className={`flex items-center justify-between ${isToolbar ? "border-b border-border px-4 py-3" : ""}`}>
               <h2 className="font-display text-base font-bold text-ink">Filters</h2>
               <button
                 type="button"
@@ -84,16 +93,31 @@ export default function ProductFilters(props: ProductFiltersProps) {
                 <IconClose className="h-4 w-4" />
               </button>
             </div>
-            <div className="mt-5">
-              <FilterFields {...props} />
+            {isToolbar ? (
+              <TwoPaneFilters {...props} />
+            ) : (
+              <div className="mt-5">
+                <FilterFields {...props} />
+              </div>
+            )}
+            <div className={`flex gap-3 ${isToolbar ? "border-t border-border p-3" : "mt-6"}`}>
+              {isToolbar && (
+                <button
+                  type="button"
+                  onClick={() => onChange({ category: undefined, brand: undefined, minPrice: "", maxPrice: "" })}
+                  className="h-11 flex-1 rounded-full border border-border text-sm font-semibold text-ink"
+                >
+                  Clear all
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => setDrawerOpen(false)}
+                className="h-11 flex-1 rounded-full bg-brand text-sm font-semibold text-white"
+              >
+                Show results
+              </button>
             </div>
-            <button
-              type="button"
-              onClick={() => setDrawerOpen(false)}
-              className="mt-6 h-11 w-full rounded-full bg-brand text-sm font-semibold text-white"
-            >
-              Show results
-            </button>
           </div>
         </div>
       )}
@@ -199,5 +223,109 @@ function FilterChip({ label, selected, onClick }: { label: string; selected: boo
     >
       {label}
     </button>
+  );
+}
+
+// Flipkart-style side filter: section list on the left, that section's
+// options on the right. Same hooks/handlers as FilterFields.
+function TwoPaneFilters({ value, onChange, showCategoryFilter = true }: ProductFiltersProps) {
+  const { data: categoriesData } = useCategories();
+  const { data: brandsData } = usePublicBrands();
+  const sections = [
+    ...(showCategoryFilter ? [{ id: "category", label: "Category", count: value.category ? 1 : 0 }] : []),
+    { id: "brand", label: "Brand", count: value.brand ? 1 : 0 },
+    { id: "price", label: "Price", count: value.minPrice || value.maxPrice ? 1 : 0 },
+  ];
+  const [active, setActive] = useState(sections[0].id);
+
+  return (
+    <div className="flex min-h-0 flex-1">
+      <ul className="w-32 shrink-0 overflow-y-auto bg-cream/60">
+        {sections.map((section) => (
+          <li key={section.id}>
+            <button
+              type="button"
+              onClick={() => setActive(section.id)}
+              aria-current={active === section.id}
+              className={`flex w-full items-center justify-between gap-1 border-l-4 px-3 py-4 text-left text-sm font-semibold ${
+                active === section.id ? "border-brand bg-white text-brand" : "border-transparent text-ink-muted"
+              }`}
+            >
+              {section.label}
+              {section.count > 0 && <span className="h-2 w-2 rounded-full bg-brand" />}
+            </button>
+          </li>
+        ))}
+      </ul>
+      <div className="flex-1 overflow-y-auto p-4">
+        {active === "category" && (
+          <OptionList
+            options={(categoriesData?.categories ?? []).map((c) => ({ key: c.categoryId, label: c.name, slug: c.slug }))}
+            selected={value.category}
+            onSelect={(slug) => onChange({ category: slug })}
+          />
+        )}
+        {active === "brand" && (
+          <OptionList
+            options={(brandsData?.brands ?? []).map((b) => ({ key: b.brandId, label: b.name, slug: b.slug }))}
+            selected={value.brand}
+            onSelect={(slug) => onChange({ brand: slug })}
+          />
+        )}
+        {active === "price" && (
+          <div className="flex items-center gap-2">
+            <input
+              type="number"
+              inputMode="decimal"
+              min={0}
+              aria-label="Minimum price"
+              placeholder="Min"
+              value={value.minPrice}
+              onChange={(e) => onChange({ minPrice: e.target.value })}
+              className="h-10 w-full rounded-lg border border-border px-3 text-sm focus:border-brand focus:outline-none"
+            />
+            <span className="text-ink-faint">–</span>
+            <input
+              type="number"
+              inputMode="decimal"
+              min={0}
+              aria-label="Maximum price"
+              placeholder="Max"
+              value={value.maxPrice}
+              onChange={(e) => onChange({ maxPrice: e.target.value })}
+              className="h-10 w-full rounded-lg border border-border px-3 text-sm focus:border-brand focus:outline-none"
+            />
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function OptionList({
+  options,
+  selected,
+  onSelect,
+}: {
+  options: { key: string; label: string; slug: string }[];
+  selected: string | undefined;
+  onSelect: (slug: string | undefined) => void;
+}) {
+  return (
+    <ul className="space-y-1">
+      {options.map((opt) => (
+        <li key={opt.key}>
+          <label className="flex cursor-pointer items-center gap-3 py-2.5 text-sm text-ink">
+            <input
+              type="checkbox"
+              checked={selected === opt.slug}
+              onChange={() => onSelect(selected === opt.slug ? undefined : opt.slug)}
+              className="h-4 w-4 rounded border-border text-brand focus:ring-brand"
+            />
+            {opt.label}
+          </label>
+        </li>
+      ))}
+    </ul>
   );
 }

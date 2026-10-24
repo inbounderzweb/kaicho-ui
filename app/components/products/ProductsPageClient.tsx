@@ -6,6 +6,7 @@ import SearchBox from "./SearchBox";
 import ProductSort from "./ProductSort";
 import ProductFilters from "./ProductFilters";
 import ProductCategoryTabs from "./ProductCategoryTabs";
+import MobileFilterBar from "./MobileFilterBar";
 import ProductGrid from "./ProductGrid";
 import Pagination from "./Pagination";
 import { useCatalogFilters } from "@/lib/hooks/useCatalogFilters";
@@ -61,35 +62,54 @@ export default function ProductsPageClient() {
 
   return (
     <Container className="py-8 sm:py-10">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <ProductCategoryTabs
-          value={filters.category || undefined}
-          onChange={(category) => filters.update({ category })}
-        />
-        <div className="flex shrink-0 items-center gap-2">
-          <ProductFilters
-            layout="toolbar"
-            showCategoryFilter={false}
-            value={{
+      <div className="sm:hidden">
+        <SearchBox value={filters.search} onChange={(search) => filters.update({ search })} />
+        <div className="mt-3">
+          <MobileFilterBar
+            category={filters.category || undefined}
+            onCategoryChange={(category) => filters.update({ category })}
+            filters={{
               brand: filters.brand,
               minPrice: filters.minPrice,
               maxPrice: filters.maxPrice,
               inStock: filters.inStock,
             }}
-            onChange={(patch) => filters.update(patch)}
+            onFiltersChange={(patch) => filters.update(patch)}
+            sort={filters.sort}
+            order={filters.order}
+            onSortChange={(sort, order) => filters.update({ sort, order })}
           />
         </div>
       </div>
 
-      <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="sm:max-w-xs sm:flex-1">
-          <SearchBox value={filters.search} onChange={(search) => filters.update({ search })} />
-        </div>
-        <ProductSort
-          sort={filters.sort}
-          order={filters.order}
-          onChange={(sort, order) => filters.update({ sort, order })}
+      <div className="hidden sm:block">
+        <ProductCategoryTabs
+          value={filters.category || undefined}
+          onChange={(category) => filters.update({ category })}
         />
+        <div className="mt-3 flex items-center justify-between gap-3">
+          <div className="max-w-xs flex-1">
+            <SearchBox value={filters.search} onChange={(search) => filters.update({ search })} />
+          </div>
+          <div className="flex shrink-0 items-center gap-2">
+            <ProductSort
+              sort={filters.sort}
+              order={filters.order}
+              onChange={(sort, order) => filters.update({ sort, order })}
+            />
+            <ProductFilters
+              layout="toolbar"
+              showCategoryFilter={false}
+              value={{
+                brand: filters.brand,
+                minPrice: filters.minPrice,
+                maxPrice: filters.maxPrice,
+                inStock: filters.inStock,
+              }}
+              onChange={(patch) => filters.update(patch)}
+            />
+          </div>
+        </div>
       </div>
 
       {!isLoading && (
