@@ -70,12 +70,12 @@
 .dots .selectedDot { width: 16px; background: #fff; }
 
 @keyframes slideEnter {
-  from { opacity: 0; transform: translate3d(calc(var(--slide-direction) * -70%), 0, 0); }
+  from { opacity: 0; transform: translate3d(calc(var(--slide-direction) * 70%), 0, 0); }
   to { opacity: 1; transform: translate3d(0, 0, 0); }
 }
 @keyframes slideExit {
   from { opacity: 1; transform: translate3d(0, 0, 0); }
-  to { opacity: 0; transform: translate3d(calc(var(--slide-direction) * 70%), 0, 0); }
+  to { opacity: 0; transform: translate3d(calc(var(--slide-direction) * -70%), 0, 0); }
 }
 @keyframes steamFlow {
   0% { opacity: 0; transform: translate3d(0, 6%, 0) rotate(0) scale(.7, .86); }

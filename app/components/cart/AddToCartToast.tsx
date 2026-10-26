@@ -25,16 +25,26 @@ export default function AddToCartToast() {
     <div
       role="status"
       aria-live="polite"
-      className="pointer-events-none fixed inset-x-0 bottom-24 z-[60] flex justify-center px-4 sm:bottom-6 sm:justify-end sm:px-6"
+      className="pointer-events-none fixed inset-x-0 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] z-[60] flex justify-center px-4 sm:bottom-6 sm:justify-end sm:px-6"
     >
-      <div className="pointer-events-auto flex max-w-sm items-center gap-3 rounded-full bg-ink px-4 py-2.5 text-sm text-white shadow-lg">
-        <span aria-hidden className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-brand text-[11px] font-bold">
-          ✓
+      <div
+        key={id}
+        className="pointer-events-auto flex w-full max-w-sm animate-[fade-up_.35s_cubic-bezier(.2,.8,.2,1)_both] items-center gap-3 rounded-2xl bg-ink py-2.5 pl-3 pr-2.5 text-white shadow-[0_10px_30px_rgba(0,0,0,.28)] ring-1 ring-white/10 motion-reduce:animate-none"
+      >
+        <span aria-hidden className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand">
+          <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={3} strokeLinecap="round" strokeLinejoin="round">
+            <path d="M5 12.5l4.5 4.5L19 7.5" />
+          </svg>
         </span>
-        <span className="min-w-0 truncate">
-          <span className="font-semibold">{message}</span> added to cart
+        <span className="min-w-0 flex-1 leading-tight">
+          <span className="block truncate text-[13px] font-semibold">{message}</span>
+          <span className="block text-xs text-white/60">Added to cart</span>
         </span>
-        <Link href="/cart" onClick={hide} className="shrink-0 font-bold text-white underline underline-offset-2">
+        <Link
+          href="/cart"
+          onClick={hide}
+          className="shrink-0 rounded-xl bg-white px-3.5 py-2 text-xs font-bold text-ink transition active:scale-95"
+        >
           View cart
         </Link>
       </div>
