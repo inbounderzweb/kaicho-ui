@@ -11,6 +11,7 @@ import { useCartOffer } from "@/lib/hooks/useCartOffer";
 import { useShippingPolicy } from "@/lib/hooks/useShippingPolicy";
 import { useCartStore } from "@/lib/store/cart.store";
 import { cartLineKey } from "./cart-data";
+import { offerSummaryLabel } from "@/lib/offers/matching";
 import { useAuthGate } from "@/lib/auth/useAuthGate";
 import { trackEvent } from "@/lib/analytics/events";
 import { toEcommerceItem } from "@/lib/analytics/ecommerce";
@@ -151,7 +152,7 @@ export default function CartPageClient() {
                 </div>
                 {offerDiscount > 0 && (
                   <div className="flex items-start justify-between gap-3 text-brand">
-                    <span className="min-w-0">Free item discount{offer && offer.freeUnits > 1 ? ` (${offer.freeUnits} items)` : ""}</span>
+                    <span className="min-w-0">{offerSummaryLabel(offer)}</span>
                     <span className="shrink-0 whitespace-nowrap font-semibold">− Rs. {offerDiscount.toFixed(2)}</span>
                   </div>
                 )}

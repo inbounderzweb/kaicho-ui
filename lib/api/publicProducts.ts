@@ -1,4 +1,5 @@
 import { apiFetch, type PublicReadOptions } from "./client";
+import type { MrpDisplayMode } from "./product";
 
 // Separate, deliberately smaller DTO shapes than lib/api/product.ts (the
 // admin CRUD client) — this file talks to the unauthenticated /products,
@@ -19,6 +20,8 @@ export interface PublicProductPricing {
   mrp: number;
   sellingPrice: number;
   discountPercentage: number;
+  /** Per-product override of the store-wide MRP display setting; absent = follow the store. */
+  mrpDisplay?: MrpDisplayMode;
 }
 
 export interface PublicProductInventory {
@@ -94,6 +97,7 @@ export interface PublicRelatedCombo {
   price: number;
   mrp: number;
   discountPercentage: number;
+  mrpDisplay?: MrpDisplayMode;
 }
 
 export interface PublicProductDetail {

@@ -195,6 +195,11 @@ function ReceiptEditor({ order }: { order: AdminOrderDetail }) {
                         {item.freeQuantity} FREE · {order.offer?.name ?? "BOGO Offer"} (−{formatReceiptCurrency(item.offerDiscount ?? 0)})
                       </p>
                     )}
+                    {(item.freeQuantity ?? 0) === 0 && (item.offerDiscount ?? 0) > 0 && (
+                      <p className={styles.itemDetail}>
+                        {order.offer?.name ?? "Offer"} (−{formatReceiptCurrency(item.offerDiscount ?? 0)})
+                      </p>
+                    )}
                   </td>
                   <td className={styles.numeric}>{item.quantity}</td>
                   <td className={styles.numeric}>{formatReceiptCurrency(item.unitPrice)}</td>
@@ -227,7 +232,10 @@ function ReceiptEditor({ order }: { order: AdminOrderDetail }) {
             <div><dt>Subtotal</dt><dd>{formatReceiptCurrency(order.pricing.subtotal)}</dd></div>
             {offerDiscount > 0 && (
               <div>
-                <dt>{order.offer?.name ?? "BOGO Offer"} ({order.offer?.freeUnits ?? 0} free)</dt>
+                <dt>
+                  {order.offer?.name ?? "BOGO Offer"}
+                  {(order.offer?.freeUnits ?? 0) > 0 ? ` (${order.offer?.freeUnits} free)` : ""}
+                </dt>
                 <dd>− {formatReceiptCurrency(offerDiscount)}</dd>
               </div>
             )}

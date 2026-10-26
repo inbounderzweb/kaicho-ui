@@ -13,7 +13,8 @@ interface SimLine extends PickedProduct {
 
 // Admin "Preview": runs the REAL pairing engine on the server against live
 // DB prices for a hypothetical cart — works while the offer is still a draft.
-export default function OfferSimulator({ offerId }: { offerId: string }) {
+export default function OfferSimulator({ offerId, type = "BOGO" }: { offerId: string; type?: "BOGO" | "PERCENTAGE" | "FIXED" }) {
+  const isBogo = type === "BOGO";
   const [lines, setLines] = useState<SimLine[]>([]);
   const simulate = useSimulateOffer(offerId);
 
@@ -21,7 +22,7 @@ export default function OfferSimulator({ offerId }: { offerId: string }) {
     setLines((prev) => prev.map((l) => (l.id === id ? { ...l, ...patch } : l)));
 
   const run = () => {
-    const manual = lines.some((l) => l.free.trim() !== "");
+    const manual = isBogo && lines.some((l) => l.free.trim() !== "");
     simulate.mutate({
       items: lines.map((l) => ({ productId: l.id, quantity: l.quantity })),
       freeSelections: manual
@@ -64,6 +65,7 @@ export default function OfferSimulator({ offerId }: { offerId: string }) {
                   className="w-16 rounded-lg border border-admin-border bg-admin-surface px-2 py-1 text-sm dark:border-admin-border-dark dark:bg-admin-surface-dark"
                 />
               </label>
+              {isBogo && (
               <label className="flex items-center gap-1 text-xs text-black/55 dark:text-white/55">
                 Free
                 <input
@@ -75,6 +77,7 @@ export default function OfferSimulator({ offerId }: { offerId: string }) {
                   className="w-16 rounded-lg border border-admin-border bg-admin-surface px-2 py-1 text-sm dark:border-admin-border-dark dark:bg-admin-surface-dark"
                 />
               </label>
+              )}
             </div>
           ))}
           <button
@@ -96,17 +99,23 @@ export default function OfferSimulator({ offerId }: { offerId: string }) {
             <div key={l.productId} className="flex items-center justify-between gap-3">
               <span className="min-w-0 truncate">{l.name ?? "Unknown product"}</span>
               <span className="shrink-0 tabular-nums text-xs text-black/60 dark:text-white/60">
-                {l.paidQuantity} paid{l.freeQuantity > 0 ? ` + ${l.freeQuantity} FREE` : ""} × ₹{l.unitPrice}
+                {isBogo
+                  ? `${l.paidQuantity} paid${l.freeQuantity > 0 ? ` + ${l.freeQuantity} FREE` : ""} × ₹${l.unitPrice}`
+                  : `${l.quantity} × ₹${l.unitPrice}${(l.discountAmount ?? 0) > 0 ? ` · −₹${l.discountAmount!.toFixed(2)}` : " · not discounted"}`}
               </span>
             </div>
           ))}
           <p className="border-t border-admin-border pt-2 font-semibold dark:border-admin-border-dark">
-            Customer saves ₹{result.discountAmount.toFixed(2)} ({result.freeUnits} free unit{result.freeUnits === 1 ? "" : "s"})
+            Customer saves ₹{result.discountAmount.toFixed(2)}
+            {isBogo ? ` (${result.freeUnits} free unit${result.freeUnits === 1 ? "" : "s"})` : ""}
           </p>
+          {isBogo && result.needsFreeProduct && (
+            <p className="text-xs text-black/55 dark:text-white/55">Add one of the offer&apos;s free products to the cart to unlock the free item.</p>
+          )}
           {result.limitReached && (
             <p className="text-xs text-amber-700 dark:text-amber-400">The free-unit limit was reached.</p>
           )}
-          {result.discountAmount === 0 && result.unitsToNextFree > 0 && (
+          {isBogo && result.discountAmount === 0 && result.unitsToNextFree > 0 && (
             <p className="text-xs text-black/55 dark:text-white/55">
               Add {result.unitsToNextFree} more eligible unit{result.unitsToNextFree === 1 ? "" : "s"} to unlock a free one.
             </p>

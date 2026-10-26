@@ -169,6 +169,12 @@ export interface OrderOffer {
   allowCouponStacking: boolean;
   freeUnits: number;
   discountAmount: number;
+  /** PERCENTAGE offers. */
+  discountPercent?: number | null;
+  /** FIXED offers: rupees off each unit. */
+  discountAmountPerUnit?: number | null;
+  /** PERCENTAGE / FIXED offers: each discounted line (`discount` = rupees off that whole line). */
+  discountedItems?: { productId: string; sku: string; name: string; quantity: number; unitPrice: number; discount: number }[];
   freeItems: { productId: string; sku: string; name: string; quantity: number; unitPrice: number; discount: number }[];
   pairs: {
     freeProductId: string;

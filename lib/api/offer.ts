@@ -13,6 +13,16 @@ import type { CheckoutLineInput, CheckoutPreviewResult } from "./checkout";
 export const OFFER_STATUSES = ["DRAFT", "SCHEDULED", "ACTIVE", "EXPIRED", "DISABLED"] as const;
 export type OfferStatus = (typeof OFFER_STATUSES)[number];
 
+/** BOGO = "Buy X Get Y Free" (the value existing offers already use). */
+export const OFFER_TYPES = ["BOGO", "PERCENTAGE", "FIXED"] as const;
+export type OfferType = (typeof OFFER_TYPES)[number];
+
+export const OFFER_TYPE_LABELS: Record<OfferType, string> = {
+  BOGO: "Buy X Get Y Free",
+  PERCENTAGE: "Percentage discount",
+  FIXED: "Fixed amount discount",
+};
+
 // ---- Storefront ----
 
 export interface PublicOffer {
@@ -20,7 +30,12 @@ export interface PublicOffer {
   name: string;
   description: string | null;
   image: { mediaId: string; url: string; thumbnailUrl?: string } | null;
-  type: "BOGO";
+  type: OfferType;
+  /** How the server evaluates it. BOGO_POOL = the original "free item costs the same or less" rule. */
+  mode?: "PERCENTAGE" | "FIXED" | "BOGO_POOL" | "BOGO_ROLES";
+  discountPercent?: number | null;
+  /** FIXED offers: rupees off each unit. */
+  discountAmount?: number | null;
   buyQuantity: number;
   maxFreeUnitsPerOrder: number;
   minPaidUnitPrice: number;
@@ -29,6 +44,10 @@ export interface PublicOffer {
   endsAt: string | null;
   applyToAll: boolean;
   eligibleProductIds: string[];
+  /** BOGO with a separate free list. Empty on offers made before free products existed. */
+  freeProductIds?: string[];
+  /** Names for the products this offer mentions, keyed by product id. */
+  productNames?: Record<string, { name: string; slug: string }>;
   /** Already expanded to include sub-categories. */
   eligibleCategoryIds: string[];
   excludedProductIds: string[];
@@ -58,8 +77,12 @@ export function evaluateCartOffers(
 
 export interface AdminOffer {
   id: string;
+  /** The offer's customer-facing title. */
   name: string;
-  type: "BOGO";
+  type: OfferType;
+  discountPercent?: number | null;
+  discountAmount?: number | null;
+  freeProductCount?: number;
   buyQuantity: number;
   maxFreeUnitsPerOrder: number;
   minPaidUnitPrice: number;
@@ -84,6 +107,7 @@ export interface OfferProductRef {
   sku: string | null;
   sellingPrice: number | null;
   status: string | null;
+  imageUrl?: string | null;
 }
 
 export interface OfferCategoryRef {
@@ -104,6 +128,7 @@ export interface AdminOfferDetail extends AdminOffer {
   description: string | null;
   image: { mediaId: string; url: string; thumbnailUrl?: string } | null;
   eligibleProducts: OfferProductRef[];
+  freeProducts?: OfferProductRef[];
   eligibleCategories: OfferCategoryRef[];
   excludedProducts: OfferProductRef[];
   excludedCategories: OfferCategoryRef[];
@@ -123,7 +148,10 @@ export interface OfferQueryParams extends PageParams {
 export interface OfferFormPayload {
   name: string;
   description?: string;
-  type: "BOGO";
+  type: OfferType;
+  freeProductIds?: string[];
+  discountPercent?: number | null;
+  discountAmount?: number | null;
   imageMediaId?: string | null;
   applyToAll: boolean;
   eligibleProductIds: string[];
@@ -160,10 +188,12 @@ export interface OfferUsageResult {
 }
 
 export interface OfferSimulationResult {
+  type?: OfferType;
   discountAmount: number;
   freeUnits: number;
   limitReached: boolean;
   unitsToNextFree: number;
+  needsFreeProduct?: boolean;
   lines: {
     productId: string;
     name: string | null;
@@ -171,6 +201,10 @@ export interface OfferSimulationResult {
     quantity: number;
     freeQuantity: number;
     paidQuantity: number;
+    /** Rupees off this whole line (any offer type). */
+    discountAmount?: number;
+    /** BOGO: this product can be handed out free. */
+    canBeFree?: boolean;
   }[];
   rejected: { productId: string; quantity: number; reason: string; message: string }[];
   skipped: { productId: string; reason: string }[];
@@ -221,6 +255,10 @@ export function setOfferStatus(
     method: "POST",
     body: JSON.stringify({ status }),
   });
+}
+
+export function deleteOffer(id: string): Promise<null> {
+  return apiFetch<null>(`/admin/offers/${encodeURIComponent(id)}`, { method: "DELETE" });
 }
 
 export function simulateOffer(

@@ -86,7 +86,7 @@ export default function ProductDetailClient({ product }: { product: PublicProduc
           </div>
 
           {!outOfStock && (
-            <ProductOfferInfo productId={product.productId} categoryId={product.category?.categoryId} />
+            <ProductOfferInfo productId={product.productId} categoryId={product.category?.categoryId} sellingPrice={product.pricing.sellingPrice} />
           )}
 
           <p className="mt-4 text-sm leading-relaxed text-ink-muted sm:text-base">{product.shortDescription}</p>

@@ -30,7 +30,7 @@ export default function RelatedComboModal({
   onContinue: () => void;
   onViewCombo: () => void;
 }) {
-  const showMrp = useShowMrp();
+  const showMrp = useShowMrp(combo?.mrpDisplay);
   const panelRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {

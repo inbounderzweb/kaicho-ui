@@ -4,6 +4,10 @@ import type { PageParams, Paginated } from "./admin";
 export const PRODUCT_STATUSES = ["DRAFT", "ACTIVE", "INACTIVE", "OUT_OF_STOCK", "ARCHIVED"] as const;
 export type ProductStatus = (typeof PRODUCT_STATUSES)[number];
 
+/** Per-product override of the store-wide "Show MRP and discount labels" setting. */
+export const MRP_DISPLAY_MODES = ["DEFAULT", "SHOW", "HIDE"] as const;
+export type MrpDisplayMode = (typeof MRP_DISPLAY_MODES)[number];
+
 export interface ProductImage {
   mediaId: string;
   url: string;
@@ -51,6 +55,7 @@ export interface AdminProductListItem {
   inventory: ProductInventory;
   status: ProductStatus;
   isFeatured: boolean;
+  mrpDisplay?: MrpDisplayMode;
   sortOrder: number;
   createdAt: string;
   updatedAt: string;
@@ -75,6 +80,7 @@ export interface AdminProductDetail {
   seo: ProductSeo;
   status: ProductStatus;
   isFeatured: boolean;
+  mrpDisplay?: MrpDisplayMode;
   sortOrder: number;
   createdBy: string | null;
   updatedBy: string | null;
@@ -122,6 +128,7 @@ export interface ProductFormInput {
   };
   status?: ProductStatus;
   isFeatured?: boolean;
+  mrpDisplay?: MrpDisplayMode;
   sortOrder?: number;
 }
 

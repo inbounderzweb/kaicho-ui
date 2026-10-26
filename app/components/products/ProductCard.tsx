@@ -17,6 +17,7 @@ import ProductPackDetails from "./ProductPackDetails";
 import styles from "./ProductCard.module.css";
 import ProductAvailability from "./ProductAvailability";
 import ProductOfferBadge from "../offers/ProductOfferBadge";
+import ProductOfferPrice from "../offers/ProductOfferPrice";
 import type { PublicProductListItem } from "@/lib/api/publicProducts";
 
 // The ONE reusable product card — every place a product summary is
@@ -57,7 +58,7 @@ function ProductCard({
   const href = `/products/${product.slug}`;
   const imageUrl = product.image?.mediumUrl ?? product.image?.thumbnailUrl ?? product.image?.url;
   const outOfStock = !product.inventory.inStock;
-  const showMrp = useShowMrp();
+  const showMrp = useShowMrp(product.pricing.mrpDisplay);
   const hasDiscount = showMrp && product.pricing.discountPercentage > 0 && product.pricing.mrp > product.pricing.sellingPrice;
 
   function handleWishlistClick(e: React.MouseEvent) {
@@ -105,6 +106,7 @@ function ProductCard({
             <ProductOfferBadge
               productId={product.productId}
               categoryId={product.category?.categoryId}
+              price={product.pricing.sellingPrice}
               className="absolute bottom-2 left-2 z-10"
             />
           )}
@@ -155,6 +157,13 @@ function ProductCard({
         <div className="min-w-0 space-y-1">
           <ProductAvailability inventory={product.inventory} size="sm" className="leading-4" />
           <ProductPrice pricing={product.pricing} size="sm" showDiscountBadge={false} className={styles.price} />
+          {!outOfStock && (
+            <ProductOfferPrice
+              productId={product.productId}
+              categoryId={product.category?.categoryId}
+              sellingPrice={product.pricing.sellingPrice}
+            />
+          )}
         </div>
 
         <div className={styles.controls}>

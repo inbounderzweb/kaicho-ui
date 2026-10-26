@@ -16,7 +16,7 @@ export default function ProductPrice({
   showDiscountBadge?: boolean;
   className?: string;
 }) {
-  const showMrp = useShowMrp();
+  const showMrp = useShowMrp(pricing.mrpDisplay);
   const hasDiscount = showMrp && pricing.discountPercentage > 0 && pricing.mrp > pricing.sellingPrice;
 
   const priceClass = size === "lg" ? "text-2xl sm:text-3xl" : size === "sm" ? "text-sm" : "text-lg";

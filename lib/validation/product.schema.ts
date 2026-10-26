@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { PRODUCT_STATUSES } from "@/lib/api/product";
+import { MRP_DISPLAY_MODES, PRODUCT_STATUSES } from "@/lib/api/product";
 
 // Client-side mirror of kaicho-be's product.validation.ts. This is a UX
 // convenience (fast feedback, no round-trip for an obviously-invalid form) —
@@ -49,6 +49,7 @@ export const productFormSchema = z
 
     status: z.enum(PRODUCT_STATUSES),
     isFeatured: z.boolean(),
+    mrpDisplay: z.enum(MRP_DISPLAY_MODES),
     sortOrder: z.coerce.number().int().min(0, "Must be 0 or greater"),
   })
   .refine((data) => data.sellingPrice <= data.mrp, {

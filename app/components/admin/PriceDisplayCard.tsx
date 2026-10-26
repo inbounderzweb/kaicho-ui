@@ -32,7 +32,7 @@ export default function PriceDisplayCard({ settings }: { settings: StoreSettings
       <div>
         <h2 className="text-sm font-bold">Price display</h2>
         <p className="mt-0.5 text-xs text-black/50 dark:text-white/50">
-          Choose whether customers see the original price (MRP) and the discount labels.
+          Choose whether customers see the original price (MRP) and the discount labels. Individual products can override this under Product → Publishing → MRP &amp; discount labels.
         </p>
       </div>
 

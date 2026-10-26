@@ -21,7 +21,7 @@ export default function GetStarted() {
       <Container fluid className="grid grid-cols-1 items-center gap-12 lg:grid-cols-2 lg:gap-16">
         <div>
           <span className="text-xs font-bold uppercase tracking-[0.2em] text-terracotta">
-     Wellness Served Daily
+      Wellness Served Daily
           </span>
           <h2 className="mt-3 font-display text-3xl font-bold tracking-tight text-ink sm:text-4xl">
             Get Started Today!

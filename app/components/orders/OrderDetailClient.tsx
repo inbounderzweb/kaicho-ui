@@ -26,6 +26,7 @@ import {
 import { trackEvent } from "@/lib/analytics/events";
 import { toEcommerceItem } from "@/lib/analytics/ecommerce";
 import { IconPackage, IconTruck } from "../ui/icons";
+import { offerSummaryLabel } from "@/lib/offers/matching";
 
 // GA4 has no separate "thank you" page here — checkout redirects straight to
 // this permanent order page, and the customer can come back to it any time.
@@ -343,7 +344,7 @@ export default function OrderDetailClient({ orderNumber }: { orderNumber: string
               </div>
               {Number(order.pricing.offerDiscountTotal ?? 0) > 0 && (
                 <div className="flex items-start justify-between gap-3 text-brand">
-                  <span className="min-w-0">Free item discount{(order.offer?.freeUnits ?? 0) > 1 ? ` (${order.offer?.freeUnits} items)` : ""}</span>
+                  <span className="min-w-0">{offerSummaryLabel(order.offer)}</span>
                   <span className="font-semibold">− Rs. {Number(order.pricing.offerDiscountTotal).toFixed(2)}</span>
                 </div>
               )}

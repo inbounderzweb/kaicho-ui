@@ -6,6 +6,7 @@ import {
   createOffer,
   updateOffer,
   setOfferStatus,
+  deleteOffer,
   simulateOffer,
   type OfferQueryParams,
   type OfferFormPayload,
@@ -72,6 +73,11 @@ export function useSetOfferStatus(id: string) {
     mutationFn: (status: "ACTIVE" | "DISABLED") => setOfferStatus(id, status),
     onSuccess: invalidate,
   });
+}
+
+export function useDeleteOffer(id: string) {
+  const invalidate = useInvalidateOffers();
+  return useMutation({ mutationFn: () => deleteOffer(id), onSuccess: invalidate });
 }
 
 export function useSimulateOffer(id: string) {

@@ -4,7 +4,8 @@ import { useCartStore } from "@/lib/store/cart.store";
 import type { CheckoutPreviewOffer } from "@/lib/api/checkout";
 import type { CartItem } from "./cart-data";
 
-// Cart-side BOGO control. Every number and every verdict shown here comes
+// Cart-side offer panel (Buy X Get Y Free, percentage or fixed amount off).
+// Every number and every verdict shown here comes
 // from the server's evaluation of the cart (useCartOffer) — this component
 // only renders it and records the shopper's PREFERENCE for which units are
 // free. A preference the server rejects (a free item costing more than the
@@ -26,18 +27,24 @@ export default function CartOfferPanel({
   // "I'll choose" counts only while something is actually picked; an empty
   // choice falls back to the automatic allocation (see toFreeSelectionArray).
   const manual = freeSelections !== null && Object.values(freeSelections).some((q) => q > 0);
-  const eligibleIds = new Set(offer.eligibleProductIds);
+  const isBogo = (offer.type ?? "BOGO") === "BOGO";
+  const separateFree = offer.mode === "BOGO_ROLES";
+  // The items the shopper may pick as their free one: with a separate free list
+  // only those products, otherwise any item the offer covers.
+  const pickable = new Set(offer.freeCandidateProductIds ?? offer.eligibleProductIds);
   // Only plain UNIT lines can be free (a pack's blended price isn't a unit price).
-  const eligibleLines = items.filter(
-    (i) => eligibleIds.has(i.productId) && (i.selectionType ?? "UNIT") === "UNIT"
-  );
+  const eligibleLines = isBogo
+    ? items.filter((i) => pickable.has(i.productId) && (i.selectionType ?? "UNIT") === "UNIT")
+    : [];
   const nameOf = (productId: string) => items.find((i) => i.productId === productId)?.name ?? "This item";
 
-  const label = `Buy ${offer.buyQuantity} Get 1 Free`;
+  // The admin's own offer title.
+  const label = offer.name;
+  const savingText = `saving Rs. ${offer.discountAmount.toFixed(2)}`;
 
   return (
     <section
-      aria-label="Buy one get one offer"
+      aria-label={`Offer: ${label}`}
       className={`rounded-2xl border border-brand/25 bg-brand-soft p-4 transition-opacity sm:p-5 ${isRefreshing ? "opacity-70" : ""}`}
     >
       <div className="flex flex-wrap items-center gap-2">
@@ -46,19 +53,27 @@ export default function CartOfferPanel({
       {offer.description && <p className="mt-1 break-words text-xs text-ink-muted">{offer.description}</p>}
 
       <p aria-live="polite" className="mt-3 text-sm font-semibold text-ink">
-        {offer.applied
-          ? `You're getting ${offer.freeUnits} item${offer.freeUnits === 1 ? "" : "s"} free — saving Rs. ${offer.discountAmount.toFixed(2)}`
-          : offer.unitsToNextFree > 0
-            ? `Add ${offer.unitsToNextFree} more eligible item${offer.unitsToNextFree === 1 ? "" : "s"} to get one free.`
-            : "No free item yet."}
+        {!isBogo
+          ? offer.type === "PERCENTAGE"
+            ? `${offer.discountPercent ?? 0}% off applied to the eligible items — ${savingText}`
+            : `Rs. ${offer.discountAmountPerUnit ?? 0} off each eligible item — ${savingText}`
+          : offer.applied
+            ? `You're getting ${offer.freeUnits} item${offer.freeUnits === 1 ? "" : "s"} free — ${savingText}`
+            : offer.needsFreeProduct
+              ? "Add one of the offer's free items to your cart to get it free."
+              : offer.unitsToNextFree > 0
+                ? separateFree
+                  ? `Add ${offer.unitsToNextFree} more qualifying item${offer.unitsToNextFree === 1 ? "" : "s"} to get your free item.`
+                  : `Add ${offer.unitsToNextFree} more eligible item${offer.unitsToNextFree === 1 ? "" : "s"} to get one free.`
+                : "No free item yet."}
       </p>
-      {offer.limitReached && (
+      {isBogo && offer.limitReached && (
         <p className="mt-1 text-xs font-semibold text-amber-700">
           Maximum of {offer.maxFreeUnitsPerOrder} free item{offer.maxFreeUnitsPerOrder === 1 ? "" : "s"} per order reached.
         </p>
       )}
       <p className="mt-1 text-xs text-ink-muted">
-        The free item must cost the same or less than the item you buy.
+        {isBogo && !separateFree && "The free item must cost the same or less than the item you buy."}
         {!offer.allowCouponStacking && " Coupon codes can't be combined with this offer."}
       </p>
 

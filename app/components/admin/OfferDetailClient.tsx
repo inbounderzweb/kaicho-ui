@@ -10,11 +10,12 @@ import {
   useCreateOffer,
   useUpdateOffer,
   useSetOfferStatus,
+  useDeleteOffer,
 } from "@/lib/hooks/admin/useOffers";
 import { offerFormSchema, type OfferFormValues } from "@/lib/validation/offer.schema";
 import { ApiError } from "@/lib/api/ApiError";
-import type { OfferFormPayload } from "@/lib/api/offer";
-import { offerBadgeLabel, offerConditions } from "@/lib/offers/matching";
+import { OFFER_TYPES, OFFER_TYPE_LABELS, type OfferFormPayload, type OfferProductRef, type OfferType } from "@/lib/api/offer";
+import { offerConditions, offerTitle } from "@/lib/offers/matching";
 import OfferStatusBadge from "./OfferStatusBadge";
 import OfferUsageClient from "./OfferUsageClient";
 import ConfirmDialog from "./ConfirmDialog";
@@ -43,6 +44,20 @@ function toIsoOrNull(local?: string): string | null {
   return local ? new Date(local).toISOString() : null;
 }
 
+const toPicked = (p: OfferProductRef): PickedProduct => ({
+  id: p.id,
+  name: p.name,
+  sku: p.sku,
+  sellingPrice: p.sellingPrice,
+  imageUrl: p.imageUrl ?? null,
+});
+
+const TYPE_HINTS: Record<OfferType, string> = {
+  BOGO: "The customer buys the products you pick, and gets the free product(s) you pick at no charge.",
+  PERCENTAGE: "A percentage is taken off every unit of the products you pick.",
+  FIXED: "A fixed rupee amount is taken off every unit of the products you pick (never more than the item costs).",
+};
+
 const EMPTY: OfferFormValues = {
   name: "",
   description: "",
@@ -51,6 +66,8 @@ const EMPTY: OfferFormValues = {
   buyQuantity: "1",
   maxFreeUnitsPerOrder: "1",
   minPaidUnitPrice: "",
+  discountPercent: "",
+  discountAmount: "",
   allowCouponStacking: false,
   startsAt: "",
   endsAt: "",
@@ -69,6 +86,7 @@ export default function OfferDetailClient({ id }: { id?: string }) {
   const createMutation = useCreateOffer();
   const updateMutation = useUpdateOffer(id ?? "");
   const statusMutation = useSetOfferStatus(id ?? "");
+  const deleteMutation = useDeleteOffer(id ?? "");
 
   const [savedFlash, setSavedFlash] = useState(false);
   const [disableOpen, setDisableOpen] = useState(false);
@@ -76,6 +94,9 @@ export default function OfferDetailClient({ id }: { id?: string }) {
   const [scopeError, setScopeError] = useState<string | null>(null);
 
   const [eligibleProducts, setEligibleProducts] = useState<PickedProduct[]>([]);
+  const [freeProducts, setFreeProducts] = useState<PickedProduct[]>([]);
+  const [freeError, setFreeError] = useState<string | null>(null);
+  const [deleteOpen, setDeleteOpen] = useState(false);
   const [excludedProducts, setExcludedProducts] = useState<PickedProduct[]>([]);
   const [excludedCategoryIds, setExcludedCategoryIds] = useState<string[]>([]);
   const [image, setImage] = useState<PickedImage | null>(null);
@@ -96,11 +117,13 @@ export default function OfferDetailClient({ id }: { id?: string }) {
     reset({
       name: offer.name,
       description: offer.description ?? "",
-      type: "BOGO",
+      type: offer.type,
       applyToAll: false,
       buyQuantity: String(offer.buyQuantity),
       maxFreeUnitsPerOrder: String(offer.maxFreeUnitsPerOrder),
       minPaidUnitPrice: offer.minPaidUnitPrice ? String(offer.minPaidUnitPrice) : "",
+      discountPercent: offer.discountPercent != null ? String(offer.discountPercent) : "",
+      discountAmount: offer.discountAmount != null ? String(offer.discountAmount) : "",
       allowCouponStacking: offer.allowCouponStacking,
       startsAt: toLocalInput(offer.startsAt),
       endsAt: toLocalInput(offer.endsAt),
@@ -111,8 +134,9 @@ export default function OfferDetailClient({ id }: { id?: string }) {
     // Deferred a tick (same approach as the slug suggestion in
     // CategoryDetailClient) so these don't setState synchronously in the effect.
     const t = setTimeout(() => {
-      setEligibleProducts(offer.eligibleProducts.map((p) => ({ id: p.id, name: p.name, sku: p.sku, sellingPrice: p.sellingPrice })));
-      setExcludedProducts(offer.excludedProducts.map((p) => ({ id: p.id, name: p.name, sku: p.sku, sellingPrice: p.sellingPrice })));
+      setEligibleProducts(offer.eligibleProducts.map(toPicked));
+      setFreeProducts((offer.freeProducts ?? []).map(toPicked));
+      setExcludedProducts(offer.excludedProducts.map(toPicked));
       setExcludedCategoryIds(offer.excludedCategories.map((c) => c.id));
       setImage(offer.image ? { mediaId: offer.image.mediaId, url: offer.image.url, thumbnailUrl: offer.image.thumbnailUrl } : null);
     }, 0);
@@ -125,25 +149,41 @@ export default function OfferDetailClient({ id }: { id?: string }) {
 
   const onSubmit = (values: OfferFormValues) => {
     const parsed = offerFormSchema.parse(values);
+    const type = parsed.type;
     if (eligibleProducts.length === 0) {
-      setScopeError("Choose at least one eligible product.");
+      setScopeError(
+        type === "BOGO" ? "Choose at least one product the customer must buy." : "Choose at least one eligible product."
+      );
       return;
     }
     setScopeError(null);
 
+    // A Buy X Get Y Free offer must say what is free before it can go live
+    // (the server enforces this too). Drafts may be saved incomplete.
+    const goingLive = isEdit ? offer?.status === "ACTIVE" : parsed.status === "ACTIVE" || parsed.status === "SCHEDULED";
+    if (type === "BOGO" && goingLive && freeProducts.length === 0) {
+      setFreeError("Choose the free product(s) before activating this offer.");
+      return;
+    }
+    setFreeError(null);
+
     const payload: OfferFormPayload = {
       name: parsed.name,
       description: parsed.description || undefined,
-      type: "BOGO",
+      type,
       imageMediaId: image?.mediaId ?? null,
       applyToAll: false,
       eligibleProductIds: eligibleProducts.map((p) => p.id),
       eligibleCategoryIds: [],
       excludedProductIds: excludedProducts.map((p) => p.id),
       excludedCategoryIds: excludedCategoryIds,
-      buyQuantity: parsed.buyQuantity,
-      maxFreeUnitsPerOrder: parsed.maxFreeUnitsPerOrder,
-      minPaidUnitPrice: parsed.minPaidUnitPrice,
+      freeProductIds: type === "BOGO" ? freeProducts.map((p) => p.id) : [],
+      discountPercent: type === "PERCENTAGE" ? parsed.discountPercent ?? null : null,
+      discountAmount: type === "FIXED" ? parsed.discountAmount ?? null : null,
+      // Only Buy X Get Y Free uses these; the others send the neutral defaults.
+      buyQuantity: type === "BOGO" ? parsed.buyQuantity ?? 1 : 1,
+      maxFreeUnitsPerOrder: type === "BOGO" ? parsed.maxFreeUnitsPerOrder ?? 1 : 1,
+      minPaidUnitPrice: type === "BOGO" ? parsed.minPaidUnitPrice ?? 0 : 0,
       allowCouponStacking: parsed.allowCouponStacking,
       startsAt: toIsoOrNull(parsed.startsAt),
       endsAt: toIsoOrNull(parsed.endsAt),
@@ -172,6 +212,17 @@ export default function OfferDetailClient({ id }: { id?: string }) {
     statusMutation.mutate(next, {
       onError: (err) => setActionError(err instanceof ApiError ? err.message : "Something went wrong. Please try again."),
       onSettled: () => setDisableOpen(false),
+    });
+  };
+
+  const runDelete = () => {
+    setActionError(null);
+    deleteMutation.mutate(undefined, {
+      onSuccess: () => router.push("/admin/offers"),
+      onError: (err) => {
+        setActionError(err instanceof ApiError ? err.message : "Couldn't delete this offer. Please try again.");
+        setDeleteOpen(false);
+      },
     });
   };
 
@@ -218,7 +269,16 @@ export default function OfferDetailClient({ id }: { id?: string }) {
   const canDisable = offer && offer.status === "ACTIVE";
 
   // Live, customer-facing preview from the current form values.
+  const watchedType: OfferType = (watched.type as OfferType | undefined) ?? "BOGO";
+  const separateFree =
+    watchedType === "BOGO" &&
+    freeProducts.length > 0 &&
+    !(freeProducts.length === eligibleProducts.length && freeProducts.every((f) => eligibleProducts.some((e) => e.id === f.id)));
   const previewRule = {
+    type: watchedType,
+    mode: watchedType === "BOGO" ? (separateFree ? ("BOGO_ROLES" as const) : ("BOGO_POOL" as const)) : watchedType,
+    discountPercent: Number(watched.discountPercent) || null,
+    discountAmount: Number(watched.discountAmount) || null,
     buyQuantity: Number(watched.buyQuantity) || 1,
     maxFreeUnitsPerOrder: Number(watched.maxFreeUnitsPerOrder) || 1,
     minPaidUnitPrice: Number(watched.minPaidUnitPrice) || 0,
@@ -302,6 +362,17 @@ export default function OfferDetailClient({ id }: { id?: string }) {
                     Deactivate
                   </button>
                 )}
+                {/* Only a draft / deactivated offer that no order has used can be removed. */}
+                {offer.status !== "ACTIVE" && offer.usedCount === 0 && (
+                  <button
+                    type="button"
+                    disabled={deleteMutation.isPending}
+                    onClick={() => setDeleteOpen(true)}
+                    className="rounded-full border border-red-500/30 px-4 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-500/10 disabled:opacity-50 dark:text-red-400"
+                  >
+                    Delete
+                  </button>
+                )}
               </div>
             </div>
           )}
@@ -315,15 +386,21 @@ export default function OfferDetailClient({ id }: { id?: string }) {
                 <h2 className="text-sm font-bold">Basic information</h2>
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div>
-                    <label className={LABEL} htmlFor="offer-name">Offer name *</label>
-                    <input id="offer-name" {...register("name")} placeholder="Buy 1 Get 1 Free — Pickles" className={FIELD} />
+                    <label className={LABEL} htmlFor="offer-name">Offer title *</label>
+                    <input id="offer-name" {...register("name")} placeholder="Buy 1 Get 1 Free · 50% Off · Flat ₹100 Off" className={FIELD} />
                     {errors.name && <p className={ERR}>{errors.name.message}</p>}
+                    <p className={HINT}>Shown to customers on product cards, the cart and banners.</p>
                   </div>
                   <div>
                     <label className={LABEL} htmlFor="offer-type">Offer type</label>
                     <select id="offer-type" {...register("type")} className={FIELD}>
-                      <option value="BOGO">Buy One Get One (BOGO)</option>
+                      {OFFER_TYPES.map((t) => (
+                        <option key={t} value={t}>
+                          {OFFER_TYPE_LABELS[t]}
+                        </option>
+                      ))}
                     </select>
+                    <p className={HINT}>{TYPE_HINTS[watchedType]}</p>
                   </div>
                 </div>
                 <div>
@@ -335,11 +412,20 @@ export default function OfferDetailClient({ id }: { id?: string }) {
               </div>
 
               <div className={CARD}>
-                <h2 className="text-sm font-bold">Eligible products</h2>
+                <h2 className="text-sm font-bold">
+                  {watchedType === "BOGO" ? "Products the customer must buy" : "Eligible products"}
+                </h2>
                 <p className="text-xs text-black/55 dark:text-white/55">
-                  The offer applies only to the products you pick here — nothing else gets the badge or the free item.
+                  {watchedType === "BOGO"
+                    ? "The customer has to buy these to unlock the free product. Nothing else qualifies, and nothing is selected by default."
+                    : "The discount applies only to the products you pick here — nothing else is discounted or gets the badge."}
                 </p>
-                <OfferProductPicker label="Products" value={eligibleProducts} onChange={setEligibleProducts} />
+                <OfferProductPicker
+                  label={watchedType === "BOGO" ? "Qualifying products" : "Products"}
+                  value={eligibleProducts}
+                  onChange={setEligibleProducts}
+                  emptyText="None — no products selected"
+                />
                 {scopeError && <p className={ERR}>{scopeError}</p>}
 
                 <div className="border-t border-admin-border pt-4 dark:border-admin-border-dark">
@@ -347,47 +433,117 @@ export default function OfferDetailClient({ id }: { id?: string }) {
                     Exclusions (optional)
                   </h3>
                   <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-                    <OfferProductPicker label="Excluded products" value={excludedProducts} onChange={setExcludedProducts} />
+                    <OfferProductPicker label="Excluded products" value={excludedProducts} onChange={setExcludedProducts} emptyText="None" />
                     <OfferCategoryPicker label="Excluded categories" value={excludedCategoryIds} onChange={setExcludedCategoryIds} />
                   </div>
                 </div>
               </div>
 
+              {watchedType === "BOGO" && (
+                <div className={CARD}>
+                  <h2 className="text-sm font-bold">Free Product Selection</h2>
+                  <p className="text-xs text-black/55 dark:text-white/55">
+                    The product(s) the customer receives <strong>free</strong>. It can be a different product from the
+                    one they buy, or the same one. When several are listed the customer chooses which one is free.
+                  </p>
+                  <OfferProductPicker
+                    label="Free products"
+                    value={freeProducts}
+                    onChange={(next) => {
+                      setFreeProducts(next);
+                      setFreeError(null);
+                    }}
+                    emptyText="None — no free product selected"
+                    headerAction={
+                      <button
+                        type="button"
+                        disabled={eligibleProducts.length === 0}
+                        onClick={() => {
+                          setFreeProducts(eligibleProducts);
+                          setFreeError(null);
+                        }}
+                        className="shrink-0 rounded-full border border-admin-border px-3 py-1 text-[11px] font-semibold hover:bg-admin-primary/10 disabled:opacity-40 dark:border-admin-border-dark"
+                      >
+                        Same as products to buy
+                      </button>
+                    }
+                  />
+                  {freeError && <p className={ERR}>{freeError}</p>}
+                  <p className="rounded-xl bg-admin-primary/10 p-3 text-xs text-black/70 dark:text-white/70">
+                    {separateFree ? (
+                      <>
+                        The free product is <strong>not</strong> held to the price of what was bought — a free item can cost
+                        more than the item that earned it. It is free only while the customer also buys the required
+                        quantity of the products above.
+                      </>
+                    ) : (
+                      <>
+                        When the free products are the same as the products to buy, the free item must cost the{" "}
+                        <strong>same or less</strong> than the item it is paired with. A more expensive item is never made
+                        free.
+                      </>
+                    )}{" "}
+                    The server enforces this on every cart and order.
+                  </p>
+                </div>
+              )}
+
               <div className={CARD}>
                 <h2 className="text-sm font-bold">Offer rules</h2>
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                  <div>
-                    <label className={LABEL} htmlFor="offer-buy">Purchase quantity *</label>
-                    <input id="offer-buy" type="number" min={1} max={10} {...register("buyQuantity")} className={FIELD} />
-                    {errors.buyQuantity && <p className={ERR}>{errors.buyQuantity.message}</p>}
-                    <p className={HINT}>Paid units needed per free unit.</p>
+                {watchedType === "BOGO" && (
+                  <>
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                      <div>
+                        <label className={LABEL} htmlFor="offer-buy">Purchase quantity *</label>
+                        <input id="offer-buy" type="number" min={1} max={10} {...register("buyQuantity")} className={FIELD} />
+                        {errors.buyQuantity && <p className={ERR}>{errors.buyQuantity.message}</p>}
+                        <p className={HINT}>Qualifying units needed per free unit.</p>
+                      </div>
+                      <div>
+                        <label className={LABEL} htmlFor="offer-max">Max free units per order *</label>
+                        <input id="offer-max" type="number" min={1} max={100} {...register("maxFreeUnitsPerOrder")} className={FIELD} />
+                        {errors.maxFreeUnitsPerOrder && <p className={ERR}>{errors.maxFreeUnitsPerOrder.message}</p>}
+                        <p className={HINT}>Each free unit needs {Number(watched.buyQuantity) || 1} qualifying unit{(Number(watched.buyQuantity) || 1) === 1 ? "" : "s"}. Enter 100 for no practical limit.</p>
+                      </div>
+                      <div>
+                        <label className={LABEL} htmlFor="offer-min">Min purchased price (₹)</label>
+                        <input id="offer-min" type="number" step="any" min={0} placeholder="No minimum" {...register("minPaidUnitPrice")} className={FIELD} />
+                        {errors.minPaidUnitPrice && <p className={ERR}>{errors.minPaidUnitPrice.message}</p>}
+                        <p className={HINT}>The item bought must cost at least this.</p>
+                      </div>
+                    </div>
+                    <p className={HINT}>The customer receives 1 free unit per set; &ldquo;Buy 2 Get 1 Free&rdquo; = purchase quantity 2.</p>
+                  </>
+                )}
+                {watchedType === "PERCENTAGE" && (
+                  <div className="max-w-xs">
+                    <label className={LABEL} htmlFor="offer-percent">Discount percentage *</label>
+                    <div className="relative">
+                      <input id="offer-percent" type="number" step="any" min={0} max={100} placeholder="e.g. 50" {...register("discountPercent")} className={`${FIELD} pr-8`} />
+                      <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sm text-black/45 dark:text-white/45">%</span>
+                    </div>
+                    {errors.discountPercent && <p className={ERR}>{errors.discountPercent.message}</p>}
+                    <p className={HINT}>Taken off every unit of the products above. No free product is created.</p>
                   </div>
-                  <div>
-                    <label className={LABEL} htmlFor="offer-max">Max free units per order *</label>
-                    <input id="offer-max" type="number" min={1} max={100} {...register("maxFreeUnitsPerOrder")} className={FIELD} />
-                    {errors.maxFreeUnitsPerOrder && <p className={ERR}>{errors.maxFreeUnitsPerOrder.message}</p>}
-                    <p className={HINT}>The most free items one order can get. Every {Number(watched.buyQuantity) + 1 || 2} eligible items earn 1 free, so 4 items with a limit of 2 → 2 free (the cheapest ones; the dearest are charged). Enter 100 for no practical limit.</p>
+                )}
+                {watchedType === "FIXED" && (
+                  <div className="max-w-xs">
+                    <label className={LABEL} htmlFor="offer-amount">Discount amount (₹) *</label>
+                    <input id="offer-amount" type="number" step="any" min={0} placeholder="e.g. 100" {...register("discountAmount")} className={FIELD} />
+                    {errors.discountAmount && <p className={ERR}>{errors.discountAmount.message}</p>}
+                    <p className={HINT}>Taken off each unit of the products above, but never more than the item costs.</p>
                   </div>
-                  <div>
-                    <label className={LABEL} htmlFor="offer-min">Min purchased price (₹)</label>
-                    <input id="offer-min" type="number" step="any" min={0} placeholder="No minimum" {...register("minPaidUnitPrice")} className={FIELD} />
-                    {errors.minPaidUnitPrice && <p className={ERR}>{errors.minPaidUnitPrice.message}</p>}
-                    <p className={HINT}>The item bought must cost at least this.</p>
-                  </div>
-                </div>
-                <p className="rounded-xl bg-admin-primary/10 p-3 text-xs text-black/70 dark:text-white/70">
-                  The free item must cost the <strong>same or less</strong> than the item it is paired with. A more
-                  expensive item is never made free — the server enforces this on every cart and order.
-                </p>
+                )}
                 <label className="flex cursor-pointer items-start gap-2 text-sm">
                   <input type="checkbox" {...register("allowCouponStacking")} className="mt-0.5 h-4 w-4" />
                   <span>
                     <span className="font-semibold">Allow coupon codes together with this offer</span>
                     <span className="block text-xs text-black/55 dark:text-white/55">
-                      Off: a coupon is refused when this offer applies. On: the coupon discounts only what is left to pay after the free items.
+                      Off: a coupon is refused when this offer applies. On: the coupon discounts only what is left to pay after the offer.
                     </span>
                   </span>
                 </label>
+                <p className={HINT}>If several offers cover the same product, only the one that saves the customer the most is applied — offers are never added together.</p>
               </div>
 
               <div className={CARD}>
@@ -459,9 +615,9 @@ export default function OfferDetailClient({ id }: { id?: string }) {
                 <h2 className="text-sm font-bold">Customer preview</h2>
                 <div className="rounded-xl border border-dashed border-admin-border p-3 dark:border-admin-border-dark">
                   <span className="inline-flex rounded-md bg-emerald-600 px-2 py-1 text-xs font-bold text-white">
-                    {offerBadgeLabel(previewRule)}
+                    {offerTitle({ ...previewRule, name: watched.name ?? "" })}
                   </span>
-                  <p className="mt-2 text-sm font-semibold">{watched.name || "Offer name"}</p>
+                  <p className="mt-2 text-sm font-semibold">{watched.name || "Offer title"}</p>
                   {watched.description && (
                     <p className="mt-0.5 text-xs text-black/60 dark:text-white/60">{watched.description}</p>
                   )}
@@ -494,7 +650,7 @@ export default function OfferDetailClient({ id }: { id?: string }) {
               {isEdit && id && (
                 <div className={CARD}>
                   <h2 className="text-sm font-bold">Preview with a sample cart</h2>
-                  <OfferSimulator offerId={id} />
+                  <OfferSimulator offerId={id} type={offer?.type ?? "BOGO"} />
                 </div>
               )}
 
@@ -526,6 +682,17 @@ export default function OfferDetailClient({ id }: { id?: string }) {
           </form>
         </>
       )}
+
+      <ConfirmDialog
+        open={deleteOpen}
+        title="Delete this offer?"
+        description="This permanently removes the offer. It hasn't been used on any order. This can't be undone."
+        confirmLabel="Delete"
+        destructive
+        isConfirming={deleteMutation.isPending}
+        onConfirm={runDelete}
+        onCancel={() => setDeleteOpen(false)}
+      />
 
       <ConfirmDialog
         open={disableOpen}

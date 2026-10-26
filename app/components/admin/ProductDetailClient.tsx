@@ -110,6 +110,7 @@ export default function ProductDetailClient({ id }: { id?: string }) {
       ogDescription: "",
       status: "DRAFT",
       isFeatured: false,
+      mrpDisplay: "DEFAULT",
       sortOrder: 0,
     },
   });
@@ -149,6 +150,7 @@ export default function ProductDetailClient({ id }: { id?: string }) {
         ogDescription: p.seo.ogDescription ?? "",
         status: p.status,
         isFeatured: p.isFeatured,
+        mrpDisplay: p.mrpDisplay ?? "DEFAULT",
         sortOrder: p.sortOrder,
       });
       setImages(p.images.map((img) => ({ mediaId: img.mediaId, url: img.url, thumbnailUrl: img.thumbnailUrl })));
@@ -273,6 +275,7 @@ export default function ProductDetailClient({ id }: { id?: string }) {
       },
       status: values.status,
       isFeatured: values.isFeatured,
+      mrpDisplay: values.mrpDisplay,
       sortOrder: values.sortOrder,
     };
 
@@ -740,6 +743,23 @@ export default function ProductDetailClient({ id }: { id?: string }) {
                 className="w-full max-w-[160px] rounded-xl border border-admin-border bg-admin-surface px-3 py-2 text-sm outline-none focus:border-admin-primary-dark dark:border-admin-border-dark dark:bg-admin-surface-dark"
               />
               {errors.sortOrder && <p className="mt-1 text-xs text-red-600 dark:text-red-400">{errors.sortOrder.message}</p>}
+            </div>
+
+            <div>
+              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-black/50 dark:text-white/50">
+                MRP &amp; discount labels
+              </label>
+              <select
+                {...register("mrpDisplay")}
+                className="w-full rounded-xl border border-admin-border bg-admin-surface px-3 py-2 text-sm outline-none focus:border-admin-primary-dark dark:border-admin-border-dark dark:bg-admin-surface-dark"
+              >
+                <option value="DEFAULT">Use store setting</option>
+                <option value="SHOW">Always show MRP and % OFF</option>
+                <option value="HIDE">Always hide MRP and % OFF</option>
+              </select>
+              <p className="mt-1 text-[11px] text-black/45 dark:text-white/45">
+                Overrides Settings → Price display for this product only (cards, product page, combos, checkout).
+              </p>
             </div>
 
             <label className="flex items-center gap-2 text-sm font-semibold">

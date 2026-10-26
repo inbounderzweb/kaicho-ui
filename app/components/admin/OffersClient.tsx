@@ -19,12 +19,21 @@ function fmtDate(value: string | null) {
 }
 
 function ruleLabel(o: AdminOffer) {
+  if (o.type === "PERCENTAGE") return `${o.discountPercent ?? 0}% off each unit`;
+  if (o.type === "FIXED") return `₹${o.discountAmount ?? 0} off each unit`;
   return `Buy ${o.buyQuantity} Get 1 Free · max ${o.maxFreeUnitsPerOrder} free/order`;
 }
 
 function scopeLabel(o: AdminOffer) {
   const parts: string[] = [];
-  if (o.eligibleProductCount) parts.push(`${o.eligibleProductCount} product${o.eligibleProductCount === 1 ? "" : "s"}`);
+  const plural = (n: number) => `${n} product${n === 1 ? "" : "s"}`;
+  if (o.type === "BOGO") {
+    // Buy side and free side are different lists — show both.
+    if (o.eligibleProductCount) parts.push(`Buy ${plural(o.eligibleProductCount)}`);
+    parts.push(o.freeProductCount ? `Free ${plural(o.freeProductCount)}` : "Free: not set");
+    return parts.join(" · ");
+  }
+  if (o.eligibleProductCount) parts.push(plural(o.eligibleProductCount));
   if (o.eligibleCategoryCount) parts.push(`${o.eligibleCategoryCount} categor${o.eligibleCategoryCount === 1 ? "y" : "ies"}`);
   return parts.join(" + ") || "—";
 }
@@ -75,7 +84,7 @@ export default function OffersClient() {
         <div>
           <h1 className="font-display text-xl font-bold sm:text-2xl">Offers &amp; Promotions</h1>
           <p className="mt-0.5 text-sm text-black/55 dark:text-white/55">
-            Automatic Buy One Get One offers, applied at cart and checkout.
+            Automatic offers — Buy X Get Y Free, percentage or fixed amount off — applied at cart and checkout.
           </p>
         </div>
         <Link
@@ -93,7 +102,7 @@ export default function OffersClient() {
             type="text"
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
-            placeholder="Search by offer name..."
+            placeholder="Search by offer title..."
             className="w-full rounded-xl border border-admin-border bg-admin-surface py-2 pl-9 pr-3 text-sm outline-none focus:border-admin-primary-dark dark:border-admin-border-dark dark:bg-admin-surface-dark dark:focus:border-admin-primary"
           />
         </div>
@@ -150,7 +159,7 @@ export default function OffersClient() {
             ) : (
               <>
                 <p className="mt-1 text-sm text-black/55 dark:text-white/55">
-                  Create your first Buy One Get One offer to get started.
+                  Create your first offer — Buy X Get Y Free, a percentage or a fixed amount off — to get started.
                 </p>
                 <Link
                   href="/admin/offers/new"

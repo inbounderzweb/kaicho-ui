@@ -2,7 +2,8 @@
 
 import Image from "next/image";
 import { resolveMediaUrl } from "@/lib/api/client";
-import { useShowMrp } from "@/lib/hooks/useShowMrp";
+import { resolveShowMrp, useShowMrp } from "@/lib/hooks/useShowMrp";
+import { offerSummaryLabel } from "@/lib/offers/matching";
 import type { CheckoutPreviewResult } from "@/lib/api/checkout";
 
 // Every number rendered here comes from the server's /checkout/preview
@@ -15,7 +16,7 @@ export default function OrderSummary({
   preview: CheckoutPreviewResult | null;
   isLoading: boolean;
 }) {
-  const showMrp = useShowMrp();
+  const storeShowMrp = useShowMrp();
   if (isLoading || !preview) {
     return (
       <section className="rounded-2xl border border-border bg-white p-5 sm:p-6">
@@ -67,7 +68,7 @@ export default function OrderSummary({
                 ) : (
                   <p className="mt-0.5 text-xs text-ink-muted">
                     Qty {item.quantity} × Rs. {item.unitPrice.toFixed(2)}
-                    {showMrp && item.discountPercentage > 0 && (
+                    {resolveShowMrp(item.mrpDisplay, storeShowMrp) && item.discountPercentage > 0 && (
                       <span className="ml-1.5 text-ink-faint line-through">Rs. {item.mrp.toFixed(2)}</span>
                     )}
                   </p>
@@ -119,7 +120,7 @@ export default function OrderSummary({
         </div>
         {offerDiscountTotal > 0 && (
           <div className="flex items-start justify-between gap-3 text-brand">
-            <span className="min-w-0">Free item discount{offer && offer.freeUnits > 1 ? ` (${offer.freeUnits} items)` : ""}</span>
+            <span className="min-w-0">{offerSummaryLabel(offer)}</span>
             <span className="shrink-0 whitespace-nowrap font-semibold">− Rs. {offerDiscountTotal.toFixed(2)}</span>
           </div>
         )}

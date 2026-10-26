@@ -53,7 +53,7 @@ export interface ReceiptItem {
   unitPrice: number;
   lineTotal: number;
   detail?: string;
-  /** BOGO: units of this line that were free, and the rupees taken off for them. Present only when > 0. */
+  /** BOGO: units of this line that were free, and the rupees taken off for them. Percentage / fixed offers: just the rupees off the line. Present only when > 0. */
   freeQuantity?: number;
   offerDiscount?: number;
 }
@@ -90,7 +90,9 @@ export function getReceiptItems(items: OrderItem[]): ReceiptItem[] {
         : undefined,
       ...((item.freeQuantity ?? 0) > 0
         ? { freeQuantity: item.freeQuantity, offerDiscount: item.offerDiscount ?? 0 }
-        : {}),
+        : (item.offerDiscount ?? 0) > 0
+          ? { offerDiscount: item.offerDiscount }
+          : {}),
     }];
   });
 }

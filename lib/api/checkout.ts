@@ -1,4 +1,5 @@
 import { apiFetch } from "./client";
+import type { MrpDisplayMode } from "./product";
 import type { Order, PaymentMethod } from "./order";
 
 // Backed by kaicho-be's /api/checkout (requireAuth). The cart itself stays
@@ -36,6 +37,7 @@ export interface CheckoutPreviewItem {
   mrp: number;
   discount: number;
   discountPercentage: number;
+  mrpDisplay?: MrpDisplayMode;
   lineTotal: number;
   selectionType?: "UNIT" | "PACK";
   packBreakdown?: CheckoutPreviewPackLine[];
@@ -83,7 +85,14 @@ export type OfferRejectionReason =
 /** The server's verdict on the best live offer for this cart. */
 export interface CheckoutPreviewOffer {
   id: string;
+  /** The offer's customer-facing title. */
   name: string;
+  type?: "BOGO" | "PERCENTAGE" | "FIXED";
+  /** BOGO_POOL = the original "free item costs the same or less" rule; BOGO_ROLES = separate free products. */
+  mode?: "PERCENTAGE" | "FIXED" | "BOGO_POOL" | "BOGO_ROLES";
+  discountPercent?: number | null;
+  /** FIXED offers: rupees off each unit. */
+  discountAmountPerUnit?: number | null;
   description: string | null;
   buyQuantity: number;
   maxFreeUnitsPerOrder: number;
@@ -91,8 +100,16 @@ export interface CheckoutPreviewOffer {
   allowCouponStacking: boolean;
   /** False when the offer is live but nothing qualifies yet (e.g. "add 1 more"). */
   applied: boolean;
-  /** Cart products this offer covers — what the shopper may pick as free. */
+  /** Cart products this offer covers. */
   eligibleProductIds: string[];
+  /** BOGO: products configured as free (empty on offers made before free products existed). */
+  freeProductIds?: string[];
+  /** BOGO: cart products the shopper may pick as their free item (falls back to eligibleProductIds). */
+  freeCandidateProductIds?: string[];
+  /** BOGO with a separate free list: none of the free products is in the cart yet. */
+  needsFreeProduct?: boolean;
+  /** Rupees taken off each product's whole line, any offer type. */
+  discountByProduct?: Record<string, number>;
   discountAmount: number;
   freeUnits: number;
   limitReached: boolean;
