@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import Image from "next/image";
 import Link from "next/link";
 import { apiFetch, resolveMediaUrl } from "@/lib/api/client";
+import { useCartToastStore } from "../store/cartToast.store";
 import { useCartStore } from "@/lib/store/cart.store";
 import { IconCart, IconCheck } from "@/app/components/ui/icons";
 import { cartLineKey, type CartItem } from "@/app/components/cart/cart-data";
@@ -56,7 +57,9 @@ export function useSmartCart(productId: string) {
   useEffect(() => () => { generation.current++; queue.current = []; pendingAdds.current = 0; clearTimeout(timer.current); }, [productId]);
 
   const commit = (selection: Selection) => {
-    useCartStore.getState().addItem(toCartItem(selection));
+    const item = toCartItem(selection);
+    useCartStore.getState().addItem(item);
+    useCartToastStore.getState().show(item.name);
     setOffer(null);
     setAdded(true);
     clearTimeout(timer.current);

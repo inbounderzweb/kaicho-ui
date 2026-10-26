@@ -21,6 +21,27 @@ interface CartStoreState {
   freeSelections: Record<string, number> | null;
   setFreeSelection: (productId: string, quantity: number) => void;
   setFreeSelectionMode: (mode: "AUTO" | "MANUAL", seed?: Record<string, number>) => void;
+  // Units the shopper added to the cart AS their free reward (productId →
+  // units), so changing the choice or losing the offer takes back exactly
+  // those units and never ones they bought themselves. Display bookkeeping
+  // only: what is actually free is decided by the server.
+  rewardUnits: Record<string, number>;
+  rewardNotice: string | null;
+  claimFreeProduct: (product: RewardProduct, units: number) => void;
+  clearFreeReward: (notice?: string | null) => void;
+  /** claimable: productId → free units the server says the cart currently earns of it. */
+  reconcileFreeReward: (claimable: Record<string, number>, names: Record<string, string>) => void;
+}
+
+/** What the cart needs to hold a free-reward product (display snapshot; the server re-prices). */
+export interface RewardProduct {
+  productId: string;
+  slug: string;
+  name: string;
+  image: string | null;
+  price: number;
+  mrp: number;
+  maxQuantity?: number;
 }
 
 // A pack line and a plain unit line for the same product are two distinct
@@ -76,6 +97,70 @@ export const useCartStore = create<CartStoreState>()(
         }),
       setFreeSelectionMode: (mode, seed) =>
         set({ freeSelections: mode === "AUTO" ? null : { ...(seed ?? {}) } }),
+      rewardUnits: {},
+      rewardNotice: null,
+      claimFreeProduct: (product, units) => {
+        if (units < 1) return;
+        get().clearFreeReward(null);
+        get().addItem({
+          productId: product.productId,
+          slug: product.slug,
+          name: product.name,
+          image: product.image,
+          imageAlt: product.name,
+          price: product.price,
+          mrp: product.mrp,
+          quantity: units,
+          maxQuantity: product.maxQuantity,
+        });
+        set({ rewardUnits: { [product.productId]: units }, freeSelections: { [product.productId]: units } });
+      },
+      // Takes back the units added as a reward (and the manual free pick that
+      // pointed at them). Units the shopper bought themselves stay.
+      clearFreeReward: (notice = null) => {
+        const { rewardUnits, items } = get();
+        for (const [productId, units] of Object.entries(rewardUnits)) {
+          const line = items.find((i) => cartLineKey(i) === `${productId}:UNIT`);
+          if (line) get().decrementItem({ ...line, quantity: Math.min(units, line.quantity) });
+        }
+        set((state) => {
+          const picks = { ...(state.freeSelections ?? {}) };
+          for (const productId of Object.keys(rewardUnits)) delete picks[productId];
+          return { rewardUnits: {}, rewardNotice: notice, freeSelections: state.freeSelections ? picks : null };
+        });
+      },
+      // Runs against a fresh server evaluation: drops the reward when its
+      // product is no longer offered or the cart stopped qualifying, trims it
+      // when fewer free units are earned, and forgets one the shopper removed.
+      reconcileFreeReward: (claimable, names) => {
+        const { rewardUnits, items } = get();
+        for (const [productId, units] of Object.entries(rewardUnits)) {
+          if (units <= 0) continue;
+          const line = items.find((i) => cartLineKey(i) === `${productId}:UNIT`);
+          const inCart = line?.quantity ?? 0;
+          const name = names[productId] ?? line?.name ?? "Your free product";
+          if (!line || inCart === 0) {
+            set((state) => {
+              const { [productId]: _gone, ...rest } = state.rewardUnits;
+              void _gone;
+              return { rewardUnits: rest };
+            });
+          } else if (!(productId in claimable)) {
+            get().clearFreeReward(`${name} is no longer available as a free product. Please choose another.`);
+          } else if (claimable[productId] < 1) {
+            get().clearFreeReward("Your free product was removed because your cart no longer qualifies for the offer.");
+          } else if (units > Math.min(claimable[productId], inCart)) {
+            const keep = Math.min(claimable[productId], inCart);
+            // keep >= 1 here, so this never empties the line.
+            const removal = Math.max(0, Math.min(units, inCart) - keep);
+            if (removal > 0) get().decrementItem({ ...line, quantity: removal });
+            set((state) => ({
+              rewardUnits: { ...state.rewardUnits, [productId]: keep },
+              freeSelections: state.freeSelections ? { ...state.freeSelections, [productId]: keep } : null,
+            }));
+          }
+        }
+      },
       addItem: (item) => {
         set((state) => {
           const key = cartLineKey(item);
@@ -195,7 +280,7 @@ export const useCartStore = create<CartStoreState>()(
             ),
           };
         }),
-      clearCart: () => set({ items: [], freeSelections: null }),
+      clearCart: () => set({ items: [], freeSelections: null, rewardUnits: {}, rewardNotice: null }),
       getSubtotal: () =>
         get().items.reduce((sum, i) => sum + i.price * i.quantity, 0),
       getTotalItems: () =>

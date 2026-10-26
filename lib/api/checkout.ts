@@ -82,6 +82,25 @@ export type OfferRejectionReason =
   | "NOT_ELIGIBLE"
   | "NOT_IN_CART";
 
+/** A product the shopper may take free for what is in their cart (server-ranked by saving, best first). */
+export interface FreeProductOption {
+  productId: string;
+  slug: string;
+  name: string;
+  imageUrl: string | null;
+  unitPrice: number;
+  mrp: number;
+  packSize: string | null;
+  /** Free units of it the cart's paid items unlock right now; 0 = still locked. */
+  claimableUnits: number;
+  /** More paid units needed before it can be free (0 once unlocked). */
+  unitsToUnlock: number;
+  /** Most units that could be held in the cart; null = stock not tracked. */
+  availableQuantity: number | null;
+  inCartQuantity: number;
+  rank: number;
+}
+
 /** The server's verdict on the best live offer for this cart. */
 export interface CheckoutPreviewOffer {
   id: string;
@@ -89,7 +108,7 @@ export interface CheckoutPreviewOffer {
   name: string;
   type?: "BOGO" | "PERCENTAGE" | "FIXED";
   /** BOGO_POOL = the original "free item costs the same or less" rule; BOGO_ROLES = separate free products. */
-  mode?: "PERCENTAGE" | "FIXED" | "BOGO_POOL" | "BOGO_ROLES";
+  mode?: "PERCENTAGE" | "FIXED" | "BOGO_POOL" | "BOGO_ROLES" | "BOGO_MAPPED";
   discountPercent?: number | null;
   /** FIXED offers: rupees off each unit. */
   discountAmountPerUnit?: number | null;
@@ -115,6 +134,8 @@ export interface CheckoutPreviewOffer {
   limitReached: boolean;
   /** More eligible units needed before the next free one unlocks. */
   unitsToNextFree: number;
+  /** BOGO: free products the cart can earn, best saving first (price rule already applied). */
+  freeOptions?: FreeProductOption[];
   freeByProduct: Record<string, number>;
   /** Free picks that were NOT honoured (they stay paid) and why. */
   rejected: { productId: string; quantity: number; reason: OfferRejectionReason; message: string }[];

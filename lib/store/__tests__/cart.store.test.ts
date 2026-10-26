@@ -25,7 +25,7 @@ const pack = (productId: string, packId: string, packCount: number, quantity: nu
   });
 
 beforeEach(() => {
-  useCartStore.setState({ items: [] });
+  useCartStore.setState({ items: [], freeSelections: null, rewardUnits: {}, rewardNotice: null });
 });
 
 describe("cart store — adding", () => {
@@ -150,5 +150,76 @@ describe("cart store — BOGO free-item preference", () => {
   it("never stores a price — the preference is productId → quantity only", () => {
     useCartStore.getState().setFreeSelection("a", 1);
     expect(Object.values(useCartStore.getState().freeSelections ?? {}).every((v) => Number.isInteger(v))).toBe(true);
+  });
+});
+
+describe("cart store — free reward product", () => {
+  const reward = (productId: string) => ({ productId, slug: productId, name: `Gift ${productId}`, image: null, price: 60, mrp: 90 });
+  const qty = (productId: string) => useCartStore.getState().getItemQuantity(productId);
+
+  it("claiming adds the units and records the free pick (productId → quantity only)", () => {
+    useCartStore.getState().addItem(unit("buy", 1));
+    useCartStore.getState().claimFreeProduct(reward("g1"), 1);
+    const s = useCartStore.getState();
+    expect(qty("g1")).toBe(1);
+    expect(s.rewardUnits).toEqual({ g1: 1 });
+    expect(s.freeSelections).toEqual({ g1: 1 });
+  });
+
+  it("changing the choice takes back only the reward units, never ones the shopper bought", () => {
+    const { addItem, claimFreeProduct } = useCartStore.getState();
+    addItem(unit("buy", 1));
+    addItem(unit("g1", 1)); // bought by the shopper
+    claimFreeProduct(reward("g1"), 1);
+    expect(qty("g1")).toBe(2);
+    useCartStore.getState().claimFreeProduct(reward("g2"), 1);
+    expect(qty("g1")).toBe(1);
+    expect(qty("g2")).toBe(1);
+    expect(useCartStore.getState().freeSelections).toEqual({ g2: 1 });
+    expect(useCartStore.getState().rewardUnits).toEqual({ g2: 1 });
+  });
+
+  it("reconcile removes the reward and explains why when the cart stops qualifying", () => {
+    useCartStore.getState().addItem(unit("buy", 1));
+    useCartStore.getState().claimFreeProduct(reward("g1"), 1);
+    useCartStore.getState().reconcileFreeReward({ g1: 0 }, {});
+    expect(qty("g1")).toBe(0);
+    expect(qty("buy")).toBe(1);
+    expect(useCartStore.getState().rewardNotice).toMatch(/no longer qualifies/);
+    expect(useCartStore.getState().freeSelections).toEqual({});
+  });
+
+  it("reconcile asks for another product when the free product is no longer offered", () => {
+    useCartStore.getState().addItem(unit("buy", 1));
+    useCartStore.getState().claimFreeProduct(reward("g1"), 1);
+    useCartStore.getState().reconcileFreeReward({ g2: 1 }, { g1: "Gift g1" });
+    expect(qty("g1")).toBe(0);
+    expect(useCartStore.getState().rewardNotice).toMatch(/Gift g1 is no longer available/);
+  });
+
+  it("reconcile trims surplus reward units when fewer free units are earned", () => {
+    useCartStore.getState().addItem(unit("buy", 2));
+    useCartStore.getState().claimFreeProduct(reward("g1"), 2);
+    useCartStore.getState().reconcileFreeReward({ g1: 1 }, {});
+    expect(qty("g1")).toBe(1);
+    expect(useCartStore.getState().rewardUnits).toEqual({ g1: 1 });
+    expect(useCartStore.getState().freeSelections).toEqual({ g1: 1 });
+  });
+
+  it("reconcile leaves a valid reward alone, and forgets one the shopper removed themselves", () => {
+    useCartStore.getState().addItem(unit("buy", 1));
+    useCartStore.getState().claimFreeProduct(reward("g1"), 1);
+    useCartStore.getState().reconcileFreeReward({ g1: 1 }, {});
+    expect(qty("g1")).toBe(1);
+    useCartStore.getState().removeItem(cartLineKey(unit("g1")));
+    useCartStore.getState().reconcileFreeReward({ g1: 1 }, {});
+    expect(useCartStore.getState().rewardUnits).toEqual({});
+  });
+
+  it("clearing the cart forgets the reward", () => {
+    useCartStore.getState().addItem(unit("buy", 1));
+    useCartStore.getState().claimFreeProduct(reward("g1"), 1);
+    useCartStore.getState().clearCart();
+    expect(useCartStore.getState().rewardUnits).toEqual({});
   });
 });

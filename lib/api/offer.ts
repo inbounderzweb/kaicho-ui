@@ -32,7 +32,7 @@ export interface PublicOffer {
   image: { mediaId: string; url: string; thumbnailUrl?: string } | null;
   type: OfferType;
   /** How the server evaluates it. BOGO_POOL = the original "free item costs the same or less" rule. */
-  mode?: "PERCENTAGE" | "FIXED" | "BOGO_POOL" | "BOGO_ROLES";
+  mode?: "PERCENTAGE" | "FIXED" | "BOGO_POOL" | "BOGO_ROLES" | "BOGO_MAPPED";
   discountPercent?: number | null;
   /** FIXED offers: rupees off each unit. */
   discountAmount?: number | null;
@@ -129,6 +129,8 @@ export interface AdminOfferDetail extends AdminOffer {
   image: { mediaId: string; url: string; thumbnailUrl?: string } | null;
   eligibleProducts: OfferProductRef[];
   freeProducts?: OfferProductRef[];
+  /** Per-product mapping: buying this product may earn those free. */
+  freeProductRules?: { buyProduct: OfferProductRef; freeProducts: OfferProductRef[] }[];
   eligibleCategories: OfferCategoryRef[];
   excludedProducts: OfferProductRef[];
   excludedCategories: OfferCategoryRef[];
@@ -150,6 +152,7 @@ export interface OfferFormPayload {
   description?: string;
   type: OfferType;
   freeProductIds?: string[];
+  freeProductRules?: { buyProductId: string; freeProductIds: string[] }[];
   discountPercent?: number | null;
   discountAmount?: number | null;
   imageMediaId?: string | null;

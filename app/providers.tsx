@@ -6,6 +6,7 @@ import { useCartStore } from "@/lib/store/cart.store";
 import { useLocationStore } from "@/lib/store/location.store";
 import { useAuthStore } from "@/lib/store/auth.store";
 import InteractionTrackingProvider from "./components/interaction/InteractionTrackingProvider";
+import AddToCartToast from "./components/cart/AddToCartToast";
 import TrackingConsentBanner from "./components/interaction/TrackingConsentBanner";
 
 export default function Providers({ children }: { children: React.ReactNode }) {
@@ -54,6 +55,7 @@ export default function Providers({ children }: { children: React.ReactNode }) {
       {children}
       <InteractionTrackingProvider />
       <TrackingConsentBanner />
+      <AddToCartToast />
     </QueryClientProvider>
   );
 }

@@ -5,6 +5,7 @@ import { useState } from "react";
 import { IconCart, IconCheck, IconHeart } from "../ui/icons";
 import ProductArt from "./ProductArt";
 import { slugify, type Product } from "./product-data";
+import { useCartToastStore } from "@/lib/store/cartToast.store";
 import { useCartStore } from "@/lib/store/cart.store";
 import { resolveMediaUrl } from "@/lib/api/client";
 import { useShowMrp } from "@/lib/hooks/useShowMrp";
@@ -40,6 +41,7 @@ export default function ProductCard({
       mrp: originalPrice,
       quantity: 1,
     });
+    useCartToastStore.getState().show(name);
     setJustAdded(true);
     setTimeout(() => setJustAdded(false), 2000);
   }

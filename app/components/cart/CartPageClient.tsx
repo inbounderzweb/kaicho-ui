@@ -42,6 +42,18 @@ export default function CartPageClient() {
       (e) => e.productId === item.productId && (e.selectionType ?? "UNIT") === (item.selectionType ?? "UNIT")
     );
 
+  // Keep the free reward honest against the server's latest answer: drop or
+  // trim it when the cart stopped qualifying or the product ran out.
+  const reconcileFreeReward = useCartStore((s) => s.reconcileFreeReward);
+  useEffect(() => {
+    if (!evaluated || isEvaluating) return;
+    const options = evaluated.offer?.freeOptions ?? [];
+    reconcileFreeReward(
+      Object.fromEntries(options.map((o) => [o.productId, o.claimableUnits])),
+      Object.fromEntries(options.map((o) => [o.productId, o.name]))
+    );
+  }, [evaluated, isEvaluating, reconcileFreeReward]);
+
   const itemCount = useMemo(
     () => items.reduce((sum, item) => sum + item.quantity, 0),
     [items]

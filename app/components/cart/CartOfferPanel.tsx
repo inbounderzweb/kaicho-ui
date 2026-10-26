@@ -3,6 +3,7 @@
 import { useCartStore } from "@/lib/store/cart.store";
 import type { CheckoutPreviewOffer } from "@/lib/api/checkout";
 import type { CartItem } from "./cart-data";
+import FreeProductPicker from "./FreeProductPicker";
 
 // Cart-side offer panel (Buy X Get Y Free, percentage or fixed amount off).
 // Every number and every verdict shown here comes
@@ -28,12 +29,15 @@ export default function CartOfferPanel({
   // choice falls back to the automatic allocation (see toFreeSelectionArray).
   const manual = freeSelections !== null && Object.values(freeSelections).some((q) => q > 0);
   const isBogo = (offer.type ?? "BOGO") === "BOGO";
-  const separateFree = offer.mode === "BOGO_ROLES";
+  const separateFree = offer.mode === "BOGO_ROLES" || offer.mode === "BOGO_MAPPED";
+  // BOGO offers that can suggest free products (pooled and per-product mapped) get the dedicated
+  // picker; its suggestions already honour the offer mapping and the price rule.
+  const useFreePicker = isBogo && (offer.mode === "BOGO_MAPPED" || (offer.freeOptions?.length ?? 0) > 0);
   // The items the shopper may pick as their free one: with a separate free list
   // only those products, otherwise any item the offer covers.
   const pickable = new Set(offer.freeCandidateProductIds ?? offer.eligibleProductIds);
   // Only plain UNIT lines can be free (a pack's blended price isn't a unit price).
-  const eligibleLines = isBogo
+  const eligibleLines = isBogo && !useFreePicker
     ? items.filter((i) => pickable.has(i.productId) && (i.selectionType ?? "UNIT") === "UNIT")
     : [];
   const nameOf = (productId: string) => items.find((i) => i.productId === productId)?.name ?? "This item";
@@ -59,7 +63,11 @@ export default function CartOfferPanel({
             : `Rs. ${offer.discountAmountPerUnit ?? 0} off each eligible item — ${savingText}`
           : offer.applied
             ? `You're getting ${offer.freeUnits} item${offer.freeUnits === 1 ? "" : "s"} free — ${savingText}`
-            : offer.needsFreeProduct
+            : useFreePicker
+              ? (offer.freeOptions ?? []).some((o) => o.claimableUnits > 0)
+                ? "You've unlocked a free product — choose it below."
+                : "Add more eligible products to unlock your free gift."
+              : offer.needsFreeProduct
               ? "Add one of the offer's free items to your cart to get it free."
               : offer.unitsToNextFree > 0
                 ? separateFree
@@ -73,9 +81,11 @@ export default function CartOfferPanel({
         </p>
       )}
       <p className="mt-1 text-xs text-ink-muted">
-        {isBogo && !separateFree && "The free item must cost the same or less than the item you buy."}
+        {isBogo && !separateFree && !useFreePicker && "The free item must cost the same or less than the item you buy."}
         {!offer.allowCouponStacking && " Coupon codes can't be combined with this offer."}
       </p>
+
+      {useFreePicker && <FreeProductPicker offer={offer} isRefreshing={isRefreshing} />}
 
       {eligibleLines.length > 0 && (
         <div className="mt-3 border-t border-brand/15 pt-3">

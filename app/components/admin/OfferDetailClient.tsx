@@ -96,6 +96,8 @@ export default function OfferDetailClient({ id }: { id?: string }) {
   const [eligibleProducts, setEligibleProducts] = useState<PickedProduct[]>([]);
   const [freeProducts, setFreeProducts] = useState<PickedProduct[]>([]);
   const [freeError, setFreeError] = useState<string | null>(null);
+  // Optional mapping: product to buy -> products it may earn free.
+  const [freeRules, setFreeRules] = useState<Record<string, PickedProduct[]>>({});
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [excludedProducts, setExcludedProducts] = useState<PickedProduct[]>([]);
   const [excludedCategoryIds, setExcludedCategoryIds] = useState<string[]>([]);
@@ -136,6 +138,9 @@ export default function OfferDetailClient({ id }: { id?: string }) {
     const t = setTimeout(() => {
       setEligibleProducts(offer.eligibleProducts.map(toPicked));
       setFreeProducts((offer.freeProducts ?? []).map(toPicked));
+      setFreeRules(
+        Object.fromEntries((offer.freeProductRules ?? []).map((r) => [r.buyProduct.id, r.freeProducts.map(toPicked)]))
+      );
       setExcludedProducts(offer.excludedProducts.map(toPicked));
       setExcludedCategoryIds(offer.excludedCategories.map((c) => c.id));
       setImage(offer.image ? { mediaId: offer.image.mediaId, url: offer.image.url, thumbnailUrl: offer.image.thumbnailUrl } : null);
@@ -161,7 +166,10 @@ export default function OfferDetailClient({ id }: { id?: string }) {
     // A Buy X Get Y Free offer must say what is free before it can go live
     // (the server enforces this too). Drafts may be saved incomplete.
     const goingLive = isEdit ? offer?.status === "ACTIVE" : parsed.status === "ACTIVE" || parsed.status === "SCHEDULED";
-    if (type === "BOGO" && goingLive && freeProducts.length === 0) {
+    const ruleList = Object.entries(freeRules)
+      .filter(([buyId, list]) => list.length > 0 && eligibleProducts.some((p) => p.id === buyId))
+      .map(([buyProductId, list]) => ({ buyProductId, freeProductIds: list.map((p) => p.id) }));
+    if (type === "BOGO" && goingLive && freeProducts.length === 0 && ruleList.length === 0) {
       setFreeError("Choose the free product(s) before activating this offer.");
       return;
     }
@@ -178,6 +186,7 @@ export default function OfferDetailClient({ id }: { id?: string }) {
       excludedProductIds: excludedProducts.map((p) => p.id),
       excludedCategoryIds: excludedCategoryIds,
       freeProductIds: type === "BOGO" ? freeProducts.map((p) => p.id) : [],
+      freeProductRules: type === "BOGO" ? ruleList : [],
       discountPercent: type === "PERCENTAGE" ? parsed.discountPercent ?? null : null,
       discountAmount: type === "FIXED" ? parsed.discountAmount ?? null : null,
       // Only Buy X Get Y Free uses these; the others send the neutral defaults.
@@ -270,13 +279,15 @@ export default function OfferDetailClient({ id }: { id?: string }) {
 
   // Live, customer-facing preview from the current form values.
   const watchedType: OfferType = (watched.type as OfferType | undefined) ?? "BOGO";
+  const hasRules = Object.values(freeRules).some((l) => l.length > 0);
   const separateFree =
     watchedType === "BOGO" &&
+    !hasRules &&
     freeProducts.length > 0 &&
     !(freeProducts.length === eligibleProducts.length && freeProducts.every((f) => eligibleProducts.some((e) => e.id === f.id)));
   const previewRule = {
     type: watchedType,
-    mode: watchedType === "BOGO" ? (separateFree ? ("BOGO_ROLES" as const) : ("BOGO_POOL" as const)) : watchedType,
+    mode: watchedType === "BOGO" ? (hasRules ? ("BOGO_MAPPED" as const) : separateFree ? ("BOGO_ROLES" as const) : ("BOGO_POOL" as const)) : watchedType,
     discountPercent: Number(watched.discountPercent) || null,
     discountAmount: Number(watched.discountAmount) || null,
     buyQuantity: Number(watched.buyQuantity) || 1,
@@ -469,6 +480,35 @@ export default function OfferDetailClient({ id }: { id?: string }) {
                     }
                   />
                   {freeError && <p className={ERR}>{freeError}</p>}
+
+                  <div className="space-y-3 border-t border-admin-border pt-4 dark:border-admin-border-dark">
+                    <div>
+                      <h3 className="text-xs font-bold uppercase tracking-wider text-black/50 dark:text-white/50">
+                        Free products per purchased product (optional)
+                      </h3>
+                      <p className="mt-1 text-xs text-black/55 dark:text-white/55">
+                        Say which products each purchase may earn free. A product with no list here can earn any of the
+                        free products chosen above. With any list set, a free item <strong>never costs more</strong> than
+                        the item bought &mdash; a mapped product that is dearer is simply not offered.
+                      </p>
+                    </div>
+                    {eligibleProducts.length === 0 ? (
+                      <p className="text-xs text-black/55 dark:text-white/55">Choose the products to buy first.</p>
+                    ) : (
+                      eligibleProducts.map((buy) => (
+                        <OfferProductPicker
+                          key={buy.id}
+                          label={`Buy: ${buy.name}${buy.sellingPrice != null ? ` (Rs. ${buy.sellingPrice})` : ""} → free`}
+                          value={freeRules[buy.id] ?? []}
+                          onChange={(next) => {
+                            setFreeRules((prev) => ({ ...prev, [buy.id]: next }));
+                            setFreeError(null);
+                          }}
+                          emptyText="Any of the free products above"
+                        />
+                      ))
+                    )}
+                  </div>
                   <p className="rounded-xl bg-admin-primary/10 p-3 text-xs text-black/70 dark:text-white/70">
                     {separateFree ? (
                       <>
