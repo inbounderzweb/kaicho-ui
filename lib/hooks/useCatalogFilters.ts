@@ -47,14 +47,16 @@ export function useCatalogFilters(): CatalogFiltersState & {
     minPrice: searchParams.get("minPrice") ?? "",
     maxPrice: searchParams.get("maxPrice") ?? "",
     inStock: searchParams.get("inStock") === "true",
-    sort: (searchParams.get("sort") as PublicSortField) ?? "relevance",
+    // Default (no ?sort in the URL) is price, low to high; "relevance" must be kept in the URL to be chosen.
+    sort: (searchParams.get("sort") as PublicSortField) ?? "price",
     order: (searchParams.get("order") as PublicSortOrder) ?? "asc",
   };
 
   function update(patch: Patch, resetPage = true) {
     const params = new URLSearchParams(searchParams.toString());
     for (const [key, value] of Object.entries(patch)) {
-      if (value === undefined || value === "" || value === "relevance" || value === false) {
+      const isDefault = (key === "sort" && value === "price") || (key === "order" && value === "asc");
+      if (value === undefined || value === "" || value === false || isDefault) {
         params.delete(key);
       } else {
         params.set(key, String(value));

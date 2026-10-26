@@ -15,7 +15,7 @@ export function useProducts(params: PublicProductListParams = {}) {
     minPrice: params.minPrice,
     maxPrice: params.maxPrice,
     inStock: params.inStock || undefined,
-    sort: params.sort ?? "relevance",
+    sort: params.sort ?? "price",
     order: params.order ?? "asc",
   };
 

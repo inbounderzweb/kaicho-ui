@@ -24,7 +24,7 @@ export default function ProductSort({
   order: PublicSortOrder;
   onChange: (sort: PublicSortField, order: PublicSortOrder) => void;
 }) {
-  const current = OPTIONS.find((o) => o.sort === sort && o.order === order)?.value ?? "relevance";
+  const current = OPTIONS.find((o) => o.sort === sort && o.order === order)?.value ?? "price-asc";
 
   return (
     <label className="flex min-w-0 items-center gap-2 text-sm text-ink-muted">

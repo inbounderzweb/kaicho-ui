@@ -14,7 +14,7 @@ export function useCategoryProducts(slug: string, params: CategoryProductsParams
     minPrice: params.minPrice,
     maxPrice: params.maxPrice,
     inStock: params.inStock || undefined,
-    sort: params.sort ?? "relevance",
+    sort: params.sort ?? "price",
     order: params.order ?? "asc",
   };
 
