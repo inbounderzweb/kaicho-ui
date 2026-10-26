@@ -61,6 +61,10 @@ export default function CartPageClient() {
 
   const handleQuantityChange = (itemKey: string, quantity: number) => {
     if (quantity < 1) return;
+    // Never step past real stock (the server's per-line limit); stepping DOWN is always allowed.
+    const item = items.find((i) => cartLineKey(i) === itemKey);
+    const limit = item ? freeFor(item)?.stockLimit : null;
+    if (item && typeof limit === "number" && quantity > item.quantity && quantity > limit) return;
     updateQuantity(itemKey, quantity);
   };
 
@@ -144,6 +148,7 @@ export default function CartPageClient() {
                     onRemove={handleRemove}
                     freeQuantity={freeFor(item)?.freeQuantity ?? 0}
                     offerDiscount={freeFor(item)?.offerDiscount ?? 0}
+                    stockLimit={freeFor(item)?.stockLimit ?? null}
                   />
                 );
               })}

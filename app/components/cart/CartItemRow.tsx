@@ -11,6 +11,7 @@ export default function CartItemRow({
   onRemove,
   freeQuantity = 0,
   offerDiscount = 0,
+  stockLimit = null,
 }: {
   item: CartItem;
   itemKey: string;
@@ -20,11 +21,15 @@ export default function CartItemRow({
   freeQuantity?: number;
   /** BOGO: rupees off this line for its free units. */
   offerDiscount?: number;
+  /** From the server's cart evaluation: real stock for this line (null = unlimited). */
+  stockLimit?: number | null;
 }) {
   const lineTotal = item.price * item.quantity;
   const payable = Math.max(0, lineTotal - offerDiscount);
   const href = `/products/${item.slug}`;
-  const atMax = typeof item.maxQuantity === "number" && item.quantity >= item.maxQuantity;
+  const limit = stockLimit ?? (typeof item.maxQuantity === "number" ? item.maxQuantity : null);
+  const atMax = limit !== null && item.quantity >= limit;
+  const stockText = limit === 0 ? "Out of stock" : item.quantity > (limit ?? Infinity) ? `Only ${limit} left — reduce quantity` : `Only ${limit} left in stock`;
   // A pack is a fixed bundle — "quantity +/- 1" is meaningless on it. Pack
   // rows show the confirmed breakdown as read-only text and only offer
   // Remove / a link back to the product page to pick a different pack,
@@ -96,7 +101,7 @@ export default function CartItemRow({
           </p>
           {atMax && !isPack && (
             <p className="mt-1 text-xs font-semibold text-sale sm:hidden">
-              Only {item.maxQuantity} left in stock
+              {stockText}
             </p>
           )}
         </div>
@@ -145,7 +150,7 @@ export default function CartItemRow({
               </div>
               {atMax && (
                 <p className="hidden text-[11px] font-semibold text-sale sm:block">
-                  Only {item.maxQuantity} left
+                  {stockText}
                 </p>
               )}
             </div>

@@ -45,6 +45,8 @@ export interface CheckoutPreviewItem {
   unavailable?: boolean;
   /** Fewer units in stock than requested — blocks checkout until adjusted. */
   insufficientStock?: boolean;
+  /** Most units of this plain line that can be held; null/absent = not stock-limited. */
+  stockLimit?: number | null;
   /** How many units are actually available, when insufficientStock is set. */
   availableQuantity?: number;
   /** A stale/no-longer-valid pack selection — same treatment as `unavailable`. */
