@@ -179,11 +179,22 @@ describe("cart store — free reward product", () => {
     expect(useCartStore.getState().rewardUnits).toEqual({ g2: 1 });
   });
 
-  it("reconcile removes the reward and explains why when the cart stops qualifying", () => {
+  // Helper: the server's settled answer. `honoured` defaults to "every claimed unit was granted".
+  const settled = (over: Partial<Parameters<ReturnType<typeof useCartStore.getState>["reconcileFreeReward"]>[0]> = {}) => ({
+    claimable: { g1: 1 } as Record<string, number>,
+    names: {} as Record<string, string>,
+    honoured: { g1: 1 } as Record<string, number>,
+    pickerActive: true,
+    ...over,
+  });
+
+  it("reconcile takes back the gift units (not the shopper's own) and explains why when the cart stops qualifying", () => {
     useCartStore.getState().addItem(unit("buy", 1));
+    useCartStore.getState().addItem(unit("g1", 1)); // the shopper's own
     useCartStore.getState().claimFreeProduct(reward("g1"), 1);
-    useCartStore.getState().reconcileFreeReward({ g1: 0 }, {});
-    expect(qty("g1")).toBe(0);
+    expect(qty("g1")).toBe(2);
+    useCartStore.getState().reconcileFreeReward(settled({ claimable: { g1: 0 }, honoured: {} }));
+    expect(qty("g1")).toBe(1);
     expect(qty("buy")).toBe(1);
     expect(useCartStore.getState().rewardNotice).toMatch(/no longer qualifies/);
     expect(useCartStore.getState().freeSelections).toEqual({});
@@ -192,15 +203,15 @@ describe("cart store — free reward product", () => {
   it("reconcile asks for another product when the free product is no longer offered", () => {
     useCartStore.getState().addItem(unit("buy", 1));
     useCartStore.getState().claimFreeProduct(reward("g1"), 1);
-    useCartStore.getState().reconcileFreeReward({ g2: 1 }, { g1: "Gift g1" });
-    expect(qty("g1")).toBe(0);
+    useCartStore.getState().reconcileFreeReward(settled({ claimable: { g2: 1 }, names: { g1: "Gift g1" }, honoured: {} }));
+    expect(qty("g1")).toBe(1); // kept as a normal line (the shopper sees and can remove it)
     expect(useCartStore.getState().rewardNotice).toMatch(/Gift g1 is no longer available/);
   });
 
   it("reconcile trims surplus reward units when fewer free units are earned", () => {
     useCartStore.getState().addItem(unit("buy", 2));
     useCartStore.getState().claimFreeProduct(reward("g1"), 2);
-    useCartStore.getState().reconcileFreeReward({ g1: 1 }, {});
+    useCartStore.getState().reconcileFreeReward(settled({ claimable: { g1: 1 }, honoured: { g1: 1 } }));
     expect(qty("g1")).toBe(1);
     expect(useCartStore.getState().rewardUnits).toEqual({ g1: 1 });
     expect(useCartStore.getState().freeSelections).toEqual({ g1: 1 });
@@ -209,11 +220,52 @@ describe("cart store — free reward product", () => {
   it("reconcile leaves a valid reward alone, and forgets one the shopper removed themselves", () => {
     useCartStore.getState().addItem(unit("buy", 1));
     useCartStore.getState().claimFreeProduct(reward("g1"), 1);
-    useCartStore.getState().reconcileFreeReward({ g1: 1 }, {});
+    useCartStore.getState().reconcileFreeReward(settled());
     expect(qty("g1")).toBe(1);
+    expect(useCartStore.getState().freeSelections).toEqual({ g1: 1 });
     useCartStore.getState().removeItem(cartLineKey(unit("g1")));
-    useCartStore.getState().reconcileFreeReward({ g1: 1 }, {});
+    useCartStore.getState().reconcileFreeReward(settled());
     expect(useCartStore.getState().rewardUnits).toEqual({});
+  });
+
+  // The reported bug: the item that paid for the free product was removed, leaving
+  // only the gift unit and a pick the server rejects ("Add 1 more eligible item(s)…")
+  // while the picker said nothing was chosen. The server still offers the product
+  // (claimable 1) because the lone unit looks like a payer — only `honoured` tells the truth.
+  it("a pick the server did not honour is cleaned up, even though the product is still offered; the last unit is kept, paid", () => {
+    useCartStore.getState().addItem(unit("buy", 1));
+    useCartStore.getState().claimFreeProduct(reward("g1"), 1);
+    useCartStore.getState().removeItem(cartLineKey(unit("buy")));
+    useCartStore.getState().reconcileFreeReward(settled({ claimable: { g1: 1 }, honoured: {} }));
+    const s = useCartStore.getState();
+    expect(qty("g1")).toBe(1); // never silently empties what the shopper is looking at
+    expect(s.freeSelections).toEqual({});
+    expect(s.rewardUnits).toEqual({});
+    expect(s.rewardNotice).toMatch(/no longer qualifies/);
+  });
+
+  it("a stale pick that no reward unit backs is dropped but the shopper's own items stay", () => {
+    useCartStore.getState().addItem(unit("g1", 1));
+    useCartStore.setState({ freeSelections: { g1: 1 } }); // e.g. left over from an earlier session
+    useCartStore.getState().reconcileFreeReward(settled({ honoured: {} }));
+    expect(qty("g1")).toBe(1);
+    expect(useCartStore.getState().freeSelections).toEqual({});
+  });
+
+  it("a pick that was honoured is kept, a partly honoured one is lowered to what was granted", () => {
+    useCartStore.getState().addItem(unit("g1", 3));
+    useCartStore.setState({ freeSelections: { g1: 2 } });
+    useCartStore.getState().reconcileFreeReward(settled({ honoured: { g1: 2 } }));
+    expect(useCartStore.getState().freeSelections).toEqual({ g1: 2 });
+    useCartStore.getState().reconcileFreeReward(settled({ honoured: { g1: 1 } }));
+    expect(useCartStore.getState().freeSelections).toEqual({ g1: 1 });
+  });
+
+  it("without the picker (legacy manual choice) picks are left for the shopper to see and adjust", () => {
+    useCartStore.getState().addItem(unit("g1", 1));
+    useCartStore.setState({ freeSelections: { g1: 1 } });
+    useCartStore.getState().reconcileFreeReward(settled({ pickerActive: false, honoured: {} }));
+    expect(useCartStore.getState().freeSelections).toEqual({ g1: 1 });
   });
 
   it("clearing the cart forgets the reward", () => {

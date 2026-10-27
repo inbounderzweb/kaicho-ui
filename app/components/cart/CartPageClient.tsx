@@ -48,10 +48,12 @@ export default function CartPageClient() {
   useEffect(() => {
     if (!evaluated || isEvaluating) return;
     const options = evaluated.offer?.freeOptions ?? [];
-    reconcileFreeReward(
-      Object.fromEntries(options.map((o) => [o.productId, o.claimableUnits])),
-      Object.fromEntries(options.map((o) => [o.productId, o.name]))
-    );
+    reconcileFreeReward({
+      claimable: Object.fromEntries(options.map((o) => [o.productId, o.claimableUnits])),
+      names: Object.fromEntries(options.map((o) => [o.productId, o.name])),
+      honoured: evaluated.offer?.freeByProduct ?? {},
+      pickerActive: options.length > 0,
+    });
   }, [evaluated, isEvaluating, reconcileFreeReward]);
 
   const itemCount = useMemo(

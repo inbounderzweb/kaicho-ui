@@ -28,9 +28,20 @@ interface CartStoreState {
   rewardUnits: Record<string, number>;
   rewardNotice: string | null;
   claimFreeProduct: (product: RewardProduct, units: number) => void;
-  clearFreeReward: (notice?: string | null) => void;
-  /** claimable: productId → free units the server says the cart currently earns of it. */
-  reconcileFreeReward: (claimable: Record<string, number>, names: Record<string, string>) => void;
+  /** keepLine: never empty a line — its last unit stays as a normal, paid item. */
+  clearFreeReward: (notice?: string | null, options?: { keepLine?: boolean }) => void;
+  reconcileFreeReward: (evaluation: FreeRewardEvaluation) => void;
+}
+
+/** What the server's latest SETTLED evaluation of the current cart says about free products. */
+export interface FreeRewardEvaluation {
+  /** productId → free units the cart currently earns of it (only products still offered). */
+  claimable: Record<string, number>;
+  names: Record<string, string>;
+  /** productId → free units the server actually gave (offer.freeByProduct). */
+  honoured: Record<string, number>;
+  /** The "Choose Your Free Product" picker is showing, so every manual pick came from it. */
+  pickerActive: boolean;
 }
 
 /** What the cart needs to hold a free-reward product (display snapshot; the server re-prices). */
@@ -117,11 +128,16 @@ export const useCartStore = create<CartStoreState>()(
       },
       // Takes back the units added as a reward (and the manual free pick that
       // pointed at them). Units the shopper bought themselves stay.
-      clearFreeReward: (notice = null) => {
+      clearFreeReward: (notice = null, { keepLine = false } = {}) => {
         const { rewardUnits, items } = get();
         for (const [productId, units] of Object.entries(rewardUnits)) {
           const line = items.find((i) => cartLineKey(i) === `${productId}:UNIT`);
-          if (line) get().decrementItem({ ...line, quantity: Math.min(units, line.quantity) });
+          if (!line) continue;
+          // Changing the choice removes the old gift entirely. Cleaning up after the
+          // server stopped honouring it must not delete an item the shopper may
+          // consider theirs (e.g. they lowered a quantity 2 -> 1), so keep the last unit.
+          const removable = keepLine ? Math.min(units, line.quantity - 1) : Math.min(units, line.quantity);
+          if (removable > 0) get().decrementItem({ ...line, quantity: removable });
         }
         set((state) => {
           const picks = { ...(state.freeSelections ?? {}) };
@@ -129,16 +145,20 @@ export const useCartStore = create<CartStoreState>()(
           return { rewardUnits: {}, rewardNotice: notice, freeSelections: state.freeSelections ? picks : null };
         });
       },
-      // Runs against a fresh server evaluation: drops the reward when its
-      // product is no longer offered or the cart stopped qualifying, trims it
-      // when fewer free units are earned, and forgets one the shopper removed.
-      reconcileFreeReward: (claimable, names) => {
+      // Runs against a fresh, SETTLED server evaluation of the current cart and
+      // makes the cart agree with it: the reward is dropped when its product is
+      // no longer offered or the cart stopped qualifying, trimmed when fewer free
+      // units are earned, and anything the server did not honour is cleaned up
+      // instead of lingering as a stale pick (which showed as a rejection error
+      // under a picker that said nothing was chosen).
+      reconcileFreeReward: ({ claimable, names, honoured, pickerActive }) => {
         const { rewardUnits, items } = get();
         for (const [productId, units] of Object.entries(rewardUnits)) {
           if (units <= 0) continue;
           const line = items.find((i) => cartLineKey(i) === `${productId}:UNIT`);
           const inCart = line?.quantity ?? 0;
           const name = names[productId] ?? line?.name ?? "Your free product";
+          const tracked = Math.min(units, inCart);
           if (!line || inCart === 0) {
             set((state) => {
               const { [productId]: _gone, ...rest } = state.rewardUnits;
@@ -146,19 +166,37 @@ export const useCartStore = create<CartStoreState>()(
               return { rewardUnits: rest };
             });
           } else if (!(productId in claimable)) {
-            get().clearFreeReward(`${name} is no longer available as a free product. Please choose another.`);
-          } else if (claimable[productId] < 1) {
-            get().clearFreeReward("Your free product was removed because your cart no longer qualifies for the offer.");
-          } else if (units > Math.min(claimable[productId], inCart)) {
-            const keep = Math.min(claimable[productId], inCart);
+            get().clearFreeReward(`${name} is no longer available as a free product. Please choose another.`, { keepLine: true });
+          } else if (claimable[productId] < 1 || (honoured[productId] ?? 0) < 1) {
+            // Nothing free was granted for it (cart no longer qualifies, e.g. the item that
+            // paid for it was removed): the unit only ever was a gift, so take it back.
+            get().clearFreeReward("Your free product is no longer free because your cart no longer qualifies for the offer.", { keepLine: true });
+          } else if (tracked > Math.min(claimable[productId], honoured[productId] ?? 0)) {
+            const keep = Math.min(claimable[productId], honoured[productId] ?? 0);
             // keep >= 1 here, so this never empties the line.
-            const removal = Math.max(0, Math.min(units, inCart) - keep);
+            const removal = Math.max(0, tracked - keep);
             if (removal > 0) get().decrementItem({ ...line, quantity: removal });
             set((state) => ({
               rewardUnits: { ...state.rewardUnits, [productId]: keep },
               freeSelections: state.freeSelections ? { ...state.freeSelections, [productId]: keep } : null,
             }));
           }
+        }
+
+        // Picks the server did not (fully) honour. With the picker showing, every
+        // pick was made through it, so a pick that is not granted is just stale.
+        if (pickerActive) {
+          set((state) => {
+            if (!state.freeSelections) return state;
+            const next: Record<string, number> = {};
+            let changed = false;
+            for (const [productId, quantity] of Object.entries(state.freeSelections)) {
+              const granted = Math.min(quantity, honoured[productId] ?? 0);
+              if (granted !== quantity) changed = true;
+              if (granted > 0) next[productId] = granted;
+            }
+            return changed ? { freeSelections: next } : state;
+          });
         }
       },
       addItem: (item) => {

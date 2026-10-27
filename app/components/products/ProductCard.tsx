@@ -86,7 +86,10 @@ function ProductCard({
 
   const money = (n: number) => `Rs. ${Number.isInteger(n) ? n.toFixed(0) : n.toFixed(2)}`;
   const savings = product.pricing.mrp - product.pricing.sellingPrice;
-  const actionBase = "absolute bottom-2 right-2 z-20 inline-flex h-9 w-[4.75rem] touch-manipulation items-center justify-center rounded-lg text-sm font-bold shadow-sm transition-colors before:absolute before:-inset-1.5 before:content-['']";
+  const actionBase = "absolute bottom-2 right-2 z-20 inline-flex h-9 w-[4.75rem] touch-manipulation items-center justify-center rounded-lg text-sm font-bold shadow-sm transition-colors";
+  // Enlarges the ADD button's tap area. ONLY for that single button: on the +/− stepper
+  // wrapper this invisible layer sits above its buttons and swallows every tap.
+  const tapArea = "before:absolute before:-inset-1.5 before:content-['']";
 
   // Layout: large borderless image tile with the Add/stepper and wishlist
   // floating on it, then price pill + MRP, "Rs. X OFF", name, pack size.
@@ -156,7 +159,7 @@ function ProductCard({
             disabled={outOfStock}
             aria-busy={smartCart.busy}
             aria-label={`Add ${product.name} to cart`}
-            className={`${actionBase} border-2 disabled:cursor-not-allowed ${
+            className={`${actionBase} ${tapArea} border-2 disabled:cursor-not-allowed ${
               outOfStock
                 ? "border-border bg-cream text-ink-faint opacity-60"
                 : "border-brand bg-white text-brand active:bg-brand/10"
