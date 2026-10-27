@@ -11,10 +11,8 @@ import { useShowMrp } from "@/lib/hooks/useShowMrp";
 import { useWishlist } from "@/lib/hooks/useWishlist";
 import { useToggleWishlist } from "@/lib/hooks/useToggleWishlist";
 import { useAuthGate } from "@/lib/auth/useAuthGate";
-import { IconHeart, IconCart } from "../ui/icons";
-import ProductPrice from "./ProductPrice";
+import { IconHeart } from "../ui/icons";
 import ProductPackDetails from "./ProductPackDetails";
-import styles from "./ProductCard.module.css";
 import ProductAvailability from "./ProductAvailability";
 import ProductOfferBadge from "../offers/ProductOfferBadge";
 import ProductOfferPrice from "../offers/ProductOfferPrice";
@@ -86,29 +84,20 @@ function ProductCard({
     void smartCart.add(1, { queueIfBusy: quantity > 0 });
   }
 
+  const money = (n: number) => `Rs. ${Number.isInteger(n) ? n.toFixed(0) : n.toFixed(2)}`;
+  const savings = product.pricing.mrp - product.pricing.sellingPrice;
+  const actionBase = "absolute bottom-2 right-2 z-20 inline-flex h-9 w-[4.75rem] touch-manipulation items-center justify-center rounded-lg text-sm font-bold shadow-sm transition-colors before:absolute before:-inset-1.5 before:content-['']";
+
+  // Layout: large borderless image tile with the Add/stepper and wishlist
+  // floating on it, then price pill + MRP, "Rs. X OFF", name, pack size.
   return (
-    <div className={`${styles.card} group relative flex h-full min-w-0 flex-col rounded-2xl border border-border bg-white p-3 transition-all duration-300 hover:-translate-y-1 hover:border-brand/30 hover:shadow-[0_20px_40px_-24px_rgba(28,28,28,0.25)] sm:p-3.5`}>
+    <div className="group relative flex h-full min-w-0 flex-col">
       <div className="relative shrink-0">
-        <Link href={href} draggable={false} className="relative block aspect-square w-full overflow-hidden rounded-xl bg-cream">
-          {outOfStock ? (
+        <Link href={href} draggable={false} className="relative block aspect-square w-full overflow-hidden rounded-2xl border border-border bg-cream">
+          {outOfStock && (
             <span className="absolute left-2 top-2 z-10 rounded-md bg-charcoal/80 px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-white">
               Out of stock
             </span>
-          ) : (
-            hasDiscount && (
-              <span className="absolute left-2 top-2 z-10 rounded-md bg-sale px-2 py-1 text-xs font-bold text-white">
-                -{Math.round(product.pricing.discountPercentage)}%
-              </span>
-            )
-          )}
-
-          {!outOfStock && (
-            <ProductOfferBadge
-              productId={product.productId}
-              categoryId={product.category?.categoryId}
-              price={product.pricing.sellingPrice}
-              className="absolute bottom-2 left-2 z-10"
-            />
           )}
 
           {imageUrl ? (
@@ -135,97 +124,97 @@ function ProductCard({
           aria-label={inWishlist ? `Remove ${product.name} from wishlist` : `Add ${product.name} to wishlist`}
           aria-pressed={inWishlist}
           disabled={toggleWishlist.isPending}
-          className="absolute right-2 top-2 z-20 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-border bg-white text-ink-muted shadow-sm transition-colors hover:text-sale focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand disabled:opacity-60"
+          className="absolute right-2 top-2 z-20 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/95 text-ink-muted shadow-sm transition-colors hover:text-sale focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand disabled:opacity-60"
         >
-          <IconHeart className={`h-5 w-5 ${inWishlist ? "fill-sale text-sale" : ""}`} />
+          <IconHeart className={`h-4 w-4 ${inWishlist ? "fill-sale text-sale" : ""}`} />
         </button>
-      </div>
-
-      <div className="mt-2 flex-1">
-        <span className="block h-4 truncate text-[11px] font-semibold uppercase leading-4 tracking-wide text-ink-faint">
-          {product.brand?.name ?? ""}
-        </span>
-        <Link href={href} draggable={false}>
-          <h3 className="line-clamp-2 min-h-[2.75em] break-words font-display text-sm font-bold leading-snug text-ink hover:text-brand sm:text-base">
-            {product.name}
-          </h3>
-        </Link>
-        <ProductPackDetails weightPerPackGrams={product.weightPerPackGrams} numberOfPacks={product.numberOfPacks} />
-      </div>
-
-      <div className={styles.footer}>
-        <div className="min-w-0 space-y-1">
-          <ProductAvailability inventory={product.inventory} size="sm" className="leading-4" />
-          <ProductPrice pricing={product.pricing} size="sm" showDiscountBadge={false} className={styles.price} />
-          {!outOfStock && (
-            <ProductOfferPrice
-              productId={product.productId}
-              categoryId={product.category?.categoryId}
-              sellingPrice={product.pricing.sellingPrice}
-            />
-          )}
-        </div>
-
-        <div className={styles.controls}>
 
         {quantity > 0 ? (
-          <div className="inline-flex h-11 w-full min-w-0 items-center overflow-hidden rounded-full bg-brand text-white" role="group" aria-label={`Quantity of ${product.name}`}>
+          <div className={`${actionBase} !w-24 overflow-hidden bg-brand text-white`} role="group" aria-label={`Quantity of ${product.name}`}>
             <button
               type="button"
               aria-label={`Remove one ${product.name}`}
               onClick={() => {
                 if (cartLine) useCartStore.getState().decrementItem({ ...cartLine, quantity: 1 });
               }}
-              className="h-11 min-w-0 flex-1 touch-manipulation text-xl transition-colors active:bg-brand-darker"
+              className="h-9 min-w-0 flex-1 touch-manipulation text-xl active:bg-brand-darker"
             >−</button>
-            <span aria-live="polite" aria-atomic="true" className="min-w-5 text-center text-sm font-bold">{quantity}</span>
+            <span aria-live="polite" aria-atomic="true" className="min-w-4 text-center text-sm font-bold">{quantity}</span>
             <button
               type="button"
               aria-label={`Add one more ${product.name}`}
               disabled={outOfStock || (product.inventory.trackInventory && quantity >= product.inventory.stockQuantity)}
               aria-busy={smartCart.busy}
               onClick={handleAddToCart}
-              className={`h-11 min-w-0 flex-1 touch-manipulation text-xl transition-colors active:bg-brand-darker disabled:opacity-50 ${smartCart.busy ? "bg-brand-darker" : ""}`}
+              className={`h-9 min-w-0 flex-1 touch-manipulation text-xl active:bg-brand-darker disabled:opacity-50 ${smartCart.busy ? "bg-brand-darker" : ""}`}
             >+</button>
           </div>
-        ) : <button
-          type="button"
-          onClick={handleAddToCart}
-          disabled={outOfStock}
-          aria-busy={smartCart.busy}
-          // The ::before is an invisible 8px ring around the green pill that belongs
-          // to the button, so a tap on its edge or just outside it still adds.
-          className={`relative inline-flex h-11 w-full min-w-0 touch-manipulation items-center justify-center gap-1 rounded-full px-2 text-sm font-bold transition-colors before:absolute before:-inset-2 before:content-[''] disabled:cursor-not-allowed ${
-            smartCart.busy
-              ? "bg-brand-darker text-white"
-              : outOfStock
-                ? "bg-cream text-ink-faint opacity-50"
-                : "bg-brand text-white active:bg-brand-darker"
-          }`}
-        >
-          {outOfStock ? (
-            "Sold Out"
-          ) : smartCart.busy ? (
-            "Adding…"
-          ) : (
-            <>
-              <IconCart className="h-3.5 w-3.5" /> Add
-            </>
-          )}
-        </button>}
+        ) : (
+          <button
+            type="button"
+            onClick={handleAddToCart}
+            disabled={outOfStock}
+            aria-busy={smartCart.busy}
+            aria-label={`Add ${product.name} to cart`}
+            className={`${actionBase} border-2 disabled:cursor-not-allowed ${
+              outOfStock
+                ? "border-border bg-cream text-ink-faint opacity-60"
+                : "border-brand bg-white text-brand active:bg-brand/10"
+            }`}
+          >
+            {outOfStock ? "Sold out" : smartCart.busy ? "…" : "ADD"}
+          </button>
+        )}
 
-        </div>
+        {/* Overlaid, not in flow: an error must not grow this card (and with it
+            its whole grid row) or shift the page under the user's finger. */}
+        {smartCart.error && (
+          <p
+            role="alert"
+            className="absolute inset-x-2 bottom-12 z-30 rounded-lg border border-red-200 bg-red-50 px-2 py-1.5 text-xs font-semibold leading-4 text-red-700 shadow-sm"
+          >
+            {smartCart.error}
+          </p>
+        )}
       </div>
-      {/* Overlaid, not in flow: an error must not grow this card (and with it
-          its whole grid row) or shift the page under the user's finger. */}
-      {smartCart.error && (
-        <p
-          role="alert"
-          className="absolute inset-x-3 bottom-[4.5rem] z-30 rounded-lg border border-red-200 bg-red-50 px-2 py-1.5 text-xs font-semibold leading-4 text-red-700 shadow-sm"
-        >
-          {smartCart.error}
-        </p>
-      )}
+
+      <div className="mt-2 flex-1 px-0.5">
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
+          <span className="rounded-md bg-brand px-2 py-0.5 font-display text-sm font-extrabold leading-5 text-white">
+            {money(product.pricing.sellingPrice)}
+          </span>
+          {hasDiscount && (
+            <span className="text-xs text-ink-faint line-through">{money(product.pricing.mrp)}</span>
+          )}
+        </div>
+        {hasDiscount && (
+          <p className="mt-1 text-xs font-bold uppercase leading-4 text-brand">{money(savings)} OFF</p>
+        )}
+        {!outOfStock && (
+          <ProductOfferBadge
+            productId={product.productId}
+            categoryId={product.category?.categoryId}
+            price={product.pricing.sellingPrice}
+            variant="tag"
+            className="mt-1"
+          />
+        )}
+        {!outOfStock && (
+          <ProductOfferPrice
+            productId={product.productId}
+            categoryId={product.category?.categoryId}
+            sellingPrice={product.pricing.sellingPrice}
+            className="mt-0.5"
+          />
+        )}
+        <Link href={href} draggable={false}>
+          <h3 className="mt-1 line-clamp-2 break-words text-sm font-semibold leading-snug text-ink hover:text-brand">
+            {product.name}
+          </h3>
+        </Link>
+        <ProductPackDetails weightPerPackGrams={product.weightPerPackGrams} numberOfPacks={product.numberOfPacks} />
+        <ProductAvailability inventory={product.inventory} size="sm" className="mt-1 leading-4" />
+      </div>
       {smartCart.modal}
     </div>
   );

@@ -1,5 +1,5 @@
 import Container from "../ui/Container";
-import ProductCard from "../products/ProductCard";
+import ProductCard from "../products/ProductCardClassic";
 import SwipeRow from "../ui/SwipeRow";
 import { fetchHomepageCollections, type AdminCollection } from "@/lib/api/collection";
 
