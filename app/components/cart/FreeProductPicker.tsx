@@ -17,7 +17,6 @@ const rs = (n: number) => `Rs. ${n.toFixed(2)}`;
 // cart until the shopper presses "Confirm Free Product"; confirming adds the
 // units and records a free pick, both of which the server re-validates.
 export default function FreeProductPicker({ offer, isRefreshing }: { offer: CheckoutPreviewOffer; isRefreshing: boolean }) {
-  const rewardNotice = useCartStore((s) => s.rewardNotice);
   const claimFreeProduct = useCartStore((s) => s.claimFreeProduct);
   const rewardUnits = useCartStore((s) => s.rewardUnits);
 
@@ -82,12 +81,6 @@ export default function FreeProductPicker({ offer, isRefreshing }: { offer: Chec
         </span>
       </div>
       <p className="mt-1 text-xs text-ink-muted">{rule}</p>
-
-      {rewardNotice && (
-        <p role="alert" className="mt-2 rounded-lg bg-sale/10 px-3 py-2 text-xs font-semibold text-sale">
-          {rewardNotice}
-        </p>
-      )}
 
       {options.length === 0 && (
         <p aria-live="polite" className="mt-2 text-sm font-semibold text-ink">
