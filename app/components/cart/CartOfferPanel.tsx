@@ -141,7 +141,8 @@ export default function CartOfferPanel({
         </div>
       )}
 
-      {offer.rejected.length > 0 && (
+      {/* The picker already guides the shopper; these per-pick rejections only flashed while the cart settled. */}
+      {!useFreePicker && offer.rejected.length > 0 && (
         <ul role="alert" className="mt-3 space-y-1">
           {offer.rejected.map((r, i) => (
             <li key={`${r.productId}-${r.reason}-${i}`} className="rounded-lg bg-sale/10 px-3 py-2 text-xs font-semibold text-sale">
