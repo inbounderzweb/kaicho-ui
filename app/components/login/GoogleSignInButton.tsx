@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { clampButtonWidth, createWidthGate } from "@/lib/utils/googleButtonWidth";
 
 const GIS_SRC = "https://accounts.google.com/gsi/client";
 const CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
@@ -79,15 +80,17 @@ export default function GoogleSignInButton({
   }, [onCredential]);
 
   const [failed, setFailed] = useState(false);
+  // Width of the button currently drawn. Redrawing empties the container, so a
+  // redraw may only ever be caused by a real WIDTH change (see googleButtonWidth.ts).
+  const widthGate = useRef(createWidthGate());
 
-  const render = useCallback(() => {
+  const render = useCallback((force = false) => {
     const host = buttonHostRef.current;
     const gid = window.google?.accounts?.id;
     if (!host || !gid || !CLIENT_ID) return;
-    const width = Math.min(
-      400,
-      Math.max(200, Math.floor(wrapperRef.current?.clientWidth ?? 320))
-    );
+    const width = clampButtonWidth(wrapperRef.current?.clientWidth);
+    if (!force && !widthGate.current.needsRedraw(width)) return;
+    widthGate.current.markDrawn(width);
     host.innerHTML = "";
     gid.renderButton(host, {
       type: "standard",
@@ -120,7 +123,7 @@ export default function GoogleSignInButton({
             if (res.credential) onCredentialRef.current(res.credential);
           },
         });
-        render();
+        render(true);
       })
       .catch(() => {
         if (!cancelled) setFailed(true);
@@ -151,8 +154,8 @@ export default function GoogleSignInButton({
         ref={buttonHostRef}
         className={
           disabled
-            ? "pointer-events-none flex justify-center opacity-60"
-            : "flex justify-center"
+            ? "pointer-events-none flex min-h-10 justify-center opacity-60"
+            : "flex min-h-10 justify-center"
         }
       />
       {statusText && (
