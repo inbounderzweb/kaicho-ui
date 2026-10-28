@@ -23,7 +23,7 @@ export default function RelatedProducts({ products }: { products: PublicProductL
             key={product.productId}
             className="w-[46vw] max-w-52 shrink-0 snap-start sm:w-auto sm:max-w-none sm:shrink"
           >
-            <ProductCard product={product} />
+            <ProductCard product={product} showWishlist={false} />
           </div>
         ))}
       </SwipeRow>

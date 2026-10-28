@@ -19,6 +19,6 @@ describe("ProductCard +/− stepper", () => {
   it("the tap-area overlay is applied to the ADD button only", () => {
     const stepperWrapper = /className=\{`\$\{actionBase\}([^`]*)`\}\s*role="group"/.exec(source)?.[1] ?? "";
     expect(stepperWrapper).not.toContain("tapArea");
-    expect(source).toMatch(/\$\{actionBase\} \$\{tapArea\}/);
+    expect(source).toMatch(/\$\{actionBase\} \$\{actionSize\} \$\{tapArea\}/);
   });
 });

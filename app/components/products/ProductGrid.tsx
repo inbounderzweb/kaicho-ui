@@ -50,7 +50,7 @@ export default function ProductGrid({
   return (
     <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4 lg:gap-6">
       {items.map((product, i) => (
-        <ProductCard key={product.productId} product={product} priority={i < 4} />
+        <ProductCard key={product.productId} product={product} priority={i < 4} largeAction showWishlist={false} />
       ))}
     </div>
   );

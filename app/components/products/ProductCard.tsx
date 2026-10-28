@@ -39,9 +39,16 @@ import type { PublicProductListItem } from "@/lib/api/publicProducts";
 function ProductCard({
   product,
   priority = false,
+  largeAction = false,
+  showWishlist = true,
 }: {
   product: PublicProductListItem;
   priority?: boolean;
+  /** Bigger ADD / +/− buttons (80×36 / stepper 104×36). Used by the listing grid only; the
+   *  suggested-products strip and wishlist keep the compact size. */
+  largeAction?: boolean;
+  /** The heart. Hidden on the listing and the suggested-products strip; the wishlist page needs it to un-save. */
+  showWishlist?: boolean;
 }) {
   const { data: wishlist } = useWishlist();
   const toggleWishlist = useToggleWishlist();
@@ -86,7 +93,13 @@ function ProductCard({
 
   const money = (n: number) => `Rs. ${Number.isInteger(n) ? n.toFixed(0) : n.toFixed(2)}`;
   const savings = product.pricing.mrp - product.pricing.sellingPrice;
-  const actionBase = "absolute bottom-2 right-2 z-20 inline-flex h-9 w-[4.75rem] touch-manipulation items-center justify-center rounded-lg text-sm font-bold shadow-sm transition-colors";
+  const actionBase = "absolute bottom-2 right-2 z-20 inline-flex touch-manipulation items-center justify-center rounded-lg text-sm font-bold shadow-sm transition-colors";
+  // Listing card: the idle "+" is a small square button (36px, same soft corners as the rest); "Sold out" needs the wider pill.
+  const actionSize = largeAction ? (outOfStock ? "h-9 w-20" : "h-9 w-9") : "h-9 w-[4.75rem]";
+  const stepperSize = largeAction ? "h-9 !w-[6.5rem]" : "h-9 !w-24";
+  const stepButtonHeight = "h-9";
+  // Size of the + / − glyphs (smaller on the listing card).
+  const iconSize = largeAction ? "text-base" : "text-xl";
   // Enlarges the ADD button's tap area. ONLY for that single button: on the +/− stepper
   // wrapper this invisible layer sits above its buttons and swallows every tap.
   const tapArea = "before:absolute before:-inset-1.5 before:content-['']";
@@ -121,6 +134,7 @@ function ProductCard({
           )}
         </Link>
 
+        {showWishlist && (
         <button
           type="button"
           onClick={handleWishlistClick}
@@ -131,16 +145,17 @@ function ProductCard({
         >
           <IconHeart className={`h-4 w-4 ${inWishlist ? "fill-sale text-sale" : ""}`} />
         </button>
+        )}
 
         {quantity > 0 ? (
-          <div className={`${actionBase} !w-24 overflow-hidden bg-brand text-white`} role="group" aria-label={`Quantity of ${product.name}`}>
+          <div className={`${actionBase} ${stepperSize} overflow-hidden bg-brand text-white`} role="group" aria-label={`Quantity of ${product.name}`}>
             <button
               type="button"
               aria-label={`Remove one ${product.name}`}
               onClick={() => {
                 if (cartLine) useCartStore.getState().decrementItem({ ...cartLine, quantity: 1 });
               }}
-              className="h-9 min-w-0 flex-1 touch-manipulation text-xl active:bg-brand-darker"
+              className={`${stepButtonHeight} min-w-0 flex-1 touch-manipulation ${iconSize} active:bg-brand-darker`}
             >−</button>
             <span aria-live="polite" aria-atomic="true" className="min-w-4 text-center text-sm font-bold">{quantity}</span>
             <button
@@ -149,7 +164,7 @@ function ProductCard({
               disabled={outOfStock || (product.inventory.trackInventory && quantity >= product.inventory.stockQuantity)}
               aria-busy={smartCart.busy}
               onClick={handleAddToCart}
-              className={`h-9 min-w-0 flex-1 touch-manipulation text-xl active:bg-brand-darker disabled:opacity-50 ${smartCart.busy ? "bg-brand-darker" : ""}`}
+              className={`${stepButtonHeight} min-w-0 flex-1 touch-manipulation ${iconSize} active:bg-brand-darker disabled:opacity-50 ${smartCart.busy ? "bg-brand-darker" : ""}`}
             >+</button>
           </div>
         ) : (
@@ -159,13 +174,13 @@ function ProductCard({
             disabled={outOfStock}
             aria-busy={smartCart.busy}
             aria-label={`Add ${product.name} to cart`}
-            className={`${actionBase} ${tapArea} border-2 disabled:cursor-not-allowed ${
+            className={`${actionBase} ${actionSize} ${tapArea} border-2 disabled:cursor-not-allowed ${
               outOfStock
                 ? "border-border bg-cream text-ink-faint opacity-60"
                 : "border-brand bg-white text-brand active:bg-brand/10"
             }`}
           >
-            {outOfStock ? "Sold out" : smartCart.busy ? "…" : "ADD"}
+            {outOfStock ? "Sold out" : smartCart.busy ? "…" : largeAction ? <span className={`${iconSize} leading-none`}>+</span> : "ADD"}
           </button>
         )}
 
@@ -174,7 +189,7 @@ function ProductCard({
         {smartCart.error && (
           <p
             role="alert"
-            className="absolute inset-x-2 bottom-12 z-30 rounded-lg border border-red-200 bg-red-50 px-2 py-1.5 text-xs font-semibold leading-4 text-red-700 shadow-sm"
+            className={`absolute inset-x-2 bottom-12 z-30 rounded-lg border border-red-200 bg-red-50 px-2 py-1.5 text-xs font-semibold leading-4 text-red-700 shadow-sm`}
           >
             {smartCart.error}
           </p>
