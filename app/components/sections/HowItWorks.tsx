@@ -16,6 +16,29 @@ const STEPS = [
 const HOLD_MS = 3000;
 const SLIDE_MS = 400;
 
+type Step = (typeof STEPS)[number];
+
+function StepContent({ step, title, Icon }: Step) {
+  return (
+    <div className="flex items-center gap-4">
+      <div className="relative shrink-0">
+        <span className="absolute -top-3.5 left-0 whitespace-nowrap text-[9px] font-bold uppercase tracking-wider text-white/50">
+          Step
+        </span>
+        <span className="block font-display text-4xl font-bold leading-none text-white/20 sm:text-5xl">
+          {step}
+        </span>
+      </div>
+      <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-brand/20 text-brand-soft">
+        <Icon className="h-5 w-5" />
+      </span>
+      <span className="whitespace-nowrap font-display text-base font-semibold text-white sm:text-lg">
+        {title}
+      </span>
+    </div>
+  );
+}
+
 export default function HowItWorks() {
   const trackRef = useRef<HTMLDivElement>(null);
   const interaction = useRef<ReturnType<typeof monitorCarouselInteraction> | null>(null);
@@ -126,7 +149,7 @@ export default function HowItWorks() {
             {/* One step per view; native scroll + snap gives swipe / trackpad / drag-scroll */}
             <div
               ref={trackRef}
-              className="no-scrollbar flex snap-x snap-mandatory overflow-x-auto"
+              className="no-scrollbar flex snap-x snap-mandatory overflow-x-auto md:hidden"
               role="group"
               aria-roledescription="carousel"
               aria-label="How it works steps"
@@ -153,24 +176,31 @@ export default function HowItWorks() {
                   aria-hidden={position === STEPS.length || undefined}
                   className="flex w-full shrink-0 snap-center items-center justify-center px-6"
                 >
-                  <div className="flex items-center gap-4">
-                    <div className="relative shrink-0">
-                      <span className="absolute -top-3.5 left-0 whitespace-nowrap text-[9px] font-bold uppercase tracking-wider text-white/50">
-                        Step
-                      </span>
-                      <span className="block font-display text-4xl font-bold leading-none text-white/20 sm:text-5xl">
-                        {step}
-                      </span>
-                    </div>
-                    <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-brand/20 text-brand-soft">
-                      <Icon className="h-5 w-5" />
-                    </span>
-                    <span className="whitespace-nowrap font-display text-base font-semibold text-white sm:text-lg">
-                      {title}
-                    </span>
-                  </div>
+                  <StepContent step={step} title={title} Icon={Icon} />
                 </div>
               ))}
+            </div>
+
+            {/* md+: all steps visible, drifting slowly and continuously. The track holds two identical
+                halves and animate-marquee shifts it by exactly one half, so the loop is seamless.
+                Hover pauses it; reduced-motion users get it static via motion-reduce. */}
+            <div
+              aria-label="How it works steps"
+              role="group"
+              className="group hidden overflow-hidden py-8 md:block [mask-image:linear-gradient(to_right,transparent,#000_8%,#000_92%,transparent)]"
+            >
+              <div className="flex w-max animate-[marquee_40s_linear_infinite] [animation-direction:reverse] motion-reduce:animate-none group-hover:[animation-play-state:paused]">
+                {[0, 1].map((half) => (
+                  <div key={half} aria-hidden={half === 1 || undefined} className="flex shrink-0">
+                    {[...STEPS, ...STEPS].map((item, i) => (
+                      <div key={i} className="flex items-center px-10">
+                        <StepContent {...item} />
+                        <IconChevronRight className="ml-10 h-4 w-4 text-white/30" />
+                      </div>
+                    ))}
+                  </div>
+                ))}
+              </div>
             </div>
 
             {([-1, 1] as const).map((direction) => (
@@ -179,7 +209,7 @@ export default function HowItWorks() {
                 type="button"
                 aria-label={direction === -1 ? "Previous step" : "Next step"}
                 onClick={() => move(direction)}
-                className={`absolute top-1/2 z-20 grid h-9 w-9 -translate-y-1/2 place-items-center rounded-full border border-white/25 bg-white/10 text-white backdrop-blur-sm transition-colors hover:bg-white/25 ${direction === -1 ? "left-3" : "right-3"}`}
+                className={`absolute top-1/2 z-20 grid md:hidden h-9 w-9 -translate-y-1/2 place-items-center rounded-full border border-white/25 bg-white/10 text-white backdrop-blur-sm transition-colors hover:bg-white/25 ${direction === -1 ? "left-3" : "right-3"}`}
               >
                 <IconChevronRight className={`h-4 w-4 ${direction === -1 ? "rotate-180" : ""}`} />
               </button>
