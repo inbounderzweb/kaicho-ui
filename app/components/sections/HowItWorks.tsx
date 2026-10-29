@@ -189,7 +189,7 @@ export default function HowItWorks() {
               role="group"
               className="group hidden overflow-hidden py-8 md:block [mask-image:linear-gradient(to_right,transparent,#000_8%,#000_92%,transparent)]"
             >
-              <div className="flex w-max animate-[marquee_40s_linear_infinite] [animation-direction:reverse] motion-reduce:animate-none group-hover:[animation-play-state:paused]">
+              <div className="flex w-max animate-[marquee_40s_linear_infinite] motion-reduce:animate-none group-hover:[animation-play-state:paused]">
                 {[0, 1].map((half) => (
                   <div key={half} aria-hidden={half === 1 || undefined} className="flex shrink-0">
                     {[...STEPS, ...STEPS].map((item, i) => (
