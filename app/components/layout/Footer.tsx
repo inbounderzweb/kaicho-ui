@@ -86,10 +86,19 @@ export default function Footer() {
             <ul className="mt-4 space-y-4 text-sm text-ink-muted">
               <li className="flex gap-3">
                 <IconMapPin className="h-5 w-5 shrink-0 text-brand" />
-                <span>
-                  Kaicho Foods, No.EKP.8/293, Kayapoyil, Kakkara PO, Via MM
-                  Bazar, Kannur, Kerala &ndash; 670306, India.
-                </span>
+                <address className="not-italic leading-relaxed">
+                  {/* Kaicho Foods, No.EKP.8/293, Kayapoyil, Kakkara PO, Via MM
+                  Bazar, Kannur, Kerala &ndash; 670306, India. */}
+                  171, Ground Floor, 4th Main Rd,
+                  <br />
+                  Opp. Sree Vinayaka Real Estate,
+                  <br />
+                  NGEF Layout, Sadanandanagar,
+                  <br />
+                  Bennigana Halli, Bengaluru,
+                  <br />
+                  Karnataka &ndash; 560038
+                </address>
               </li>
               <li className="flex items-center gap-3">
                 <IconMail className="h-5 w-5 shrink-0 text-brand" />
