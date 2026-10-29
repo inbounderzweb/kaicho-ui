@@ -48,9 +48,13 @@ export const metadata: Metadata = {
   publisher: SITE_NAME,
   category: "food",
   icons: {
-    icon: [{ url: "/icons/kaicho-touch-icon.png", type: "image/png" }],
-    shortcut: "/icons/kaicho-touch-icon.png",
-    apple: "/icons/kaicho-touch-icon.png",
+    // Google needs a square favicon whose size is a multiple of 48px
+    icon: [
+      { url: "/favicon.ico", sizes: "48x48" },
+      { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
+    ],
+    shortcut: "/favicon.ico",
+    apple: "/apple-touch-icon.png",
   },
   verification: {
     google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION || undefined,
