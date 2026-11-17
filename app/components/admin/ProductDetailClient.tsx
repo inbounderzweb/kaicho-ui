@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useProductDetail } from "@/lib/hooks/admin/useProductDetail";
 import { useCreateProduct } from "@/lib/hooks/admin/useCreateProduct";
@@ -19,6 +19,7 @@ import PackConfigSection from "./products/PackConfigSection";
 import InventoryTrackingSection from "./products/InventoryTrackingSection";
 import RelatedComboSection from "./products/RelatedComboSection";
 import ConfirmDialog from "./ConfirmDialog";
+import RichTextEditor from "./RichTextEditor";
 import DraftBanner from "./DraftBanner";
 import FormErrorToast, { type FormErrorItem } from "./FormErrorToast";
 import { useFormDraft } from "@/lib/hooks/admin/useFormDraft";
@@ -116,6 +117,7 @@ export default function ProductDetailClient({ id }: { id?: string }) {
   });
   const {
     register,
+    control,
     handleSubmit,
     watch,
     setValue,
@@ -451,10 +453,18 @@ export default function ProductDetailClient({ id }: { id?: string }) {
                 <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-black/50 dark:text-white/50">
                   Description *
                 </label>
-                <textarea
-                  {...register("description")}
-                  rows={8}
-                  className="w-full rounded-xl border border-admin-border bg-admin-surface px-3 py-2 text-sm outline-none focus:border-admin-primary-dark dark:border-admin-border-dark dark:bg-admin-surface-dark"
+                <Controller
+                  name="description"
+                  control={control}
+                  render={({ field }) => (
+                    <RichTextEditor
+                      value={field.value ?? ""}
+                      onChange={field.onChange}
+                      onFocusChange={(focused) => { if (!focused) field.onBlur(); }}
+                      allowImages={false}
+                      minHeightClass="min-h-[200px]"
+                    />
+                  )}
                 />
                 {errors.description && <p className="mt-1 text-xs text-red-600 dark:text-red-400">{errors.description.message}</p>}
               </div>

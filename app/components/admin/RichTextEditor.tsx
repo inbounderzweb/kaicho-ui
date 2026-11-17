@@ -53,7 +53,7 @@ function ToolbarButton({
   );
 }
 
-function Toolbar({ editor }: { editor: Editor }) {
+function Toolbar({ editor, allowImages }: { editor: Editor; allowImages: boolean }) {
   const uploadMutation = useUploadMedia();
   const [libraryOpen, setLibraryOpen] = useState(false);
 
@@ -99,7 +99,9 @@ function Toolbar({ editor }: { editor: Editor }) {
       <ToolbarButton title="Divider" onClick={() => editor.chain().focus().setHorizontalRule().run()}>―</ToolbarButton>
       <span className="mx-1 h-5 w-px bg-admin-border dark:bg-admin-border-dark" />
       <ToolbarButton title="Link" active={editor.isActive("link")} onClick={addLink}>Link</ToolbarButton>
-      <ToolbarButton title="Image" onClick={() => setLibraryOpen(true)} disabled={uploadMutation.isPending}>{uploadMutation.isPending ? "…" : "Image"}</ToolbarButton>
+      {allowImages && (
+        <ToolbarButton title="Image" onClick={() => setLibraryOpen(true)} disabled={uploadMutation.isPending}>{uploadMutation.isPending ? "…" : "Image"}</ToolbarButton>
+      )}
       <ToolbarButton title="Insert table" onClick={() => editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()}>Table</ToolbarButton>
       {editor.isActive("table") && (
         <>
@@ -131,14 +133,33 @@ function Toolbar({ editor }: { editor: Editor }) {
   );
 }
 
+// Legacy content (product descriptions written before this editor existed)
+// is plain text with newlines. Fed to TipTap as-is it collapses into one
+// paragraph, so wrap it as escaped <p> blocks. Anything already containing
+// markup passes through untouched, so blog bodies are unaffected.
+function toEditorHtml(value: string): string {
+  if (!value || /<\/?[a-z][^>]*>/i.test(value)) return value || "";
+  const esc = (t: string) => t.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  return value
+    .split(/\n{2,}/)
+    .map((para) => `<p>${esc(para.trim()).replace(/\n/g, "<br>")}</p>`)
+    .join("");
+}
+
 export default function RichTextEditor({
   value,
   onChange,
   onFocusChange,
+  allowImages = true,
+  minHeightClass = "min-h-[320px]",
 }: {
   value: string;
   onChange: (html: string) => void;
   onFocusChange?: (focused: boolean) => void;
+  /** Blog bodies embed Media-library images; product descriptions don't
+   *  (their images live in the gallery), so they turn this off. */
+  allowImages?: boolean;
+  minHeightClass?: string;
 }) {
   const editor = useEditor({
     immediatelyRender: false,
@@ -146,13 +167,13 @@ export default function RichTextEditor({
       // H1 is deliberately excluded — the post title owns the page's single
       // H1. The backend sanitizer also downgrades any stray h1 to h2.
       StarterKit.configure({ heading: { levels: [2, 3, 4] } }),
-      BlogImage.configure({ inline: false, HTMLAttributes: { loading: "lazy" } }),
+      ...(allowImages ? [BlogImage.configure({ inline: false, HTMLAttributes: { loading: "lazy" } })] : []),
       TableKit.configure({ table: { resizable: false } }),
     ],
-    content: value || "",
+    content: toEditorHtml(value),
     editorProps: {
       attributes: {
-        class: "blog-prose max-w-none min-h-[320px] px-4 py-3 focus:outline-none",
+        class: `blog-prose max-w-none ${minHeightClass} px-4 py-3 focus:outline-none`,
       },
     },
     onUpdate: ({ editor }) => onChange(editor.getHTML()),
@@ -165,7 +186,7 @@ export default function RichTextEditor({
   useEffect(() => {
     if (!editor) return;
     const current = editor.getHTML();
-    const incoming = value || "<p></p>";
+    const incoming = toEditorHtml(value) || "<p></p>";
     if (incoming !== current && !editor.isFocused) {
       editor.commands.setContent(incoming, { emitUpdate: false });
     }
@@ -173,7 +194,7 @@ export default function RichTextEditor({
 
   return (
     <div className="overflow-hidden rounded-xl border border-admin-border bg-admin-surface dark:border-admin-border-dark dark:bg-admin-surface-dark">
-      {editor && <Toolbar editor={editor} />}
+      {editor && <Toolbar editor={editor} allowImages={allowImages} />}
       <EditorContent editor={editor} />
     </div>
   );

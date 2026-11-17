@@ -24,7 +24,12 @@ export const productFormSchema = z
     weightPerPackGrams: z.union([z.literal(""), z.coerce.number().positive("Weight must be greater than zero")]).optional(),
     numberOfPacks: z.union([z.literal(""), z.coerce.number().int("Use a whole number").positive("Pack count must be greater than zero")]).optional(),
     shortDescription: z.string().trim().min(1, "Short description is required").max(300, "Short description is too long"),
-    description: z.string().trim().min(1, "Description is required").max(20000, "Description is too long"),
+    description: z
+      .string()
+      .trim()
+      .max(30000, "Description is too long")
+      // The rich-text editor's empty state is "<p></p>", so check visible text, not length.
+      .refine((v) => v.replace(/<[^>]*>/g, "").replace(/&nbsp;/g, " ").trim().length > 0, "Description is required"),
     categoryId: z.string().trim().min(1, "Category is required"),
     brandId: z.string().trim().min(1, "Brand is required"),
 

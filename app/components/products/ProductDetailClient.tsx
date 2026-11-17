@@ -154,9 +154,19 @@ export default function ProductDetailClient({ product }: { product: PublicProduc
           data model has (no fabricated ingredients/benefits/spec table). */}
       <div className="mt-16 border-t border-border pt-12 sm:mt-20 sm:pt-16">
         <h2 className="font-display text-xl font-bold text-ink sm:text-2xl">Product Details</h2>
-        <p className="mt-4 max-w-3xl whitespace-pre-line text-sm leading-relaxed text-ink-muted sm:text-base">
-          {product.description}
-        </p>
+        {/* Descriptions are rich-text HTML, sanitized server-side on every write
+            (kaicho-be product.sanitize.ts). Older products still hold plain
+            text with newlines, so that case keeps the original rendering. */}
+        {/<\/?[a-z][^>]*>/i.test(product.description) ? (
+          <div
+            className="blog-prose mt-4 max-w-3xl"
+            dangerouslySetInnerHTML={{ __html: product.description }}
+          />
+        ) : (
+          <p className="mt-4 max-w-3xl whitespace-pre-line text-sm leading-relaxed text-ink-muted sm:text-base">
+            {product.description}
+          </p>
+        )}
         {/* <p className="mt-6 text-xs font-semibold uppercase tracking-wide text-ink-faint">SKU: {product.sku}</p> */}
       </div>
 
