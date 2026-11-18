@@ -15,6 +15,7 @@ import {
   IconMail,
   IconSettings,
   IconMegaphone,
+  IconSearch,
   type IconProps,
 } from "../ui/icons";
 
@@ -83,6 +84,15 @@ export const ADMIN_NAV_ITEMS: AdminNavItem[] = [
     label: "Marketing",
     Icon: IconMegaphone,
     children: [{ href: "/admin/popups", label: "Popups", Icon: IconMegaphone }],
+  },
+  {
+    label: "SEO Management",
+    Icon: IconSearch,
+    children: [
+      { href: "/admin/seo", label: "All Pages", Icon: IconSearch, exact: true },
+      { href: "/admin/seo/product", label: "Product Details", Icon: IconPackage },
+      { href: "/admin/seo/category", label: "Categories", Icon: IconTag },
+    ],
   },
   { href: "/admin/media", label: "Media", Icon: IconImages },
   { href: "/admin/settings", label: "Settings", Icon: IconSettings },

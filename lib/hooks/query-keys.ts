@@ -201,3 +201,10 @@ export const checkoutKeys = {
   all: ["checkout"] as const,
   preview: ["checkout", "preview"] as const,
 };
+
+export const seoKeys = {
+  all: ["admin", "seo"] as const,
+  pages: ["admin", "seo", "pages"] as const,
+  entities: (pageType: string, search: string) => ["admin", "seo", "entities", pageType, search] as const,
+  content: (pageType: string, entityId: string | null) => ["admin", "seo", "content", pageType, entityId ?? "static"] as const,
+};

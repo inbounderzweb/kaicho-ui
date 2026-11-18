@@ -1,13 +1,16 @@
 import PageBanner from "../components/ui/PageBanner";
 import StorySection from "../components/sections/StorySection";
-import { buildPageMetadata } from "@/lib/seo/metadata";
+import ManagedPageSections from "@/app/components/seo/ManagedPageSections";
+import { buildManagedMetadata } from "@/lib/seo/pageContent";
 
-export const metadata = buildPageMetadata({
+export async function generateMetadata() {
+  return buildManagedMetadata("ABOUT", {
   title: "Our Story",
   description:
     "Learn about Kaicho Foods — natural ingredients, no preservatives, and Japanese retort technology behind every ready-to-eat meal.",
   path: "/about",
 });
+}
 
 export default function AboutPage() {
   return (
@@ -18,6 +21,7 @@ export default function AboutPage() {
         breadcrumbs={[{ label: "Home", href: "/" }, { label: "About", href: "/about" }]}
       />
       <StorySection />
+      <ManagedPageSections pageType="ABOUT" />
     </>
   );
 }

@@ -145,3 +145,39 @@ export function productJsonLd(product: {
     },
   };
 }
+
+/** Visible text of already-sanitized FAQ answer HTML. */
+function htmlToText(html: string): string {
+  return html
+    .replace(/<\/(p|li|h[2-6]|tr|blockquote)>/gi, " ")
+    .replace(/<br\s*\/?>/gi, " ")
+    .replace(/<[^>]*>/g, "")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+/**
+ * FAQPage markup mirroring EXACTLY the questions/answers rendered on the page
+ * (Google requires the markup to match visible content). Returns null when
+ * there is nothing eligible. Google currently limits FAQ rich results to a
+ * small set of authoritative sites, so this is valid markup, not a promise of
+ * a rich result.
+ */
+export function faqPageJsonLd(items: { question: string; answer: string }[]): JsonLd | null {
+  const entities = items
+    .map((i) => ({ q: i.question.trim(), a: htmlToText(i.answer) }))
+    .filter((i) => i.q && i.a)
+    .map((i) => ({
+      "@type": "Question",
+      name: i.q,
+      acceptedAnswer: { "@type": "Answer", text: i.a },
+    }));
+  if (!entities.length) return null;
+  return { "@context": "https://schema.org", "@type": "FAQPage", mainEntity: entities };
+}

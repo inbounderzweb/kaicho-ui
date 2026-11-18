@@ -34,6 +34,11 @@ type PageMetadataInput = {
   canonical?: string;
   /** Open Graph type. "article" for blog posts; defaults to "website". */
   ogType?: "website" | "article";
+  /** Optional social-share overrides; fall back to title/description. */
+  ogTitle?: string;
+  ogDescription?: string;
+  /** <meta name="keywords">. Omitted when empty. */
+  keywords?: string[];
   /** Article-only OG timestamps, ISO strings. */
   publishedTime?: string;
   modifiedTime?: string;
@@ -57,6 +62,9 @@ export function buildPageMetadata({
   ogType = "website",
   publishedTime,
   modifiedTime,
+  ogTitle,
+  ogDescription,
+  keywords,
 }: PageMetadataInput = {}): Metadata {
   const resolvedTitle = title ?? DEFAULT_TITLE;
   const canonical = canonicalOverride ? absoluteUrl(canonicalOverride) : absoluteUrl(path);
@@ -70,13 +78,14 @@ export function buildPageMetadata({
   return {
     title,
     description,
+    ...(keywords?.length ? { keywords } : {}),
     alternates: {
       canonical,
     },
     robots: { index: !noIndex, follow: !noFollow },
     openGraph: {
-      title: resolvedTitle,
-      description,
+      title: ogTitle || resolvedTitle,
+      description: ogDescription || description,
       url: canonical,
       siteName: SITE_NAME,
       locale: "en_IN",
@@ -88,8 +97,8 @@ export function buildPageMetadata({
     },
     twitter: {
       card: "summary_large_image",
-      title: resolvedTitle,
-      description,
+      title: ogTitle || resolvedTitle,
+      description: ogDescription || description,
       images: [ogImage.url],
     },
   };

@@ -2,14 +2,17 @@ import { Suspense } from "react";
 import PageBanner from "../components/ui/PageBanner";
 import ProductsPageClient from "../components/products/ProductsPageClient";
 import ProductGrid from "../components/products/ProductGrid";
-import { buildPageMetadata } from "@/lib/seo/metadata";
+import ManagedPageSections from "@/app/components/seo/ManagedPageSections";
+import { buildManagedMetadata } from "@/lib/seo/pageContent";
 
-export const metadata = buildPageMetadata({
+export async function generateMetadata() {
+  return buildManagedMetadata("ALL_PRODUCTS", {
   title: "Ready-to-Eat Meals, Combos & Saver Packs",
   description:
     "Browse Kaicho Foods' ready-to-eat meals, combos and family saver packs — 100% natural, no preservatives, ready in minutes.",
   path: "/products",
 });
+}
 
 export default function ProductsPage() {
   return (
@@ -28,6 +31,7 @@ export default function ProductsPage() {
       <Suspense fallback={<ProductGrid items={[]} isLoading />}>
         <ProductsPageClient />
       </Suspense>
+      <ManagedPageSections pageType="ALL_PRODUCTS" />
     </>
   );
 }

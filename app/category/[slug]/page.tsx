@@ -6,6 +6,8 @@ import ProductGrid from "../../components/products/ProductGrid";
 import { fetchPublicCategoryBySlug } from "@/lib/api/publicCategories";
 import { ApiError } from "@/lib/api/ApiError";
 import { buildPageMetadata } from "@/lib/seo/metadata";
+import { buildManagedMetadata } from "@/lib/seo/pageContent";
+import ManagedPageSections from "@/app/components/seo/ManagedPageSections";
 import { resolveMediaUrl } from "@/lib/api/client";
 
 // On-demand ISR (see products/[slug] for the rationale): the first hit to a
@@ -34,12 +36,12 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     return buildPageMetadata({ title: "Category Not Found", noIndex: true });
   }
 
-  return buildPageMetadata({
+  return buildManagedMetadata("CATEGORY", {
     title: category.name,
     description: category.description || `Shop ${category.name} at Kaicho Foods.`,
     path: `/category/${slug}`,
     image: category.image ? { url: resolveMediaUrl(category.image.url), alt: category.name } : undefined,
-  });
+  }, slug);
 }
 
 export default async function CategoryPage({ params }: { params: Promise<{ slug: string }> }) {
@@ -67,6 +69,7 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
       <Suspense fallback={<ProductGrid items={[]} isLoading />}>
         <CategoryPageClient slug={slug} />
       </Suspense>
+      <ManagedPageSections pageType="CATEGORY" slug={slug} />
     </>
   );
 }

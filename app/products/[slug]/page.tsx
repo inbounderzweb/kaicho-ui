@@ -6,6 +6,8 @@ import { fetchPublicProductBySlug } from "@/lib/api/publicProducts";
 import { ApiError } from "@/lib/api/ApiError";
 import { resolveMediaUrl } from "@/lib/api/client";
 import { buildPageMetadata } from "@/lib/seo/metadata";
+import { buildManagedMetadata } from "@/lib/seo/pageContent";
+import ManagedPageSections from "@/app/components/seo/ManagedPageSections";
 import { productJsonLd, breadcrumbJsonLd } from "@/lib/seo/structured-data";
 
 // The catalog changes continuously, so nothing is pre-rendered at build
@@ -39,14 +41,16 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     return buildPageMetadata({ title: "Product Not Found", noIndex: true });
   }
 
-  return buildPageMetadata({
+  // Product SEO (title/description/keywords/canonical/OG/robots) is read from
+  // the same Product.seo the admin edits; these are the fallbacks.
+  return buildManagedMetadata("PRODUCT", {
     title: product.seo.title || product.name,
     description: product.seo.description || product.shortDescription,
     path: `/products/${slug}`,
     image: product.images[0]
       ? { url: resolveMediaUrl(product.images[0].url), alt: product.images[0].altText }
       : undefined,
-  });
+  }, slug);
 }
 
 export default async function ProductDetailPage({ params }: { params: Promise<{ slug: string }> }) {
@@ -80,6 +84,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
         })}
       />
       <ProductDetailClient product={product} />
+      <ManagedPageSections pageType="PRODUCT" slug={slug} />
     </>
   );
 }
